@@ -1,0 +1,671 @@
+The system is powered on.
+
+eXtensible Modular Hypervisor Framework (XMHF) v6.1.0
+Build revision: v6.1.0-you-gotta-have-faith-not-in-who-you-are-but-who-you-can-be
+
+INIT(early): initializing, total modules=3
+INIT(early): detected an Intel CPUChecking whether MBI module 2 is SINIT...
+YES! SINIT found @ 0x101000, 35776 bytes
+
+Finding SMP info. via ACPI...
+ACPI RSDP at 0x000fc600
+ACPI RSDT at 0xbb3fe0ac
+	len=0x0000005c, headerlen=0x00000024, numentries=14
+ACPI MADT at 0xbb3fa000
+	len=0x000000bc, record-length=144 bytes
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x01
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x04
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x05
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x01, length=12 bytes, flags=0xfec00000, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000002, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000009, id=0x09
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0xffff0100, id=0x05
+original system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x00000000baac2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+proceeding to revise E820...
+E820 revision complete.
+revised system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x0000000009a00000 (2)
+0x0000000019a00000, size=0x00000000a11c2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 
+
+hashandprint: processing 0x0976c000 bytes at addr 0x10200000    INIT(early): *UNTRUSTED* comp runtime: : 64 4d 46 db 5e 60 4f 88 8a d3 62 78 27 62 6a fa ae e3 61 f3
+
+    INIT(early): *UNTRUSTED* gold SL low 64K: a6 5a 7f 2d 07 5d ec 76 06 ba 54 1a a2 ab a9 12 
+    INIT(early): *UNTRUSTED* gold SL low 64K: 41 60 5e 20 
+
+hashandprint: processing 0x00010000 bytes at addr 0x10000000    INIT(early): *UNTRUSTED* comp SL low 64K: : a6 5a 7f 2d 07 5d ec 76 06 ba 54 1a a2 ab a9 12 41 60 5e 20
+
+    INIT(early): *UNTRUSTED* gold SL above 64K: 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be 
+    INIT(early): *UNTRUSTED* gold SL above 64K: 47 6a 52 8a 
+
+hashandprint: processing 0x001f0000 bytes at addr 0x10010000    INIT(early): *UNTRUSTED* comp SL above 64K): : 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be 47 6a 52 8a
+
+INIT(early): relocated hypervisor binary image to 0x10000000
+INIT(early): 2M aligned size = 0x09a00000
+INIT(early): un-aligned size = 0x0996c000
+setupvcpus: cpustacks range 0x01e22000-0x01e42000 in 0x00004000 chunks
+setupvcpus: vcpubuffers range 0x01e0d080-0x01e18a00 in 0x00001730 chunks
+CPU #0: vcpu_vaddr_ptr=0x01e0d080, esp=0x01e26000
+CPU #1: vcpu_vaddr_ptr=0x01e0e7b0, esp=0x01e2a000
+CPU #2: vcpu_vaddr_ptr=0x01e0fee0, esp=0x01e2e000
+CPU #3: vcpu_vaddr_ptr=0x01e11610, esp=0x01e32000
+Sending INIT IPI to all APs...Done.
+Sending SIPI-0...
+AP(0x05): Waiting for DRTM establishment...
+AP(0x04): Waiting for DRTM establishment...Done.
+AP(0x01): Waiting for DRTM establishment...
+Sending SIPI-1...Done.
+APs should be awake!
+BSP(0x00): Rallying APs...
+BSP(0x00): APs ready, doing DRTM...
+LAPIC base and status=0xfee00900
+Sending INIT IPI to all APs...
+Done.
+
+INIT(early): sent INIT IPI to APs
+******  INIT(early): Begin TXT Stuff  ******
+TXT.ERRORCODE=0
+LT.ESTS=0
+txt_verify_platform
+CPU is VMX-capable
+CPU is SMX-capable
+SENTER should work.
+SMX enabled in CR4
+TXT chipset and all needed capabilities (0x000001fd) present
+bios_data (@0xbb720008, 2c):
+	 version: 3
+	 bios_sinit_size: 0x0 (0)
+	 lcp_pd_base: 0x0
+	 lcp_pd_size: 0x0 (0)
+	 num_logical_procs: 4
+	 flags: 0x00000000
+CR0 and EFLAGS OK
+no machine check errors
+CPU is ready for SENTER
+chipset ids: vendor: 0x8086, device: 0xa000, revision: 0x1f
+chipset production fused: 1
+	 1 ACM chipset id entries:
+	     vendor: 0x8086, device: 0xa000, flags: 0x1, revision: 0x1, extended: 0x0
+SINIT matches platform
+copied SINIT (size=8bc0) to 0xbb700000
+AC mod base alignment OK
+AC mod size OK
+AC module header dump for SINIT:
+	 type: 0x2 (ACM_TYPE_CHIPSET)
+	 length: 0xa1 (161)
+	 version: 0
+	 chipset_id: 0xa000
+	 flags: 0x0
+		 pre_production: 0
+		 debug_signed: 0
+	 vendor: 0x8086
+	 date: 0x20111122
+	 size*4: 0x8bc0 (35776)
+	 code_control: 0x0
+	 error_entry_point: 0x0
+	 gdt_limit 0x28, gdt_base 0x500
+	 entry point (seg_sel:entry_point): 0x00000008:00006601
+	 scratch_size: 0x8f (143)
+		 SINIT GDT: 00 00 00 00 00 00 00 00 ff ff 00 00 00 9b cf 00 
+		 SINIT GDT: ff ff 00 00 00 93 cf 00 ff ff 00 00 00 93 cf 00 
+		 SINIT GDT: ff ff 00 00 00 93 cf 00 
+	 info_table:
+		 uuid: {0x7fc03aaa, 0x46a7, 0x18db, 0xac2e,
+		{0x69, 0x8f, 0x8d, 0x41, 0x7f, 0x5a}}
+		     ACM_UUID_V3
+		 chipset_acm_type: 0x1 (SINIT)
+		 version: 3
+		 length: 0x28 (40)
+		 chipset_id_list: 0x4e8
+		 os_sinit_data_ver: 0x5
+		 min_mle_hdr_ver: 0x00020000
+		 capabilities: 0x0000000e
+		     rlp_wake_getsec: 0
+		     rlp_wake_monitor: 1
+		     ecx_pgtbl: 1
+		 acm_ver: 51
+	 chipset list:
+		 count: 1
+		 entry 0:
+		     flags: 0x1
+		     vendor_id: 0x8086
+		     device_id: 0xa000
+		     revision_id: 0x1
+		     extended_id: 0x0
+file addresses:
+	 &g_mle_hdr=0x1e18a60
+MLE header:
+	 uuid={0x9082ac5a, 0x476f, 0x74a7, 0x5c0f,
+		{0x55, 0xa2, 0xcb, 0x51, 0xb6, 0x42}}
+	 length=34
+	 version=00020001
+	 entry_point=00000080
+	 first_valid_page=00000000
+	 mle_start_off=0
+	 mle_end_off=10000
+	 capabilities: 0x00000007
+	     rlp_wake_getsec: 1
+	     rlp_wake_monitor: 1
+	     ecx_pgtbl: 1
+MLE start=10003000, end=10013000, size=10000
+ptab_size=3000, ptab_base=0x10000000
+*(uint64_t *)pg_dir_ptr_tab = 0x        10001001
+*(uint64_t *)pg_dir = 0x        10002001
+pte = 0x10002000
+*pte = 0x       10003001
+pte = 0x10002008
+*pte = 0x       10004001
+pte = 0x10002010
+*pte = 0x       10005001
+pte = 0x10002018
+*pte = 0x       10006001
+pte = 0x10002020
+*pte = 0x       10007001
+pte = 0x10002028
+*pte = 0x       10008001
+pte = 0x10002030
+*pte = 0x       10009001
+pte = 0x10002038
+*pte = 0x       1000a001
+pte = 0x10002040
+*pte = 0x       1000b001
+pte = 0x10002048
+*pte = 0x       1000c001
+pte = 0x10002050
+*pte = 0x       1000d001
+pte = 0x10002058
+*pte = 0x       1000e001
+pte = 0x10002060
+*pte = 0x       1000f001
+pte = 0x10002068
+*pte = 0x       10010001
+pte = 0x10002070
+*pte = 0x       10011001
+pte = 0x10002078
+*pte = 0x       10012001
+bios_data (@0xbb720008, 2c):
+	 version: 3
+	 bios_sinit_size: 0x0 (0)
+	 lcp_pd_base: 0x0
+	 lcp_pd_size: 0x0 (0)
+	 num_logical_procs: 4
+	 flags: 0x00000000
+Copied mle_hdr (0x01e18a60, 0x34 bytes) into SL (0x10003000)
+os_sinit_data (@0xbb730154, 64):
+	 version: 5
+	 mle_ptab: 0x10000000
+	 mle_size: 0x10000 (65536)
+	 mle_hdr_base: 0x0
+	 vtd_pmr_lo_base: 0x10000000
+	 vtd_pmr_lo_size: 0x9a00000
+	 vtd_pmr_hi_base: 0x0
+	 vtd_pmr_hi_size: 0x0
+	 lcp_po_base: 0x0
+	 lcp_po_size: 0x0 (0)
+	 capabilities: 0x00000002
+	     rlp_wake_getsec: 0
+	     rlp_wake_monitor: 1
+	     ecx_pgtbl: 0
+	 efi_rsdt_ptr: 0x0
+mtrr_def_type: e = 1, fe = 1, type = 0
+mtrrs:
+		base	mask	type	v
+		0ffc00	fffc00	05	1
+		000000	f80000	06	1
+		080000	fc0000	06	1
+		0bc000	ffc000	00	1
+		100000	fc0000	06	1
+		138000	ff8000	00	1
+		000000	000000	00	0
+		000000	000000	00	0
+setting MTRRs for acmod: base=0xbb700000, size=8bc0, num_pages=9
+executing GETSEC[SENTER]...
+
+SL(early-init): at 0x10000000, starting...
+SL: slpb at = 0x00010000
+	errorHandler=0x00000000
+	isEarlyInit=0x00000001
+	numE820Entries=19
+	system memory map buffer at 0x00010010
+	numCPUEntries=4
+	cpuinfo buffer at 0x00010514
+	runtime size= 158777344 bytes
+	OS bootmodule at 0x00100000, size=512 bytes
+	cmdline = "serial=115200,8n1,0x5080"
+SL: RDTSC before_drtm 0xaf8ceffbd, after_drtm 0xb151732e5
+SL: [PERF] RDTSC DRTM elapsed cycles: 0x1c483328
+SL: runtime at 0x10200000; size=0x0976c000 bytes adjusted to 0x09800000 bytes (2M aligned)
+SL: RPB, magic=0xf00ddead
+xmhf_baseplatform_arch_x86_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_pci_initialize: Done with PCI bus enumeration.
+SL: txt_heap = 0xbb720000
+SL: os_mle_data = 0xab720034
+SL: Restoring mtrrs...
+SL: setup runtime TSS.
+SL (xmhf_sl_arch_x86_setup_runtime_paging): runtime_spa=10200000, runtime_sva=10200000, totalsize=09800000
+	pa xpdpt=0x0x9943000, xpdt=0x0x9944000
+SL: setup runtime paging structures.
+Transferring control to runtime
+runtime initializing...
+xmhf_baseplatform_arch_x86_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_pci_initialize: Done with PCI bus enumeration.
+Number of E820 entries = 19
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x0000000009a00000 (2)
+0x0000000019a00000, size=0x00000000a11c2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+Number of MP entries = 4
+CPU #0: bsp=1, lapic_id=0x00
+CPU #1: bsp=0, lapic_id=0x01
+CPU #2: bsp=0, lapic_id=0x04
+CPU #3: bsp=0, lapic_id=0x05
+xmhf_xcphandler_arch_initialize: setting up runtime IDT...
+xmhf_xcphandler_arch_initialize: IDT setup done.
+Runtime: Re-initializing DMA protection...
+Runtime: Protected SL+Runtime (10000000-1996c000) from DMA.
+BSP: _mle_join_start = 0x1020d300, _ap_bootstrap_start = 0x1020d2d0
+BSP: joining RLPs to MLE with MONITOR wakeup
+BSP: rlp_wakeup_addr = 0xbb701d20
+Relinquishing BSP thread and moving to common...
+BSP rallying APs...
+BSP(0x00): My ESP is 0x1994c000
+APs all awake...Setting them free...
+AP(0x01): My ESP is 0x19950000, proceeding...
+txt_heap = 0xbb720000
+txt_heap = 0xbb720000
+os_mle_data = 0xbb720034
+os_mle_data = 0xbb720034
+CPU(0x00): UNRESTRICTED-GUEST supported.
+CPU(0x01): UNRESTRICTED-GUEST supported.
+CPU(0x00): MSR_EFER=0x0000000000000000
+CPU(0x01): MSR_EFER=0x0000000000000000
+CPU(0x00): MSR_EFCR=0x000000000000ff07
+CPU(0x01): MSR_EFCR=0x000000000000ff07
+CPU(0x00): enabled VMX
+CPU(0x01): enabled VMX
+CPU(0x00): Entered VMX root operation
+CPU(0x01): Entered VMX root operation
+CPU(0x00, BSP): initializing INT 15 hook for UG mode...
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+CPU(0x00): original INT 15h handler at 0xe000:0xd7b0
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+BSP(0x00): copying boot-module to boot guest
+AP(0x04): My ESP is 0x19954000, proceeding...
+AP(0x05): My ESP is 0x19958000, proceeding...
+txt_heap = 0xbb720000
+txt_heap = 0xbb720000
+os_mle_data = 0xbb720034
+os_mle_data = 0xbb720034
+CPU(0x04): UNRESTRICTED-GUEST supported.
+CPU(0x05): UNRESTRICTED-GUEST supported.
+CPU(0x04): MSR_EFER=0x0000000000000000
+CPU(0x05): MSR_EFER=0x0000000000000000
+CPU(0x04): MSR_EFCR=0x000000000000ff07
+CPU(0x05): MSR_EFCR=0x000000000000ff07
+CPU(0x04): enabled VMX
+CPU(0x05): enabled VMX
+CPU(0x04): Entered VMX root operation
+CPU(0x05): Entered VMX root operation
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+CPU(0x01): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x01)
+
+CPU(0x01): AP, waiting for SIPI signal...
+CPU(0x00): Activated VMX EPTs.
+CPU(0x04): Activated VMX EPTs.
+CPU(0x05): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x04)
+TV[0]:appmain.c:tv_app_main:141:                   CPU(0x05)
+TV[0]:appmain.c:tv_app_main:141:                   CPU(0x00)
+
+CPU(0x04): AP, waiting for SIPI signal...
+CPU(0x05): AP, waiting for SIPI signal...TV[0]:appmain.c:tv_app_main:144:                   CPU(0x00): init
+
+TV[0]:appmain.c:tv_app_main:146:                   CPU(0x00) apb->cmdline: "serial=115200,8n1,0x5080"
+TV[0]:appmain.c:parse_boot_cmdline:129:            NV Enforcement ENABLED
+
+NV uPCR[0] required to be: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+NV uPCR[0] required to be: 00 00 00 00 
+TV[0]:scode.c:init_scode:327:                      alloc 94KB mem for scode_list at 10273898!
+TV[0]:scode.c:init_scode:329:                      alloc 512KB mem for pfn_bitmap at 1028b12c!
+TV[0]:scode.c:init_scode:331:                      alloc 512KB mem for pfn_bitmap_2M at 1030b130!
+TV[0]:scode.c:init_scode:339:                      whitelist max = 100!
+
+xmhf_tpm_arch_x86vmx_open_locality: chipset ids: vendor: 0x8086, device: 0xa000, revision: 0x1f
+xmhf_tpm_arch_x86vmx_open_locality: chipset production fused: 1TPM: PERF: Command 0x00000065 consumed 18577191 cycles
+TPM: PERF: Command 0x00000065 consumed 6913374 cycles
+TPM is ready
+TPM nv_locked: TRUE
+TPM: PERF: Command 0x00000065 consumed 7017685 cycles
+TPM timeout values: A: 750, B: 750, C: 2000, D: 750
+
+xmhf_tpm_open_locality: opened TPM locality 2TPM: PERF: Command 0x00000046 consumed 8284277 cycles
+TV[0]:crypto_init.c:get_hw_tpm_entropy:110:        Successfully received 32/32 bytes of entropy from HW TPM.
+TV[0]:crypto_init.c:trustvisor_master_crypto_init:306: AES-256 CTR_DRBG PRNG successfully seeded with TPM RNG.
+TV[0]:nv.c:trustvisor_nv_get_mss:271:              locality 2, idx 0x00015213, mss@0x1994b760, mss_size 20
+TPM: PERF: Command 0x00000065 consumed 10619572 cycles
+TPM: PERF: Command 0x00000065 consumed 19755677 cycles
+TV[0]:nv.c:dump_nv_data_public:107:                nvIndex              0x00015213
+TV[0]:nv.c:dump_nv_data_public:111:                pcrInfoRead:         
+TV[0]:nv.c:dump_pcr_info_short:82:                 selected PCRs:
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 11, 
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 12, 
+TV[0]:nv.c:dump_pcr_info_short:90:                 localityAtRelease  
+TV[0]:nv.c:dump_pcr_info_short:93:                 locality 2, 
+TV[0]:nv.c:dump_pcr_info_short:97:                 digestAtRelease db 9e ae 07 5f 40 ae 91 bc 0a 1e c6 69 e4 4f 29 3b d7 10 1c
+TV[0]:nv.c:dump_nv_data_public:113:                pcrInfoWrite:        
+TV[0]:nv.c:dump_pcr_info_short:82:                 selected PCRs:
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 11, 
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 12, 
+TV[0]:nv.c:dump_pcr_info_short:90:                 localityAtRelease  
+TV[0]:nv.c:dump_pcr_info_short:93:                 locality 2, 
+TV[0]:nv.c:dump_pcr_info_short:97:                 digestAtRelease db 9e ae 07 5f 40 ae 91 bc 0a 1e c6 69 e4 4f 29 3b d7 10 1c
+TV[0]:nv.c:dump_nv_data_public:116:                  permission           0x00000000
+TV[0]:nv.c:dump_nv_data_public:118:                bReadSTClear         false
+TV[0]:nv.c:dump_nv_data_public:120:                bWriteSTClear        false
+TV[0]:nv.c:dump_nv_data_public:122:                bWriteDefine         false
+TV[0]:nv.c:dump_nv_data_public:125:                data_size            20
+TV[3]:nv.c:validate_nv_access_controls:158:        
+VULNERABILITY:VULNERABILITY:VULNERABILITY:VULNERABILITY
+   MANDATORY_PCR_x set to unsafe value!!! Proper code
+   measurement UNIMPLEMENTED for NV index 0x00015213!
+   Continuing anyways...
+VULNERABILITY:VULNERABILITY:VULNERABILITY:VULNERABILITY
+
+TPM: PERF: Command 0x000000cf consumed 14944132 cycles
+TV[0]:nv.c:_trustvisor_nv_get_mss:256:             MSS successfully read from TPM NVRAM
+TV[0]:crypto_init.c:trustvisor_long_term_secret_init:245: Sealing AES key derived from MSS.
+TV[0]:crypto_init.c:trustvisor_long_term_secret_init:246: Sealing HMAC key derived from MSS.
+TV[0]:crypto_init.c:trustvisor_long_term_secret_init:257: Generating RSA keypair...
+TV[0]:crypto_init.c:trustvisor_long_term_secret_init:263: RSA key pair generated
+TV[0]:crypto_init.c:trustvisor_measure_qnd_bridge_signing_pubkey:170: Serialized RSA key: 30 82 01 0a 02 82 01 01 00 9a c2 97 48 31 2e 91 b3 50 d7 9b 9c a5 83 65 30 f7 38 f1 18 1c 65 ff 92 c8 85 7d ac be a6 87 1c ee dc 77 69 e2 f2 9c 20 61 7c 52 cf e2 7b 8b f6 72 b7 dd d0 d6 78 df b2 92 01 71 6a 31 13 16 a5 f7 ff fd 73 68 81 7f 16 2f 5f e8 db da 9e e5 80 2f cc e3 fa 40 c7 fe 3c 63 f6 de 29 e0 4c 6e f5 0b 1c bd 6f f5 55 0a 12 f4 2d 45 48 62 45 70 5e a0 cd e5 94 e1 1c f7 44 fe 36 1c 7d 84 ea 0d e9 f7 7b 76 0c a2 5d 7b 82 d6 61 0b 7d f7 4c 46 11 46 a2 75 d1 60 ee f3 fb a6 d8 63 cd 81 39 22 a8 6b 8e 7c 93 eb 0a 03 20 2e e2 d7 0d 8a 63 37 57 cd 2d e7 e8 b0 37 f0 5d 56 bd 51 b3 aa 20 60 8f 46 7d f2 dc c3 4e de 71 ac 52 a3 be 1d 5c 45 ec 68 95 05 5c a5 24 af ed 01 74 9d c4 fb 16 cf 96 c9 d3 a4 97 47 08 e3 d7 6f 11 bc 21 53 ca f8 7f 2b 54 27 9b 18 e4 03 eb 92 7a dc f1 ba 4c ef c3 02 03 01 00 01
+TPM: PERF: Command 0x00000014 consumed 9416230 cycles
+TV[0]:crypto_init.c:trustvisor_measure_qnd_bridge_signing_pubkey:184: Successfully extended HW TPM PCR 19.
+TV[0]:crypto_init.c:trustvisor_measure_qnd_bridge_signing_pubkey:185: New PCR value: 
+TV[0]:crypto_init.c:trustvisor_master_crypto_init:311: long term secrets initialized successfully.
+TPM: PERF: Command 0x00000065 consumed 10411736 cycles
+TPM: PERF: Command 0x00000065 consumed 19525899 cycles
+TV[0]:nv.c:dump_nv_data_public:107:                nvIndex              0x00014e56
+TV[0]:nv.c:dump_nv_data_public:111:                pcrInfoRead:         
+TV[0]:nv.c:dump_pcr_info_short:82:                 selected PCRs:
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 11, 
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 12, 
+TV[0]:nv.c:dump_pcr_info_short:90:                 localityAtRelease  
+TV[0]:nv.c:dump_pcr_info_short:93:                 locality 2, 
+TV[0]:nv.c:dump_pcr_info_short:97:                 digestAtRelease db 9e ae 07 5f 40 ae 91 bc 0a 1e c6 69 e4 4f 29 3b d7 10 1c
+TV[0]:nv.c:dump_nv_data_public:113:                pcrInfoWrite:        
+TV[0]:nv.c:dump_pcr_info_short:82:                 selected PCRs:
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 11, 
+TV[0]:nv.c:dump_pcr_info_short:85:                 pcr 12, 
+TV[0]:nv.c:dump_pcr_info_short:90:                 localityAtRelease  
+TV[0]:nv.c:dump_pcr_info_short:93:                 locality 2, 
+TV[0]:nv.c:dump_pcr_info_short:97:                 digestAtRelease db 9e ae 07 5f 40 ae 91 bc 0a 1e c6 69 e4 4f 29 3b d7 10 1c
+TV[0]:nv.c:dump_nv_data_public:116:                  permission           0x00000000
+TV[0]:nv.c:dump_nv_data_public:118:                bReadSTClear         false
+TV[0]:nv.c:dump_nv_data_public:120:                bWriteSTClear        false
+TV[0]:nv.c:dump_nv_data_public:122:                bWriteDefine         false
+TV[0]:nv.c:dump_nv_data_public:125:                data_size            32
+TV[3]:nv.c:validate_nv_access_controls:158:        
+VULNERABILITY:VULNERABILITY:VULNERABILITY:VULNERABILITY
+   MANDATORY_PCR_x set to unsafe value!!! Proper code
+   measurement UNIMPLEMENTED for NV index 0x00014e56!
+   Continuing anyways...
+VULNERABILITY:VULNERABILITY:VULNERABILITY:VULNERABILITY
+
+TV[0]:crypto_init.c:trustvisor_master_crypto_init:327: NvMuxPal anti-rollback NV Region: Access Controls validated successfully.
+
+TPM: xmhf_tpm_arch_deactivate_all_localities()
+TV[0]:scode.c:init_scode:353:                      trustvisor_master_crypto_init successful.
+
+CPU(0x00): Waiting for all cores to cycle through appmain...
+CPU(0x00): All cores have successfully been through appmain.
+CPU(0x00): setup x86vmx SMP guest capabilities
+xmhf_runtime_main[00]: starting partition...
+CPU(0x00): VMCLEAR success.
+CPU(0x00): VMPTRLD success.
+CPU(0x00): VMWRITEs success.
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000009, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000a, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000b, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000c, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000d, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000e, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x0000000f, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000010, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000011, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000012, ECX=0x00000014, ES=0x6800, DI=0x0004
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069b
+CPU(0x00): processSIPI, dest_lapic_id is 0x01
+CPU(0x00): found AP to pass SIPI; id=0x01, vcpu=0x102461d0
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x01): SIPI signal received, vector=0x9b
+0x0060:0xc1022452 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069b
+xmhf_runtime_main[01]: starting partition...
+CPU(0x00): processSIPI, dest_lapic_id is 0x01
+CPU(0x01): VMCLEAR success.
+CPU(0x00): found AP to pass SIPI; id=0x01, vcpu=0x102461d0
+CPU(0x01): VMPTRLD success.
+CPU(0x00): destination CPU #0x01 has already received SIPI, ignoring
+CPU(0x01): VMWRITEs success.
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069b
+CPU(0x00): processSIPI, dest_lapic_id is 0x04
+CPU(0x00): found AP to pass SIPI; id=0x04, vcpu=0x10247900
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x04): SIPI signal received, vector=0x9b
+0x0060:0xc1022452 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069b
+CPU(0x00): processSIPI, dest_lapic_id is 0x04
+CPU(0x00): found AP to pass SIPI; id=0x04, vcpu=0x10247900
+CPU(0x00): destination CPU #0x04 has already received SIPI, ignoring
+xmhf_runtime_main[04]: starting partition...
+CPU(0x04): VMCLEAR success.
+CPU(0x04): VMPTRLD success.
+CPU(0x04): VMWRITEs success.
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0060:0xc1022452 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069b
+CPU(0x00): processSIPI, dest_lapic_id is 0x05
+CPU(0x00): found AP to pass SIPI; id=0x05, vcpu=0x10249030
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x05): SIPI signal received, vector=0x9b
+xmhf_smpguest_arch_x86vmx_eventhandler_dbexception: delinking LAPIC interception since all cores have SIPI
+xmhf_runtime_main[05]: starting partition...
+CPU(0x05): VMCLEAR success.
+CPU(0x05): VMPTRLD success.
+CPU(0x05): VMWRITEs success.Warning, SOL device is running in loopback mode.  Text input may not be accepted
+SOL device is no longer running in loopback mode

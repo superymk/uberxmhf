@@ -1,0 +1,18 @@
+HEM		Hardware Enabled Virtualization
+SVM		Secure Virtual Machine (AMD)
+VT		Virtualization Technology (Intel)
+
+TPM		Trusted Platform Module
+TXT		Trust Execution Technology (Intel)
+PCR		Platform Configuration Register
+
+AMT		Active Management Technology (Intel)
+
+XMHF	eXtensible Modular Hypervisor Framework
+hypapp	Hypervisor Application (XMHF)
+TV		Trust Visor
+TZ		?
+PAL		Pieces of Application Logic (TrustVisor)
+TEE-SDK	Trusted Execution Environment SDK
+PM		?
+

@@ -1,3 +1,10 @@
+Booting
+BSP			Bootstrap Processor (SMP)
+AP			Application Processor (SMP)
+MSR			Model-Specific Register
+APIC		Advanced Programmable Interrupt Controller
+ACPI		Advanced Configuration and Power-management Interface
+
 Virtualization
 HEM			Hardware Enabled Virtualization
 SVM			Secure Virtual Machine (AMD)

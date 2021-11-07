@@ -28,5 +28,22 @@ mp_cstartup
  AP: wait for DRTM establishment, halt (AMT 103-105)
  BSP: wait for all APs to be ready, jump to `do_drtm()` (AMT 108-109)
 do_drtm()
- Different code for with / without MP / DRT
- 
+ If MP: call `send_init_ipi_to_all_APs()` (AMT 110-113)
+ with DRT: call `txt_do_senter()`
+  `txt_verify_platform()`
+   `txt_support_txt()`: check hardware support (AMT 119-123)
+   `verify_bios_data()`: check bios (AMT 124-130)
+  `txt_prepare_cpu()`: set registers for CPU (AMT 131-133)
+  jump to `txt_launch_environment()`
+   `check_sinit_module()`: (AMT 134-138)
+   `copy_sinit()`: (AMT 139)
+   `verify_acmod()`: (AMT 140-183)
+   `print_file_info()`: (AMT 184-185)
+   `print_mle_hdr()`: (AMT 186-198)
+   `build_mle_pagetable()`: (AMT 199-234)
+   `init_txt_heap`: (AMT 235-258)
+   `save_mtrrs()`: (AMT 259-269)
+   `set_mtrrs_for_acmod()`: (AMT 270)
+   Print `executing GETSEC[SENTER]...`: (AMT 271)
+   jump to `__getsec_senter()` (never returns)
+ without DRT: jump to SL + (*SL)

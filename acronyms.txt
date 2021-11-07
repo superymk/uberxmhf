@@ -4,6 +4,7 @@ AP			Application Processor (SMP)
 MSR			Model-Specific Register
 APIC		Advanced Programmable Interrupt Controller
 ACPI		Advanced Configuration and Power-management Interface
+IPI			Inter-Processor Interrupt
 
 Virtualization
 HEM			Hardware Enabled Virtualization
@@ -16,6 +17,9 @@ Hardware assisted verification
 TPM			Trusted Platform Module
 TXT			Trust Execution Technology (Intel)
 PCR			Platform Configuration Register
+SINIT		Secure INIT?
+ACM			Authenticated Code Module (AC mod) (SINIT)
+MLE			Measured Launch Environment
 
 Debugging
 AMT			Active Management Technology (Intel)
@@ -30,5 +34,4 @@ PAL			Pieces of Application Logic (TrustVisor)
 TEE-SDK		Trusted Execution Environment SDK
 scode_pm	Scode parameter
 scode_en	Scode entry point
-AC mod		Authenticated Code Module (SINIT)
 

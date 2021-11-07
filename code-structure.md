@@ -18,7 +18,7 @@
 				* `Makefile`
 				* `smp.c`: TODO
 				* `txt_acmod.c`
-				* `txt.c`
+				* `txt.c`: Functions for booting with Intel TXT
 				* `txt_hash.c`
 				* `txt_heap.c`
 			* `xmhf-runtime`

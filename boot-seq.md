@@ -1,4 +1,6 @@
 # XMHF boot sequence
+
+## `xmhf-bootloader`
 init_start (entry) ->
 cstartup() (early init)
  Print banner (AMT 3-4)
@@ -46,4 +48,37 @@ do_drtm()
    `set_mtrrs_for_acmod()`: (AMT 270)
    Print `executing GETSEC[SENTER]...`: (AMT 271)
    jump to `__getsec_senter()` (never returns)
- without DRT: jump to SL + (*SL)
+ without DRT: jump to SL + (*SL) (`_sl_start`)
+
+## `xmhf-secureloader`
+_sl_start
+ test CPU vendor
+ modify GDT and load GDT
+ jump to `xmhf_sl_main`
+xmhf_sl_main()
+ Print `slpb` from `cstartup()` (AMT 273-283)
+ Set up rbp (AMT 286-287)
+ `xmhf_baseplatform_initialize()`: check PCI and ACPI (AMT 288-290)
+ `xmhf_sl_arch_sanitize_post_launch()`: ? (AMT 291-293)
+ `xmhf_sl_arch_xfer_control_to_runtime()`: (AMT 294 - 298)
+  construct page table
+  `xmhf_sl_arch_x86_invoke_runtime_entrypoint`: enable paging, jump to runtime
+
+## `xmhf-runtime`
+xmhf_runtime_entry()
+ Dump info (AMT 299-327)
+ `xmhf_xcphandler_initialize()`: set up exception handler (AMT 328-329)
+ Set up DMA protection (AMT 330-331)
+ Jump to `xmhf_baseplatform_smpinitialize()`
+xmhf_baseplatform_smpinitialize()
+ Set up Master-ID table
+ `xmhf_baseplatform_arch_x86vmx_allocandsetupvcpus()`: Set up VCPU table
+ `xmhf_baseplatform_arch_x86vmx_wakeupAPs()`: Wake up APs (AMT 332-334)
+  Performs MLE
+  AP will start at `_ap_bootstrap_start`
+ Jump to `_ap_pmode_entry_with_paging`
+AP -> `_ap_bootstrap_start`
+ Load GDT, enter protected mode
+AP and BSP -> `_ap_pmode_entry_with_paging`
+ Call `xmhf_baseplatform_arch_x86_smpinitialize_commonstart()` with vcpu ptr
+xmhf_baseplatform_arch_x86_smpinitialize_commonstart()

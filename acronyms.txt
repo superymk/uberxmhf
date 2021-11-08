@@ -3,8 +3,11 @@ BSP			Bootstrap Processor (SMP)
 AP			Application Processor (SMP)
 MSR			Model-Specific Register
 APIC		Advanced Programmable Interrupt Controller
+LAPIC		Local APIC
 ACPI		Advanced Configuration and Power-management Interface
 IPI			Inter-Processor Interrupt
+GDT			Global Descriptor Table
+IDT			Interrupt Descriptor Table
 
 Virtualization
 HEM			Hardware Enabled Virtualization
@@ -12,6 +15,8 @@ SVM			Secure Virtual Machine (AMD)
 VT			Virtualization Technology (Intel)
 EPT			Extended Page Table (Intel)
 VMCS		Virtual Machine Control Structure (Intel)
+VMX			Virtual Machine Extension (Intel)
+EAP			? (VMX?)
 
 Hardware assisted verification
 TPM			Trusted Platform Module
@@ -34,4 +39,8 @@ PAL			Pieces of Application Logic (TrustVisor)
 TEE-SDK		Trusted Execution Environment SDK
 scode_pm	Scode parameter
 scode_en	Scode entry point
+xcphandler	Exception Handler
 
+Unknown
+MIDTABLE	Master-ID Table
+VCPU		?

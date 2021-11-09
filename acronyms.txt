@@ -8,12 +8,14 @@ ACPI		Advanced Configuration and Power-management Interface
 IPI			Inter-Processor Interrupt
 GDT			Global Descriptor Table
 IDT			Interrupt Descriptor Table
+MTRR		Memory type range register
 
 Virtualization
 HEM			Hardware Enabled Virtualization
+HVM			Hardware Virtual Machine
 SVM			Secure Virtual Machine (AMD)
 VT			Virtualization Technology (Intel)
-EPT			Extended Page Table (Intel)
+EPT			Extended Page Table (Intel) (guest physical -> host physical)
 VMCS		Virtual Machine Control Structure (Intel)
 VMX			Virtual Machine Extension (Intel)
 EAP			? (VMX?)
@@ -40,6 +42,8 @@ TEE-SDK		Trusted Execution Environment SDK
 scode_pm	Scode parameter
 scode_en	Scode entry point
 xcphandler	Exception Handler
+PFN			PAL Function?
+NV			? (NV Space)
 
 Unknown
 MIDTABLE	Master-ID Table

@@ -34,6 +34,14 @@ Current user is `dev`
 echo 'dev ALL=NOPASSWD:ALL' | sudo tee -a /etc/sudoers
 ```
 
+Problem: SSH to HP laptop is slow, stuck at `SSH2_MSG_SERVICE_ACCEPT received`
+Ref: <https://blog.csdn.net/qq_40907977/article/details/105409810>
+Solution: `UseDNS no` in `/etc/ssh/sshd_config`
+
+```sh
+echo UseDNS no | sudo tee -a /etc/ssh/sshd_config
+```
+
 ### SSH
 In controlling machine, add option `PubkeyAcceptedKeyTypes +ssh-rsa`
 

@@ -13,6 +13,3 @@ USER lxy
 # /usr/lib/gcc-cross/i686-linux-gnu/10/libgcc.a, expected /usr/lib/gcc
 # Giving up for now
 
-# docker build -t xmhf-compile .
-# echo cd $PWD; docker-run -v "$PWD:$PWD" xmhf-compile
-

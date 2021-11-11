@@ -44,6 +44,8 @@ scode_en	Scode entry point
 xcphandler	Exception Handler
 PFN			PAL Function?
 NV			? (NV Space)
+paddr		Physical Address
+vaddr		Virtual Address
 
 Unknown
 MIDTABLE	Master-ID Table

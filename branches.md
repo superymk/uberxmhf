@@ -9,3 +9,18 @@
 		  `--disable-drt`</del>
 		* `xmhf64-comp`: Make trustvisor compilable in 64 bits
 
+## Change Log
+
+### `xmhf64-no-drt`
+* Disable call to `trustvisor_master_crypto_init()`
+* Disable call to `utpm_extend()`
+
+### `xmhf64-comp`
+* Add `__X86_64__` and `__X86__` macros
+* Port `xmhf/src/libbaremetal/libxmhfc/include/sys/ia64_*.h`, similar to `i386*`
+* When casting to/from pointers and uints, change from uint32 to `uintptr_t`
+  or equivalent
+* Remove assembly instructions that do not compile (e.g. `pusha`)
+* Remove some function definitions when `__DRT__` is not defined
+* Add uint definitions for pointers: `hva_t`, `spa_t`, `gva_t`, `gpa_t`, `sla_t`
+

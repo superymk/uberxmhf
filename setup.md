@@ -66,6 +66,13 @@ sudo make install
 ./configure --with-approot=hypapps/helloworld --enable-drt=no
 ```
 
+#### Cross-compile 32-bit TrustVisor on Debian 64-bit
+
+This is just a workaround
+```sh
+./configure --with-approot=hypapps/trustvisor --enable-drt=no CC=i686-linux-gnu-gcc LD=i686-linux-gnu-ld
+```
+
 #### Installed files
 See `xmhf-v0.2.2/Makefile.in`'s `install-bin` target
 

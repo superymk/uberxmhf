@@ -24,3 +24,10 @@
 * Remove some function definitions when `__DRT__` is not defined
 * Add uint definitions for pointers: `hva_t`, `spa_t`, `gva_t`, `gpa_t`, `sla_t`
 
+### TODO
+* !!! `hva_t` in `_sl_parameter_block` causes problems.
+  Likely split header file? Or add `__BOOTLOADER__`.
+* Review all uses of `uintptr_t`, change to `hva_t` etc.
+* Review unaligned structs caused by `__attribute__((packed))`
+* Decide a coding format.
+

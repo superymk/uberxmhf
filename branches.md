@@ -12,6 +12,7 @@
 ## Change Log
 
 ### `xmhf64-no-drt`
+`bc29c25e4..ea33d732f`
 * Disable call to `trustvisor_master_crypto_init()`
 * Disable call to `utpm_extend()`
 

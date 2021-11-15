@@ -7,7 +7,9 @@
 	* `xmhf64`: Main development branch
 		* <del>`xmhf64-no-drt` (ea33d732f): Make trustvisor runnable with
 		  `--disable-drt`</del>
-		* `xmhf64-comp`: Make trustvisor compilable in 64 bits
+		* <del>`xmhf64-comp` (62c6eb8c6): Make trustvisor compilable in 64
+		  bits</del>
+		* `xmhf64-long`: set up long mode in bootloader 
 
 ## Change Log
 
@@ -17,13 +19,18 @@
 * Disable call to `utpm_extend()`
 
 ### `xmhf64-comp`
-* Add `__X86_64__` and `__X86__` macros
+`0f069fa78..62c6eb8c6`
+* Add `__X86__`, `__X86_64__`, `__XMHF_X86__`, and `__XMHF_X86_64__` and macros
 * Port `xmhf/src/libbaremetal/libxmhfc/include/sys/ia64_*.h`, similar to `i386*`
 * When casting to/from pointers and uints, change from uint32 to `uintptr_t`
   or equivalent
 * Remove assembly instructions that do not compile (e.g. `pusha`)
 * Remove some function definitions when `__DRT__` is not defined
 * Add uint definitions for pointers: `hva_t`, `spa_t`, `gva_t`, `gpa_t`, `sla_t`
+* Modify Makefile to compile bootloader in x86, others in x86_64
+* Compile some object files twice to support x86 bootloader
+
+### `xmhf64-long`
 
 ### TODO
 * !!! `hva_t` in `_sl_parameter_block` causes problems.

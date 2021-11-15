@@ -18,7 +18,7 @@ VT			Virtualization Technology (Intel)
 EPT			Extended Page Table (Intel) (guest physical -> host physical)
 VMCS		Virtual Machine Control Structure (Intel)
 VMX			Virtual Machine Extension (Intel)
-EAP			? (VMX?)
+EAP			? (something related to DMA protection?)
 
 Hardware assisted verification
 TPM			Trusted Platform Module

@@ -1,0 +1,119 @@
+
+
+eXtensible Modular Hypervisor Framework (XMHF) v6.1.0
+Build revision: xmhf64-comp-62c6eb8c6a3a9e0f146a23e681f00faec3626c03
+
+INIT(early): initializing, total modules=3
+INIT(early): detected an Intel CPU
+Checking whether MBI module 2 is SINIT...
+YES! SINIT found @ 0x101000, 35776 bytes
+
+Finding SMP info. via ACPI...
+ACPI RSDP at 0x000fc600
+ACPI RSDT at 0xbb3fe0ac
+	len=0x0000005c, headerlen=0x00000024, numentries=14
+ACPI MADT at 0xbb3fa000
+	len=0x000000bc, record-length=144 bytes
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x01
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x04
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x05
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x01, length=12 bytes, flags=0xfec00000, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000002, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000009, id=0x09
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0xffbf0100, id=0x05
+original system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x00000000baac2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+proceeding to revise E820...
+E820 revision complete.
+revised system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x0000000009a00000 (2)
+0x0000000019a00000, size=0x00000000a11c2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 
+hashandprint: processing 0x09770000 bytes at addr 0x10200000
+    INIT(early): *UNTRUSTED* comp runtime: : 6d 2d e2 0c 2d dd 53 00 ee 82 58 63 05 39 40 95 91 22 de de
+
+    INIT(early): *UNTRUSTED* gold SL low 64K: eb 95 db 1b 5f 73 ea f8 97 ea 04 9d 9b 88 a4 fb 
+    INIT(early): *UNTRUSTED* gold SL low 64K: 39 f4 62 c8 
+hashandprint: processing 0x00010000 bytes at addr 0x10000000
+    INIT(early): *UNTRUSTED* comp SL low 64K: : eb 95 db 1b 5f 73 ea f8 97 ea 04 9d 9b 88 a4 fb 39 f4 62 c8
+
+    INIT(early): *UNTRUSTED* gold SL above 64K: d8 1d 5d 59 58 71 5b b2 b0 9c 3d 7e 98 9a 6a bd 
+    INIT(early): *UNTRUSTED* gold SL above 64K: 92 63 5f 42 
+hashandprint: processing 0x001f0000 bytes at addr 0x10010000
+    INIT(early): *UNTRUSTED* comp SL above 64K): : d8 1d 5d 59 58 71 5b b2 b0 9c 3d 7e 98 9a 6a bd 92 63 5f 42
+
+INIT(early): relocated hypervisor binary image to 0x10000000
+INIT(early): 2M aligned size = 0x09a00000
+INIT(early): un-aligned size = 0x09970000
+setupvcpus: cpustacks range 0x01e1f000-0x01e3f000 in 0x00004000 chunks
+setupvcpus: vcpubuffers range 0x01e0b080-0x01e16a00 in 0x00001730 chunks
+CPU #0: vcpu_vaddr_ptr=0x01e0b080, esp=0x01e23000
+CPU #1: vcpu_vaddr_ptr=0x01e0c7b0, esp=0x01e27000
+CPU #2: vcpu_vaddr_ptr=0x01e0dee0, esp=0x01e2b000
+CPU #3: vcpu_vaddr_ptr=0x01e0f610, esp=0x01e2f000
+Sending INIT IPI to all APs...Done.
+Sending SIPI-0...
+AP(0x04): Waiting for DRTM establishment...
+AP(0x05): Waiting for DRTM establishment...Done.
+Sending SIPI-1...
+AP(0x01): Waiting for DRTM establishment...Done.
+APs should be awake!
+BSP(0x00): Rallying APs...
+BSP(0x00): APs ready, doing DRTM...
+LAPIC base and status=0xfee00900
+Sending INIT IPI to all APs...
+Done.
+
+INIT(early): sent INIT IPI to APs
+****** NO DRTM startup ******
+
+slbase=0x10000000, sl_entry_point_offset=0x00003080
+SL entry point to transfer control to: 0x10003080The system is powered off.

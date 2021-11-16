@@ -376,11 +376,11 @@ cd ..
 * (If have time) Try Debian Stretch (latest version supporting non-PAE)
 	* Should also support stable, see `linux-image-686`
 * Try HelloWorld hypapp and QEMU
-	* See [20211026Debian.md](./20211026Debian.md), not successful
+	* See [debian.md](./debian.md), not successful
 * Boot Ubuntu with TrustVisor compiled on Debian (higher gcc version)
 	* Successful
 * Boot Debian with TrustVisor on HP
-	* unhandled exception, see [20211026Debian.md](./20211026Debian.md)
+	* unhandled exception, see [debian.md](./debian.md)
 
 ## Miscellaneous
 

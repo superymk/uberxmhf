@@ -31,10 +31,12 @@
 * Compile some object files twice to support x86 bootloader
 
 ### `xmhf64-long`
+Reason for entering long mode in secure loader:
+in bootloader addresses are temporary; may be overwritten later.
 
 ### TODO
 * !!! `hva_t` in `_sl_parameter_block` causes problems.
-  Likely split header file? Or add `__BOOTLOADER__`.
+  Likely to split header file? Or add `__BOOTLOADER__`.
 * Review unaligned structs caused by `__attribute__((packed))`
 * Decide a coding format.
 

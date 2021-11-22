@@ -33,6 +33,13 @@
 ### `xmhf64-long`
 Reason for entering long mode in secure loader:
 in bootloader addresses are temporary; may be overwritten later.
+* References
+	* <https://wiki.osdev.org/Setting_Up_Long_Mode>
+	* Intel v3 9.8.5 Initializing IA-32e Mode
+	* Paging: Intel v3 chapter 4
+	* MSR (cr0, cr3, cr4): Intel v3 2.5 CONTROL REGISTERS
+	* MSR (EFER): Intel v3 2.2.1 Extended Feature Enable Register
+	* GDT entries: Intel v3 3.4.5 Segment Descriptors
 
 ### TODO
 * !!! `hva_t` in `_sl_parameter_block` causes problems.

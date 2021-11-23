@@ -16,3 +16,5 @@
 * `xmhf/src/xmhf-core/xmhf-secureloader/arch/x86_64/sl-x86_64-entry.S`: GPL 2.0, from
   <https://github.com/torvalds/linux/blob/v4.16/arch/x86/boot/compressed/head_64.S>
   (hardcoded number in gdt, and some code)
+* `xmhf/src/libbaremetal/libxmhfc/include/stdarg64.h`: BSD, from
+  <https://github.com/freebsd/freebsd-src/blob/stable/13/sys/sys/_stdarg.h>

@@ -31,19 +31,22 @@
 * Compile some object files twice to support x86 bootloader
 
 ### `xmhf64-long`
-Reason for entering long mode in secure loader:
-in bootloader addresses are temporary; may be overwritten later.
-* References
+* Transition from protected mode to long mode in beginning of secure loader
 	* <https://wiki.osdev.org/Setting_Up_Long_Mode>
+	* <https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-4.html>
 	* Intel v3 9.8.5 Initializing IA-32e Mode
 	* Paging: Intel v3 chapter 4
 	* MSR (cr0, cr3, cr4): Intel v3 2.5 CONTROL REGISTERS
 	* MSR (EFER): Intel v3 2.2.1 Extended Feature Enable Register
 	* GDT entries: Intel v3 3.4.5 Segment Descriptors
+* x86 use GDT to create VA to PA offset -> x86_64 use page table
+* Implement spinlock in x64
+* For SLPB (passing parameter from x86 bootloader to x86_64 secure loader), use
+  32-bit data types, and cast in secure loader
+* Fix stdarg in x64 (so that printf can work correctly)
 
 ### TODO
-* !!! `hva_t` in `_sl_parameter_block` causes problems.
-  Likely to split header file? Or add `__BOOTLOADER__`.
+* ACPI problem in x64
 * Review unaligned structs caused by `__attribute__((packed))`
 * Decide a coding format.
 

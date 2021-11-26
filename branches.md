@@ -49,9 +49,12 @@
 * Fix stdarg in x64 (so that printf can work correctly)
 
 ### `xmhf64-acpi`
-* ACPI problem in x64: `xmhf_baseplatform_arch_x86_acpi_getRSDP`
-	* Need to access low physical memory (e.g. 0x40e)
+* Support accessing low physical memory (e.g. 0x40e)
+	* e.g. ACPI problem in x64: `xmhf_baseplatform_arch_x86_acpi_getRSDP`
 	* Solution: map these memory at high end of the page table
+* Change run time GDT TSS to 64-bits in `xmhf_sl_arch_xfer_control_to_runtime()`
+	* TSS ref: Intel v3 7.2.3 TSS Descriptor in 64-bit mode
+* 4-level identity paging in `xmhf_sl_arch_x86_64_setup_runtime_paging()`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

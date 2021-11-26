@@ -59,3 +59,5 @@ print('\nXMHF 32')
 print_gdt(0x00cf9a000000ffff)
 print_gdt(0x00cf92000000ffff)
 
+print_gdt(0xff1089ffffff0067)	# x86 TSS: 0067 ffff ff 89 10 ff
+

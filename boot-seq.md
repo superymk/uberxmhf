@@ -58,7 +58,7 @@ _sl_start
  jump to `xmhf_sl_main`
 xmhf_sl_main()
  Print `slpb` from `cstartup()` (AMT 273-283)
- Set up rbp (AMT 286-287)
+ Set up rpb (AMT 286-287)
  `xmhf_baseplatform_initialize()`: check PCI and ACPI (AMT 288-290)
  `xmhf_sl_arch_sanitize_post_launch()`: ? (AMT 291-293)
  `xmhf_sl_arch_xfer_control_to_runtime()`: (AMT 294 - 298)
@@ -67,7 +67,7 @@ xmhf_sl_main()
 
 ## `xmhf-runtime`
 xmhf_runtime_entry()
- Dump info (AMT 299-327)
+ Dump info from rpb (AMT 299-327)
  `xmhf_xcphandler_initialize()`: set up exception handler (AMT 328-329)
  Set up DMA protection (AMT 330-331)
  Jump to `xmhf_baseplatform_smpinitialize()`

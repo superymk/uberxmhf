@@ -34,8 +34,10 @@
 ### `xmhf64-long`
 `7e142744b..7bf294603`
 * Transition from protected mode to long mode in beginning of secure loader
+	* <https://www.gnu.org/software/grub/manual/multiboot/multiboot.html>
 	* <https://wiki.osdev.org/Setting_Up_Long_Mode>
 	* <https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-4.html>
+	* <https://wiki.osdev.org/Creating_a_64-bit_kernel#Loading>
 	* Intel v3 9.8.5 Initializing IA-32e Mode
 	* Paging: Intel v3 chapter 4
 	* MSR (cr0, cr3, cr4): Intel v3 2.5 CONTROL REGISTERS
@@ -55,6 +57,14 @@
 * Change run time GDT TSS to 64-bits in `xmhf_sl_arch_xfer_control_to_runtime()`
 	* TSS ref: Intel v3 7.2.3 TSS Descriptor in 64-bit mode
 * 4-level identity paging in `xmhf_sl_arch_x86_64_setup_runtime_paging()`
+* Port exception handler (IDT) to 64 bits
+	* Intel v3 6.3 SOURCES OF INTERRUPTS
+	* Intel v3 6.10 INTERRUPT DESCRIPTOR TABLE (IDT)
+	* Intel v3 6.14 EXCEPTION AND INTERRUPT HANDLING IN 64-BIT MODE
+	* Intel v3 6.12.1 Exception- or Interrupt-Handler Procedures (stack content)
+	* Find out CPU's LAPIC ID: <https://wiki.osdev.org/APIC>
+* Reference
+	* E820: <https://wiki.osdev.org/Detecting_Memory_(x86)>, or ACPI standard
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

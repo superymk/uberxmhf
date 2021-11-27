@@ -9,6 +9,7 @@ IPI			Inter-Processor Interrupt
 GDT			Global Descriptor Table
 IDT			Interrupt Descriptor Table
 MTRR		Memory type range register
+CPL			Current Privilege Level (related to Rings?)
 
 Virtualization
 HEM			Hardware Enabled Virtualization
@@ -41,7 +42,7 @@ PAL			Pieces of Application Logic (TrustVisor)
 TEE-SDK		Trusted Execution Environment SDK
 scode_pm	Scode parameter
 scode_en	Scode entry point
-xcphandler	Exception Handler
+xcphandler	Exception Handler (also "xcph")
 PFN			PAL Function?
 NV			? (NV Space)
 paddr		Physical Address

@@ -63,8 +63,15 @@
 	* Intel v3 6.14 EXCEPTION AND INTERRUPT HANDLING IN 64-BIT MODE
 	* Intel v3 6.12.1 Exception- or Interrupt-Handler Procedures (stack content)
 	* Find out CPU's LAPIC ID: <https://wiki.osdev.org/APIC>
-* Reference
+* Other Reference
 	* E820: <https://wiki.osdev.org/Detecting_Memory_(x86)>, or ACPI standard
+* EPT: similar to 4-level paging, but some fields differ
+	* Intel v3 27.2 THE EXTENDED PAGE TABLE MECHANISM (EPT)
+* AP bootstrap
+	* <https://wiki.osdev.org/Symmetric_Multiprocessing#AP_startup>
+	* Intel v3 8.4.4 MP Initialization Example
+	* Intel v3 10.6.1 Interrupt Command Register (ICR)
+	* Intel v3 10.5.3 Error Handling
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

@@ -10,7 +10,8 @@
 		* <del>`xmhf64-comp` (62c6eb8c6): Make trustvisor compilable in 64
 		  bits</del>
 		* <del>`xmhf64-long`: set up long mode in secureloader</del>
-		* `xmhf64-acpi`
+		* <del>`xmhf64-acpi`: get into x64 runtime</del>
+		* `xmhf64-ap`
 
 ## Change Log
 
@@ -51,6 +52,7 @@
 * Fix stdarg in x64 (so that printf can work correctly)
 
 ### `xmhf64-acpi`
+`7bf294603..4e1ddca98`
 * Support accessing low physical memory (e.g. 0x40e)
 	* e.g. ACPI problem in x64: `xmhf_baseplatform_arch_x86_acpi_getRSDP`
 	* Solution: map these memory at high end of the page table
@@ -67,11 +69,16 @@
 	* E820: <https://wiki.osdev.org/Detecting_Memory_(x86)>, or ACPI standard
 * EPT: similar to 4-level paging, but some fields differ
 	* Intel v3 27.2 THE EXTENDED PAGE TABLE MECHANISM (EPT)
+
+### `xmhf64-ap`
+`386d791fd..`
 * AP bootstrap
 	* <https://wiki.osdev.org/Symmetric_Multiprocessing#AP_startup>
 	* Intel v3 8.4.4 MP Initialization Example
 	* Intel v3 10.6.1 Interrupt Command Register (ICR)
 	* Intel v3 10.5.3 Error Handling
+	* <https://stackoverflow.com/questions/70147401/>
+	* Use `objdump -m i8086 -Sd runtime.exe` to view real mode code
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

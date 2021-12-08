@@ -79,6 +79,7 @@
 	* Intel v3 10.5.3 Error Handling
 	* <https://stackoverflow.com/questions/70147401/>
 	* Use `objdump -m i8086 -Sd runtime.exe` to view real mode code
+* Rename functions from `*x86*` to `*x86_64*`, using `replace_x86.py` for help
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

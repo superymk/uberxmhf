@@ -11,7 +11,8 @@
 		  bits</del>
 		* <del>`xmhf64-long`: set up long mode in secureloader</del>
 		* <del>`xmhf64-acpi`: get into x64 runtime</del>
-		* `xmhf64-ap`
+		* <del>`xmhf64-ap`: be able to spawn APs in xmhf-runtime</del>
+		* `xmhf64-vm`: deal with VMWRITE failed problem
 
 ## Change Log
 
@@ -71,7 +72,7 @@
 	* Intel v3 27.2 THE EXTENDED PAGE TABLE MECHANISM (EPT)
 
 ### `xmhf64-ap`
-`386d791fd..`
+`386d791fd..05113224d`
 * AP bootstrap
 	* <https://wiki.osdev.org/Symmetric_Multiprocessing#AP_startup>
 	* Intel v3 8.4.4 MP Initialization Example
@@ -80,6 +81,10 @@
 	* <https://stackoverflow.com/questions/70147401/>
 	* Use `objdump -m i8086 -Sd runtime.exe` to view real mode code
 * Rename functions from `*x86*` to `*x86_64*`, using `replace_x86.py` for help
+* Add GitHub actions to check whether the project compiles automatically
+
+## `xmhf64-vm`
+`88ffba9e3..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

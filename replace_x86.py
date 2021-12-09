@@ -12,7 +12,7 @@ def replace_word(old, new, dry_run=False):
 	# Prepare
 	change_list = []
 	for name in names:
-		assert name.endswith('.h') or name.endswith('.c')
+		assert name[-2:] in ('.h', '.c', '.S')
 		old_content = open(name).read()
 		new_content, ns = re.subn(r'\b%s\b' % re.escape(old), new, old_content)
 		assert old_content != new_content

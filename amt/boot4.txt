@@ -1,0 +1,439 @@
+The system is powered on.
+
+eXtensible Modular Hypervisor Framework (XMHF) v6.1.0
+Build revision: xmhf64-vm-2a4fb99a69e00a6786a546348d15c9e74693f4e6
+
+INIT(early): initializing, total modules=3
+INIT(early): detected an Intel CPU
+Checking whether MBI module 2 is SINIT...
+YES! SINIT found @ 0x101000, 35776 bytes
+
+Finding SMP info. via ACPI...
+ACPI RSDP at 0x000fc600
+ACPI RSDT at 0xbb3fe0ac
+	len=0x0000005c, headerlen=0x00000024, numentries=14
+ACPI MADT at 0xbb3fa000
+	len=0x000000bc, record-length=144 bytes
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x01
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x04
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x05
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000000, id=0x00
+rec type=0x01, length=12 bytes, flags=0xfec00000, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000002, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000009, id=0x09
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0x06040100, id=0x05
+rec type=0x04, length=6 bytes, flags=0xffbf0100, id=0x05
+original system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x00000000baac2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+proceeding to revise E820...
+E820 revision complete.
+revised system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x0000000009a00000 (2)
+0x0000000019a00000, size=0x00000000a11c2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 
+hashandprint: processing 0x09772000 bytes at addr 0x10200000
+    INIT(early): *UNTRUSTED* comp runtime: : 7d 88 da c6 90 c7 92 32 7d fb 2b 03 61 bc c0 82 fd c0 8c d9
+
+    INIT(early): *UNTRUSTED* gold SL low 64K: dc 4d 56 ca ea 8b b4 92 7b e8 58 f6 bf b2 03 00 
+    INIT(early): *UNTRUSTED* gold SL low 64K: 70 8a b9 93 
+hashandprint: processing 0x00010000 bytes at addr 0x10000000
+    INIT(early): *UNTRUSTED* comp SL low 64K: : dc 4d 56 ca ea 8b b4 92 7b e8 58 f6 bf b2 03 00 70 8a b9 93
+
+    INIT(early): *UNTRUSTED* gold SL above 64K: 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be 
+    INIT(early): *UNTRUSTED* gold SL above 64K: 47 6a 52 8a 
+hashandprint: processing 0x001f0000 bytes at addr 0x10010000
+    INIT(early): *UNTRUSTED* comp SL above 64K): : 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be 47 6a 52 8a
+
+INIT(early): relocated hypervisor binary image to 0x10000000
+INIT(early): 2M aligned size = 0x09a00000
+INIT(early): un-aligned size = 0x09972000
+setupvcpus: cpustacks range 0x01e1f000-0x01e3f000 in 0x00004000 chunks
+setupvcpus: vcpubuffers range 0x01e0b080-0x01e16a00 in 0x00001730 chunks
+CPU #0: vcpu_vaddr_ptr=0x01e0b080, esp=0x01e23000
+CPU #1: vcpu_vaddr_ptr=0x01e0c7b0, esp=0x01e27000
+CPU #2: vcpu_vaddr_ptr=0x01e0dee0, esp=0x01e2b000
+CPU #3: vcpu_vaddr_ptr=0x01e0f610, esp=0x01e2f000
+Sending INIT IPI to all APs...Done.
+Sending SIPI-0...
+AP(0x05): Waiting for DRTM establishment...
+AP(0x04): Waiting for DRTM establishment...
+AP(0x01): Waiting for DRTM establishment...Done.
+Sending SIPI-1...Done.
+APs should be awake!
+BSP(0x00): Rallying APs...
+BSP(0x00): APs ready, doing DRTM...
+LAPIC base and status=0xfee00900
+Sending INIT IPI to all APs...
+Done.
+
+INIT(early): sent INIT IPI to APs
+****** NO DRTM startup ******
+
+slbase=0x10000000, sl_entry_point_offset=0x00003080
+SL entry point to transfer control to: 0x10003080
+SL(early-init): at 0x10000000, starting...
+SL: slpb at = 0x00010000
+	errorHandler=0x00000000
+	isEarlyInit=0x00000001
+	numE820Entries=19
+	system memory map buffer at 0x00010010
+	numCPUEntries=4
+	cpuinfo buffer at 0x00010514
+	runtime size= 158801920 bytes
+	OS bootmodule at 0x00100000, size=512 bytes
+	cmdline = "serial=115200,8n1,0x5080"
+SL: RDTSC before_drtm 0x0, after_drtm 0x96e344657
+SL: [PERF] RDTSC DRTM elapsed cycles: 0x96e344657
+SL: runtime at 0x10200000; size=0x09772000 bytes adjusted to 0x09800000 bytes (2M aligned)
+SL: RPB, magic=0xf00ddead
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_64_pci_initialize: Done with PCI bus enumeration.
+SL: setup runtime TSS.
+SL (xmhf_sl_arch_x86_64_setup_runtime_paging): runtime_spa=0000000010200000, runtime_sva=0000000010200000, totalsize=0000000009800000
+	pa xpml4=0x0x9948000, xpdpt=0x0x9949000, xpdt=0x0x994a000
+SL: setup runtime paging structures.
+Transferring control to runtime
+runtime initializing...
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_64_pci_initialize: Done with PCI bus enumeration.
+Number of E820 entries = 19
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000e0000, size=0x0000000000020000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x0000000009a00000 (2)
+0x0000000019a00000, size=0x00000000a11c2000 (1)
+0x00000000babc2000, size=0x0000000000700000 (2)
+0x00000000bb2c2000, size=0x0000000000100000 (4)
+0x00000000bb3c2000, size=0x000000000003d000 (3)
+0x00000000bb3ff000, size=0x0000000000001000 (1)
+0x00000000bb400000, size=0x0000000000c00000 (2)
+0x00000000e0000000, size=0x0000000010000000 (2)
+0x00000000fec00000, size=0x0000000000001000 (2)
+0x00000000fed10000, size=0x0000000000004000 (2)
+0x00000000fed19000, size=0x0000000000001000 (2)
+0x00000000fed1b000, size=0x0000000000005000 (2)
+0x00000000fee00000, size=0x0000000000001000 (2)
+0x00000000ffd00000, size=0x0000000000300000 (2)
+0x0000000100000000, size=0x0000000038000000 (1)
+Number of MP entries = 4
+CPU #0: bsp=1, lapic_id=0x00
+CPU #1: bsp=0, lapic_id=0x01
+CPU #2: bsp=0, lapic_id=0x04
+CPU #3: bsp=0, lapic_id=0x05
+xmhf_xcphandler_arch_initialize: setting up runtime IDT...
+xmhf_xcphandler_arch_initialize: IDT setup done.
+Runtime: Re-initializing DMA protection...
+Runtime: Protected SL+Runtime (10000000-19972000) from DMA.
+BSP: Using APIC to awaken APs...
+BSP: APs should be awake.
+Relinquishing BSP thread and moving to common...
+BSP rallying APs...
+BSP(0x00): My RSP is 0x0000000019952000
+APs all awake...Setting them free...
+AP(0x04): My RSP is 0x000000001995a000, proceeding...
+AP(0x05): My RSP is 0x000000001995e000, proceeding...
+CPU(0x04): UNRESTRICTED-GUEST supported.
+CPU(0x00): UNRESTRICTED-GUEST supported.
+AP(0x01): My RSP is 0x0000000019956000, proceeding...
+CPU(0x00): MSR_EFER=0x0000000000000500
+CPU(0x01): UNRESTRICTED-GUEST supported.
+CPU(0x00): MSR_EFCR=0x000000000000ff07
+CPU(0x01): MSR_EFER=0x0000000000000500
+CPU(0x00): enabled VMX
+CPU(0x01): MSR_EFCR=0x000000000000ff07
+CPU(0x00): Entered VMX root operation
+CPU(0x01): enabled VMX
+CPU(0x00, BSP): initializing INT 15 hook for UG mode...
+CPU(0x01): Entered VMX root operation
+CPU(0x00): original INT 15h handler at 0xe000:0xd7b0
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+BSP(0x00): copying boot-module to boot guest
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+CPU(0x04): MSR_EFER=0x0000000000000500
+CPU(0x05): UNRESTRICTED-GUEST supported.
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+CPU(0x05): MSR_EFER=0x0000000000000500
+CPU(0x05): MSR_EFCR=0x000000000000ff07
+CPU(0x04): MSR_EFCR=0x000000000000ff07
+CPU(0x05): enabled VMX
+CPU(0x04): enabled VMX
+CPU(0x05): Entered VMX root operation
+CPU(0x04): Entered VMX root operation
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=1
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+CPU(0x01): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x01)
+
+CPU(0x01): AP, waiting for SIPI signal...
+CPU(0x00): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x00)
+TV[0]:appmain.c:tv_app_main:144:                   CPU(0x00): init
+
+TV[0]:appmain.c:tv_app_main:146:                   CPU(0x00) apb->cmdline: "serial=115200,8n1,0x5080"
+TV[0]:appmain.c:parse_boot_cmdline:129:            NV Enforcement ENABLED
+
+NV uPCR[0] required to be: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+NV uPCR[0] required to be: 00 00 00 
+CPU(0x05): Activated VMX EPTs.
+CPU(0x04): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x05)
+TV[0]:appmain.c:tv_app_main:141:                   CPU(0x04)
+
+CPU(0x05): AP, waiting for SIPI signal...
+CPU(0x04): AP, waiting for SIPI signal...00 
+TV[0]:scode.c:init_scode:331:                      alloc 110KB mem for scode_list at 10277df0!
+TV[0]:scode.c:init_scode:333:                      alloc 512KB mem for pfn_bitmap at 10293698!
+TV[0]:scode.c:init_scode:335:                      alloc 512KB mem for pfn_bitmap_2M at 103136a0!
+TV[0]:scode.c:init_scode:343:                      whitelist max = 100!
+TV[0]:scode.c:init_scode:360:                      DEVELOPMENT ONLY: skipping trustvisor_master_crypto_init().
+
+CPU(0x00): Waiting for all cores to cycle through appmain...
+CPU(0x00): All cores have successfully been through appmain.
+CPU(0x00): setup x86vmx SMP guest capabilities
+xmhf_runtime_main[00]: starting partition...
+CPU(0x00): VMCLEAR success.
+CPU(0x00): VMPTRLD success.
+CPU(0x00): VMWRITEs success.
+[00]: unhandled exception e, halting!
+[00]: state dump follows...
+[00] CS:EIP 0x0000:0x              80 with EFLAGS=0x               1
+[00]: VCPU at 0x        10247820
+[00] RAX=0x               1 RBX=0x               0
+[00] RCX=0x               0 RDX=0x              80
+[00] RSI=0x               0 RDI=0x               0
+[00] RBP=0x               0 RSP=0x        19951a88
+[00] R8 =0x               0 R9 =0x        1025e7e1
+[00] R10=0x               1 R11=0x               0
+[00] R12=0x        b5906b4c R13=0x           75000
+[00] R14=0xfffffffff0000079 R15=0x           4ee2a
+[00] CS=0x0010, DS=0x0018, ES=0x0018, SS=0x0018
+[00] FS=0x0018, GS=0x0018
+[00] TR=0x0020
+[00]-----stack dump-----
+[00]  Stack(0x        19951a88) -> 0x              80
+[00]  Stack(0x        19951a90) -> 0x               0
+[00]  Stack(0x        19951a98) -> 0x               1
+[00]  Stack(0x        19951aa0) -> 0x               0
+[00]  Stack(0x        19951aa8) -> 0x        1025e7e1
+[00]  Stack(0x        19951ab0) -> 0x               1
+[00]  Stack(0x        19951ab8) -> 0x               0
+[00]  Stack(0x        19951ac0) -> 0x        b5906b4c
+[00]  Stack(0x        19951ac8) -> 0x           75000
+[00]  Stack(0x        19951ad0) -> 0xfffffffff0000079
+[00]  Stack(0x        19951ad8) -> 0x           4ee2a
+[00]  Stack(0x        19951ae0) -> 0x               2
+[00]  Stack(0x        19951ae8) -> 0x        10211466
+[00]  Stack(0x        19951af0) -> 0x              10
+[00]  Stack(0x        19951af8) -> 0x           10042
+[00]  Stack(0x        19951b00) -> 0x        19951b10
+[00]  Stack(0x        19951b08) -> 0x              18
+[00]  Stack(0x        19951b10) -> 0x18feb00019951b20
+[00]  Stack(0x        19951b18) -> 0x        10247820
+[00]  Stack(0x        19951b20) -> 0x        19951b90
+[00]  Stack(0x        19951b28) -> 0x        18feb000
+[00]  Stack(0x        19951b30) -> 0x        19951b50
+[00]  Stack(0x        19951b38) -> 0x        102115b9
+[00]  Stack(0x        19951b40) -> 0x              18
+[00]  Stack(0x        19951b48) -> 0x        10247820
+[00]  Stack(0x        19951b50) -> 0x        19951b70
+[00]  Stack(0x        19951b58) -> 0x        1020f73f
+[00]  Stack(0x        19951b60) -> 0x        19951b80
+[00]  Stack(0x        19951b68) -> 0x        10247820
+[00]  Stack(0x        19951b70) -> 0x        19951b90
+[00]  Stack(0x        19951b78) -> 0x        1020f5bc
+[00]  Stack(0x        19951b80) -> 0x               0
+[00]  Stack(0x        19951b88) -> 0x        10247820
+[00]  Stack(0x        19951b90) -> 0x        19951fd0
+[00]  Stack(0x        19951b98) -> 0x        10211b91
+[00]  Stack(0x        19951ba0) -> 0x       100000000
+[00]  Stack(0x        19951ba8) -> 0x        10247820
+[00]  Stack(0x        19951bb0) -> 0x               0
+[00]  Stack(0x        19951bb8) -> 0x  10000000000000
+[00]  Stack(0x        19951bc0) -> 0x             200
+[00]  Stack(0x        19951bc8) -> 0x1020000000000000
+[00]  Stack(0x        19951bd0) -> 0x313d6c6169726573
+[00]  Stack(0x        19951bd8) -> 0x6e382c3030323531
+[00]  Stack(0x        19951be0) -> 0x3038303578302c31
+[00]  Stack(0x        19951be8) -> 0x               0
+[00]  Stack(0x        19951bf0) -> 0x               0
+[00]  Stack(0x        19951bf8) -> 0x               0
+[00]  Stack(0x        19951c00) -> 0x               0
+[00]  Stack(0x        19951c08) -> 0x               0
+[00]  Stack(0x        19951c10) -> 0x               0
+[00]  Stack(0x        19951c18) -> 0x               0
+[00]  Stack(0x        19951c20) -> 0x               0
+[00]  Stack(0x        19951c28) -> 0x               0
+[00]  Stack(0x        19951c30) -> 0x               0
+[00]  Stack(0x        19951c38) -> 0x               0
+[00]  Stack(0x        19951c40) -> 0x               0
+[00]  Stack(0x        19951c48) -> 0x               0
+[00]  Stack(0x        19951c50) -> 0x               0
+[00]  Stack(0x        19951c58) -> 0x               0
+[00]  Stack(0x        19951c60) -> 0x               0
+[00]  Stack(0x        19951c68) -> 0x               0
+[00]  Stack(0x        19951c70) -> 0x               0
+[00]  Stack(0x        19951c78) -> 0x               0
+[00]  Stack(0x        19951c80) -> 0x               0
+[00]  Stack(0x        19951c88) -> 0x               0
+[00]  Stack(0x        19951c90) -> 0x               0
+[00]  Stack(0x        19951c98) -> 0x               0
+[00]  Stack(0x        19951ca0) -> 0x               0
+[00]  Stack(0x        19951ca8) -> 0x               0
+[00]  Stack(0x        19951cb0) -> 0x               0
+[00]  Stack(0x        19951cb8) -> 0x               0
+[00]  Stack(0x        19951cc0) -> 0x               0
+[00]  Stack(0x        19951cc8) -> 0x               0
+[00]  Stack(0x        19951cd0) -> 0x               0
+[00]  Stack(0x        19951cd8) -> 0x               0
+[00]  Stack(0x        19951ce0) -> 0x               0
+[00]  Stack(0x        19951ce8) -> 0x               0
+[00]  Stack(0x        19951cf0) -> 0x               0
+[00]  Stack(0x        19951cf8) -> 0x               0
+[00]  Stack(0x        19951d00) -> 0x               0
+[00]  Stack(0x        19951d08) -> 0x               0
+[00]  Stack(0x        19951d10) -> 0x               0
+[00]  Stack(0x        19951d18) -> 0x               0
+[00]  Stack(0x        19951d20) -> 0x               0
+[00]  Stack(0x        19951d28) -> 0x               0
+[00]  Stack(0x        19951d30) -> 0x               0
+[00]  Stack(0x        19951d38) -> 0x               0
+[00]  Stack(0x        19951d40) -> 0x               0
+[00]  Stack(0x        19951d48) -> 0x               0
+[00]  Stack(0x        19951d50) -> 0x               0
+[00]  Stack(0x        19951d58) -> 0x               0
+[00]  Stack(0x        19951d60) -> 0x               0
+[00]  Stack(0x        19951d68) -> 0x               0
+[00]  Stack(0x        19951d70) -> 0x               0
+[00]  Stack(0x        19951d78) -> 0x               0
+[00]  Stack(0x        19951d80) -> 0x               0
+[00]  Stack(0x        19951d88) -> 0x               0
+[00]  Stack(0x        19951d90) -> 0x               0
+[00]  Stack(0x        19951d98) -> 0x               0
+[00]  Stack(0x        19951da0) -> 0x               0
+[00]  Stack(0x        19951da8) -> 0x               0
+[00]  Stack(0x        19951db0) -> 0x               0
+[00]  Stack(0x        19951db8) -> 0x               0
+[00]  Stack(0x        19951dc0) -> 0x               0
+[00]  Stack(0x        19951dc8) -> 0x               0
+[00]  Stack(0x        19951dd0) -> 0x               0
+[00]  Stack(0x        19951dd8) -> 0x               0
+[00]  Stack(0x        19951de0) -> 0x               0
+[00]  Stack(0x        19951de8) -> 0x               0
+[00]  Stack(0x        19951df0) -> 0x               0
+[00]  Stack(0x        19951df8) -> 0x               0
+[00]  Stack(0x        19951e00) -> 0x               0
+[00]  Stack(0x        19951e08) -> 0x               0
+[00]  Stack(0x        19951e10) -> 0x               0
+[00]  Stack(0x        19951e18) -> 0x               0
+[00]  Stack(0x        19951e20) -> 0x               0
+[00]  Stack(0x        19951e28) -> 0x               0
+[00]  Stack(0x        19951e30) -> 0x               0
+[00]  Stack(0x        19951e38) -> 0x               0
+[00]  Stack(0x        19951e40) -> 0x               0
+[00]  Stack(0x        19951e48) -> 0x               0
+[00]  Stack(0x        19951e50) -> 0x               0
+[00]  Stack(0x        19951e58) -> 0x               0
+[00]  Stack(0x        19951e60) -> 0x               0
+[00]  Stack(0x        19951e68) -> 0x               0
+[00]  Stack(0x        19951e70) -> 0x               0
+[00]  Stack(0x        19951e78) -> 0x               0
+[00]  Stack(0x        19951e80) -> 0x               0
+[00]  Stack(0x        19951e88) -> 0x               0
+[00]  Stack(0x        19951e90) -> 0x               0
+[00]  Stack(0x        19951e98) -> 0x               0
+[00]  Stack(0x        19951ea0) -> 0x               0
+[00]  Stack(0x        19951ea8) -> 0x               0
+[00]  Stack(0x        19951eb0) -> 0x               0
+[00]  Stack(0x        19951eb8) -> 0x               0
+[00]  Stack(0x        19951ec0) -> 0x               0
+[00]  Stack(0x        19951ec8) -> 0x               0
+[00]  Stack(0x        19951ed0) -> 0x               0
+[00]  Stack(0x        19951ed8) -> 0x               0
+[00]  Stack(0x        19951ee0) -> 0x               0
+[00]  Stack(0x        19951ee8) -> 0x               0
+[00]  Stack(0x        19951ef0) -> 0x               0
+[00]  Stack(0x        19951ef8) -> 0x               0
+[00]  Stack(0x        19951f00) -> 0x               0
+[00]  Stack(0x        19951f08) -> 0x               0
+[00]  Stack(0x        19951f10) -> 0x               0
+[00]  Stack(0x        19951f18) -> 0x               0
+[00]  Stack(0x        19951f20) -> 0x               0
+[00]  Stack(0x        19951f28) -> 0x               0
+[00]  Stack(0x        19951f30) -> 0x               0
+[00]  Stack(0x        19951f38) -> 0x               0
+[00]  Stack(0x        19951f40) -> 0x               0
+[00]  Stack(0x        19951f48) -> 0x               0
+[00]  Stack(0x        19951f50) -> 0x               0
+[00]  Stack(0x        19951f58) -> 0x               0
+[00]  Stack(0x        19951f60) -> 0x               0
+[00]  Stack(0x        19951f68) -> 0x               0
+[00]  Stack(0x        19951f70) -> 0x               0
+[00]  Stack(0x        19951f78) -> 0x               0
+[00]  Stack(0x        19951f80) -> 0x               0
+[00]  Stack(0x        19951f88) -> 0x               0
+[00]  Stack(0x        19951f90) -> 0x               0
+[00]  Stack(0x        19951f98) -> 0x               0
+[00]  Stack(0x        19951fa0) -> 0x               0
+[00]  Stack(0x        19951fa8) -> 0x               0
+[00]  Stack(0x        19951fb0) -> 0x               0
+[00]  Stack(0x        19951fb8) -> 0x               0
+[00]  Stack(0x        19951fc0) -> 0x               0
+[00]  Stack(0x        19951fc8) -> 0x               0
+[00]  Stack(0x        19951fd0) -> 0x        19951ff0
+[00]  Stack(0x        19951fd8) -> 0x        1020d87f
+[00]  Stack(0x        19951fe0) -> 0x               0
+[00]  Stack(0x        19951fe8) -> 0x        10247820
+[00]  Stack(0x        19951ff0) -> 0x               0
+[00]-----end------------The system is powered off.
+amtterm: RUN_SOL -> ERROR (failure)
+amtterm: ERROR: EOF from socket
+

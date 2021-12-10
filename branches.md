@@ -85,6 +85,14 @@
 
 ## `xmhf64-vm`
 `88ffba9e3..`
+* Solved old problem: VMWRITE in QEMU fails because not implemented by KVM
+	* Remember that QEMU uses KVM nested virtualization (Turtles Project)
+	* <https://www.kernel.org/doc/html/latest/virt/kvm/nested-vmx.html>
+	* In Linux source code `arch/x86/include/asm/vmx.h`, see `enum vmcs_field`
+	* Turns out that the field written to are unused by XMHF (value = 0).
+	* So just skip them. Create a compiler switch to control the skip
+	* QEMU x86 now can at least enter GRUB and see E820 interrupts
+	* Still have strange error when booting Debian
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

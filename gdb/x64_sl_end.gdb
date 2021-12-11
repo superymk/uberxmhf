@@ -9,5 +9,5 @@ c
 d
 symbol-file
 si
-symbol-file -o 0x10000000 ~/Documents/GreenBox/xmhf64/xmhf/src/xmhf-core/xmhf-secureloader/sl_syms.exe
+symbol-file -o 0x10000000 ~/Documents/GreenBox/build64/work/xmhf/src/xmhf-core/xmhf-secureloader/sl_syms.exe
 

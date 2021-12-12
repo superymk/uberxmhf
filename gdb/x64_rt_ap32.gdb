@@ -1,6 +1,6 @@
 # Stop at AP running 32-bit code (_ap_clear_pipe)
 
-source ~/Documents/GreenBox/notes/gdb/x64_rt_pre.gdb
+source gdb/x64_rt_pre.gdb
 
 b xmhf_baseplatform_arch_x86_64_wakeupAPs
 c

@@ -2,7 +2,10 @@
 
 set -xe
 
-GIT_DIR=~/Documents/GreenBox/xmhf64
+# Inputs from environment variables
+[ -d "$GIT_DIR" ]
+[ -d "$GDB_DIR" ]
+
 BUILD_DIR="$(realpath "$1")"
 [ -d "$BUILD_DIR" ]
 
@@ -12,6 +15,8 @@ fi
 
 cd "$GIT_DIR"
 find * -type d -exec mkdir -p "${BUILD_DIR}"/{} \;
-find * -type f -exec ln -sf "${GIT_DIR}"/{} "${BUILD_DIR}"/{} \;
+find * -type f -exec ln -Tsf "${GIT_DIR}"/{} "${BUILD_DIR}"/{} \;
+ln -Tsf "${GIT_DIR}"/.github/build.sh "${BUILD_DIR}/build.sh"
+ln -Tsf "${GDB_DIR}" "${BUILD_DIR}/gdb"
 echo SUCCESS
 

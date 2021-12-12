@@ -12,7 +12,8 @@
 		* <del>`xmhf64-long`: set up long mode in secureloader</del>
 		* <del>`xmhf64-acpi`: get into x64 runtime</del>
 		* <del>`xmhf64-ap`: be able to spawn APs in xmhf-runtime</del>
-		* `xmhf64-vm`: deal with VMWRITE failed problem
+		* <del>`xmhf64-vm`: deal with VMWRITE failed problem</del>
+		* `xmhf64-launch`: deal with VMLAUNCH failed problem
 
 ## Change Log
 
@@ -84,7 +85,7 @@
 * Add GitHub actions to check whether the project compiles automatically
 
 ## `xmhf64-vm`
-`88ffba9e3..`
+`88ffba9e3..2c7662626`
 * Solved old problem: VMWRITE in QEMU fails because not implemented by KVM
 	* Remember that QEMU uses KVM nested virtualization (Turtles Project)
 	* <https://www.kernel.org/doc/html/latest/virt/kvm/nested-vmx.html>
@@ -93,6 +94,12 @@
 	* So just skip them. Create a compiler switch to control the skip
 	* QEMU x86 now can at least enter GRUB and see E820 interrupts
 	* Still have strange error when booting Debian
+* Ported some assembly code from x86 to x86_64
+
+## `xmhf64-launch`
+`2c7662626..`
+* Add proposal of changing EPT in `_vmx_setupEPT()`
+* Prevent VMREAD to fail in QEMU
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

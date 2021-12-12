@@ -3,7 +3,9 @@
 
 set -xe
 
-GIT_DIR=~/Documents/GreenBox/xmhf64
+# Input from environment variable
+[ -d "$GIT_DIR" ]
+
 BUILD_DIR="$1"
 [ -d "$BUILD_DIR" ]
 

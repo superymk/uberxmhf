@@ -3,4 +3,4 @@ set confirm off
 set pagination off
 b *0x10003080
 c
-symbol-file -o 0x10000000 ~/Documents/GreenBox/build64/work/xmhf/src/xmhf-core/xmhf-secureloader/sl_syms.exe
+symbol-file -o 0x10000000 xmhf/src/xmhf-core/xmhf-secureloader/sl_syms.exe

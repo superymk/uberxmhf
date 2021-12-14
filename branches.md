@@ -100,6 +100,11 @@
 `2c7662626..`
 * Add proposal of changing EPT in `_vmx_setupEPT()`
 * Prevent VMREAD to fail in QEMU
+* VMENTRY fail in QEMU: fix incorrect VMCS setting. After fix can enter grub
+	* Intel v3 25 VM ENTRIES
+	* Intel v3 23.7.1 VM-Exit Controls
+	* Intel v3 25.2.4 Checks Related to Address-Space Size
+* QEMU and HP: encounter "Unhandled intercept: 0x00000002"
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

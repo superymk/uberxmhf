@@ -105,6 +105,8 @@
 	* Intel v3 23.7.1 VM-Exit Controls
 	* Intel v3 25.2.4 Checks Related to Address-Space Size
 * QEMU and HP: encounter "Unhandled intercept: 0x00000002"
+* Unhandled intercept: 0x00000002
+	* Intel v3 Appendix C: VMX BASIC EXIT REASONS
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

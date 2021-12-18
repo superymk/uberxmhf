@@ -12,8 +12,8 @@
 		* <del>`xmhf64-long`: set up long mode in secureloader</del>
 		* <del>`xmhf64-acpi`: get into x64 runtime</del>
 		* <del>`xmhf64-ap`: be able to spawn APs in xmhf-runtime</del>
-		* <del>`xmhf64-vm`: deal with VMWRITE failed problem</del>
-		* `xmhf64-launch`: deal with VMLAUNCH failed problem
+		* <del>`xmhf64-vm`: deal with VMWRITE and VMLAUNCH failed problem</del>
+		* `xmhf64-???`: ???
 
 ## Change Log
 
@@ -96,8 +96,7 @@
 	* Still have strange error when booting Debian
 * Ported some assembly code from x86 to x86_64
 
-## `xmhf64-launch`
-`2c7662626..`
+`2c7662626..c2d641da3`
 * Add proposal of changing EPT in `_vmx_setupEPT()`
 * Prevent VMREAD to fail in QEMU
 * VMENTRY fail in QEMU: fix incorrect VMCS setting. After fix can enter grub
@@ -107,7 +106,11 @@
 * QEMU and HP: encounter "Unhandled intercept: 0x00000002"
 * Unhandled intercept: 0x00000002 (triple fault)
 	* Intel v3 Appendix C: VMX BASIC EXIT REASONS
+	* Caused by guest trying to set CR0.PG
 	* Add `nokaslr` in grub: keep kernel address the same
+	* Compare x86 and x64 registers, found that IA32_EFER.LME is mistakenly set
+	* Clear IA32_EFER.LME manually to fix triple fault (first fault is GP)
+	* Now x86 and x64 progresses to the same location in QEMU
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

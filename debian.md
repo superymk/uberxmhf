@@ -49,13 +49,33 @@ Change grub line to the following, then can see XMHF output from serial port
 	* QEMU CPU does supports virtualization
 		* Receive error `CPU(0x00): VMWRITE failed. HALT!`
 
-### Conclusion on QEMU
+### VMX on QEMU
 Ref:
 <https://stackoverflow.com/questions/39154850/how-do-i-emulate-the-vmx-feature-with-qemu>
 
 Looks like `vmx` support in QEMU is implemented by nested vmx (the Ben-Yehuda
 paper), and QEMU does not support emulating vmx. Also since XMHF does not work
-out of the box, using QEMU is deprecated.
+out of the box, using QEMU is deprecated. But it can assist a lot of debugging.
+
+### Debugging Debian on QEMU
+
+Install symbol file using `apt-get install linux-image-$(uname -r)-dbg`
+(cached in `/var/cache/apt/archives/`, installed files in `/usr/lib/debug`)
+
+`sudo apt-get install dpkg-dev`
+
+Install source file using `apt-get source linux-image-$(uname -r)-dbg`
+(installed files in `./linux-<version-number>`)
+
+`cd` into source file directory, then in GDB
+`symbol-file .../usr/lib/debug/boot/vmlinux-<version>`
+
+Should be able to also use `directory` command in gdb
+* Ref: <https://sourceware.org/gdb/onlinedocs/gdb/Source-Path.html>
+
+For example, normal files are `arch/x86/mm/extable.c`. But sometimes I see
+`/build/linux-Zn7N0z/linux-5.10.84/arch/x86/kernel/head_32.S`. So creating
+a symbolic link at `./build/linux-Zn7N0z` with content `../..` solves it.
 
 ### Debian 11 on HP
 

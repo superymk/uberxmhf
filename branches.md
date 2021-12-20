@@ -13,7 +13,7 @@
 		* <del>`xmhf64-acpi`: get into x64 runtime</del>
 		* <del>`xmhf64-ap`: be able to spawn APs in xmhf-runtime</del>
 		* <del>`xmhf64-vm`: deal with VMWRITE and VMLAUNCH failed problem</del>
-		* `xmhf64-???`: ???
+		* (no longer use sub-branches)
 
 ## Change Log
 
@@ -104,13 +104,21 @@
 	* Intel v3 23.7.1 VM-Exit Controls
 	* Intel v3 25.2.4 Checks Related to Address-Space Size
 * QEMU and HP: encounter "Unhandled intercept: 0x00000002"
-* Unhandled intercept: 0x00000002 (triple fault)
+* Unhandled intercept: 0x00000002 (triple fault) (`bug_001`)
 	* Intel v3 Appendix C: VMX BASIC EXIT REASONS
 	* Caused by guest trying to set CR0.PG
 	* Add `nokaslr` in grub: keep kernel address the same
 	* Compare x86 and x64 registers, found that IA32_EFER.LME is mistakenly set
 	* Clear IA32_EFER.LME manually to fix triple fault (first fault is GP)
 	* Now x86 and x64 progresses to the same location in QEMU
+
+## `xmhf64`
+`eca643c3c..`
+* Allow `INVPCID` in guest
+	* Intel v3 23.6.2 Processor-Based VM-Execution Controls
+	* Intel v3 Table 23-7
+* Allow `RDTSCP` in guest
+	* Intel v3 17.17.2 IA32_TSC_AUX Register and RDTSCP Support
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

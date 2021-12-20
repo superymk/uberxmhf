@@ -1,4 +1,4 @@
-# QEMU booting Debian 11 hangs (IN PROGRESS)
+# QEMU booting Debian 11 hangs due to INVPCID
 
 ## Scope
 * x86 and x86-64
@@ -54,10 +54,63 @@ Call stack is
 (gdb) 
 ```
 
+### Exception in Debian kernel
 
-### temporary notes below
+Break at `early_idt_handler_common`, then print the stack
 
 ```
-Try to set a break point in early_fixup_exception
+(gdb) x/30x $esp
+0xc1a6fe4c:	0x00000006	0x00000000	0xc105973e	0x00000060
+0xc1a6fe5c:	0x00210102	0x00000000	0x00000000	0x00000000
+0xc1a6fe6c:	0x00000000	0x00000000	0xffffffff	0x00000100
+0xc1a6fe7c:	0xc1a6fe84	0xc1058a98	0xc1a6fec8	0xc1bba894
+0xc1a6fe8c:	0x00000000	0xc1c86c00	0x00000000	0x00000002
+0xc1a6fe9c:	0x00000400	0x00000000	0x00000100	0x00000100
+0xc1a6feac:	0x00000000	0x00000300	0x00100000	0x00000001
+0xc1a6febc:	0xc1804a60	0xc1a6fef0
 ```
+
+Looks like the first numbers are (error code, ???, EIP, CS). Not sure why there
+is a 0 in between. Now set a break point at EIP
+`0xc105973e <native_flush_tlb_global+62>`.
+
+### Cause of exception
+
+Problematic instruction and arguments:
+```
+(gdb) x/i $eip
+=> 0xc105973e <native_flush_tlb_global+62>:	invpcid -0x1c(%ebp),%eax
+(gdb) p $ebp
+$4 = (void *) 0xc1a6fe7c
+(gdb) x/2gx ($ebp - 0x1c)
+0xc1a6fe60:	0x0000000000000000	0x0000000000000000
+(gdb) p $eax
+$5 = 2
+(gdb) 
+```
+
+### Fix the problem
+In Intel v3 "Table 23-7. Definitions of Secondary Processor-Based VM-Execution
+Controls", should set `Enable INVPCID`
+
+### Attachment: GDB script for setting break points
+```
+# Start with gdb/x86_vm_entry.gdb
+b _vmx_handle_intercept_xsetbv
+c
+p/x vcpu->vmcs.guest_RIP
+# Should be 0x1025bce (xsetbv), next instruction is 0x1025bd1
+hb *0xc1025bd1
+c
+d
+source gdb/linux-sym.gdb
+b early_fixup_exception
+b native_flush_tlb_global
+b early_idt_handler_common
+c
+```
+
+## Fix
+`eca643c3c..3b8955c74`
+Set VMCS control field to enable the INVPCID instruction
 

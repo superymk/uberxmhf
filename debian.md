@@ -94,3 +94,24 @@ Get unhandled exception when OS is booting in XMHF
 ...
 ```
 
+### VirtualBox
+
+VirtualBox has a debugger, not sure whether useful.
+
+```
+vboxmanage modifyvm "$NAME" --nested-hw-virt on
+vboxmanage startvm "$NAME" -E VBOX_GUI_DBG_AUTO_SHOW=true -E VBOX_GUI_DBG_ENABLED=true
+```
+
+* Ref: <https://www.virtualbox.org/manual/ch12.html#ts_debugger>
+* Ref: <https://stackoverflow.com/a/53286104>
+
+Need to change CPUID, but not successful
+
+```
+vboxmanage setextradata "$NAME" VBoxInternal/CPUM/HostCPUID/00000000/ebx 0x756E6547
+vboxmanage setextradata "$NAME" VBoxInternal/CPUM/HostCPUID/00000000/edx 0x49656E69
+vboxmanage setextradata "$NAME" VBoxInternal/CPUM/HostCPUID/00000000/ecx 0x6C65746E
+```
+* Ref: <https://superuser.com/a/774596>
+

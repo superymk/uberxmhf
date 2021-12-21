@@ -4,7 +4,7 @@
 * At least x86, Debian 11, QEMU
 
 ## Behavior
-In QEMU, boot XMHF64, then Debian 11 Linux 5.10.0-9-686, serial port prints
+In QEMU, boot XMHF, then Debian 11 Linux 5.10.0-10-686, serial port prints
 ```
 MOV TO CR4 (flush TLB?), current=0x00002000, proposed=0x00000000
 _vmx_handle_intercept_xsetbv: xcr_value=7

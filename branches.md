@@ -113,12 +113,19 @@
 	* Now x86 and x64 progresses to the same location in QEMU
 
 ## `xmhf64`
-`eca643c3c..`
-* Allow `INVPCID` in guest
+`eca643c3c..e74a28b83`
+* Allow `INVPCID` in guest (`bug_002`)
 	* Intel v3 23.6.2 Processor-Based VM-Execution Controls
 	* Intel v3 Table 23-7
-* Allow `RDTSCP` in guest
+* Allow `RDTSCP` in guest (`bug_003`)
 	* Intel v3 17.17.2 IA32_TSC_AUX Register and RDTSCP Support
+* Propagate RDMSR exception to guest (`bug_004`)
+	* Intel v3 25.6 EVENT INJECTION
+* (Now can boot Debian 11 in QEMU, x86 and x64)
+* Check `INVPCID` and `RDTSCP` before setting them in VMCS (`bug_005`)
+* (Now can boot Ubuntu 12.04 in HP, x86 and x64)
+
+`e74a28b83..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

@@ -9,6 +9,7 @@ RUN useradd lxy && \
 USER lxy
 
 RUN sudo apt-get install crossbuild-essential-i386 -y
+RUN sudo apt-get install pkg-config -y
 # Problem: Docker is 64-bit, but 32-bit libgcc.a is installed in
 # /usr/lib/gcc-cross/i686-linux-gnu/10/libgcc.a, expected /usr/lib/gcc
 # Ideal way is to use i686-linux-gnu-gcc etc.

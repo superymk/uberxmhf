@@ -27,5 +27,5 @@ When guest OS tries to enable paging by setting `CR0.PG`, the VMM sees an
 
 ## Fix
 `19f921c3c..c2d641da3`
-When copying `MSR_EFER` from host to guest, clear `LME` and `LMA` flags
+* When copying `MSR_EFER` from host to guest, clear `LME` and `LMA` flags
 

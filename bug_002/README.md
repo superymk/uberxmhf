@@ -112,5 +112,5 @@ c
 
 ## Fix
 `eca643c3c..3b8955c74`
-Set VMCS control field to enable the INVPCID instruction
+* Set VMCS control field to enable the INVPCID instruction
 

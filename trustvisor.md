@@ -32,3 +32,9 @@ Use gdb, break at `vmcall()`, see list of VMCALLs
 	* esx = 0
 	* eix = 0
 
+## Demo
+
+Difficult to write a ld script, so use dynamic memory allocation instead.
+
+Working demo in `hypapps/trustvisor/pal_demo/`, only works in x86.
+

@@ -1,0 +1,53 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-bootloader/smp.c b/xmhf/src/xmhf-core/xmhf-bootloader/smp.c
+index 54311cfbc..d8df227a7 100644
+--- a/xmhf/src/xmhf-core/xmhf-bootloader/smp.c
++++ b/xmhf/src/xmhf-core/xmhf-bootloader/smp.c
+@@ -97,6 +97,7 @@ u32 smp_getinfo(PCPU *pcpus, u32 *num_pcpus){
+ 	}
+ 	
+ 	printf("\nACPI RSDP at 0x%08x", (u32)rsdp);
++	printf("\nACPI RSDP revision 0x%08x", (u32)(rsdp->revision));
+ 
+ #if 0	
+ 	xsdt=(ACPI_XSDT *)(u32)rsdp->xsdtaddress;
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
+index 46ccbf5cd..910fb3bd3 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
+@@ -428,16 +428,36 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
+ //---CR0 access handler-------------------------------------------------
+ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gpr, u32 tofrom){
+ 	u32 cr0_value;
++	u32 _0, _1, _2, _3, _4, _5, _6;
+ 	
+ 	HALT_ON_ERRORCOND(tofrom == VMX_CRX_ACCESS_TO);
+ 	
+ 	cr0_value = *((u32 *)_vmx_decode_reg(gpr, vcpu, r));
+ 
++	_0 = vcpu->vmcs.guest_CR0;
++	_1 = cr0_value;
++	_2 = vcpu->vmcs.control_CR0_shadow;
++	_3 = vcpu->vmcs.control_CR0_mask;
++
+ 	//printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
+ 	//	(u32)vcpu->vmcs.guest_CR0, cr0_value);
+ 
+ 	vcpu->vmcs.control_CR0_shadow = cr0_value;
+ 	vcpu->vmcs.guest_CR0 = cr0_value & ~(CR0_CD | CR0_NW);
++
++	if (cr0_value == 0x60000011U) {
++		printf("\ncr0-manual change 2");
++		// vcpu->vmcs.control_CR0_shadow = 0x60000011;
++		// vcpu->vmcs.guest_CR0 = 0x60000011;
++		vcpu->vmcs.guest_CR0 = 0x00000031U;
++	}
++
++	_4 = vcpu->vmcs.guest_CR0;
++	_5 = vcpu->vmcs.control_CR0_shadow;
++	_6 = vcpu->vmcs.control_CR0_mask;
++
++	printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x, shadow=0x%08x, mask=0x%08x, post_cr0=0x%08x, post_shadow=0x%08x, post_mask=0x%08x", vcpu->id,
++		_0, _1, _2, _3, _4, _5, _6);
+ 	
+ 	//flush mappings
+ 	xmhf_memprot_arch_x86vmx_flushmappings(vcpu);

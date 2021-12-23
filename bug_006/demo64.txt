@@ -1,0 +1,56 @@
+TV[0]:scode.c:scode_register:508:                  cpu 0 setting root pm from 0x1067b000 to 0x1067e000
+TV[0]:scode.c:scode_register:508:                  cpu 1 setting root pm from 0x1067c000 to 0x1067e000
+TV[0]:scode.c:scode_register:508:                  cpu 2 setting root pm from 0x1067d000 to 0x1067e000
+TV[0]:scode.c:scode_register:508:                  cpu 3 setting root pm from 0x1067e000 to 0x1067e000
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x03): add to whitelist,  scode_info 0x13f75b0, scode_pm 0x13f7630, gventry 0xb7f8a006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x4baf000, entry point vaddr is 0xb7f8a006, paddr is 0x9673006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x13f7630, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 13f75b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xb7f8a000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xb7f58000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xb7f57000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xb7f56000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000b7f8a000 to 00000000b7f8a000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 0000000009673067, level 1, type 0
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000b7f58000 to 00000000b7f58000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 0000000009669067, level 1, type 0
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000b7f57000 to 00000000b7f57000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 0000000009674067, level 1, type 0
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000b7f56000 to 00000000b7f56000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 0000000009678067, level 1, type 0
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0xb7f8a006, gpa=0x9673006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0xb7f8a006, gcr3 0x4baf000, gpaddr 0x9673006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xb7f8a006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x4b95fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xbfbded3c, switch to sensitive code stack 0xb7f57ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0x1
+HPT[3]:/home/lxy/Documents/GreenBox/build64/xmhf/src/libbaremetal/libxmhfutil/hptw.c:hptw_checked_access_va:325: EU_CHK( ((access_type & hpt_pmeo_getprot(&pmeo)) == access_type) && (cpl == HPTW_CPL0 || hpt_pmeo_getuser(&pmeo))) failed
+HPT[3]:/home/lxy/Documents/GreenBox/build64/xmhf/src/libbaremetal/libxmhfutil/hptw.c:hptw_checked_access_va:325: req-priv:2 req-cpl:3 priv:5 user-accessible:1
+TV[3]:scode.c:scode_marshall:813:                  EU_CHKN( hptw_checked_copy_to_va( &whitelist[curr].hptw_pal_checked_guest_ctx.super, HPTW_CPL3, pm_addr, &whitelist[curr].gpm_num, sizeof(whitelist[curr].gpm_num))) failed with: 1
+TV[3]:scode.c:hpt_scode_switch_scode:937:          EU_CHKN( scode_marshall(vcpu)) failed with: 1
+TV[0]:scode.c:hpt_scode_switch_scode:997:          released pal_running lock!
+TV[3]:scode.c:hpt_scode_npf:1206:                  EU_CHKN( hpt_scode_switch_scode(vcpu)) failed with: 1
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:587: FATAL ERROR: Unexpected return value from page fault handling

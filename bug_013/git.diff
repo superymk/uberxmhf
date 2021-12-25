@@ -1,0 +1,55 @@
+diff --git a/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h b/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
+index 20881bd3f..4d642b7e7 100644
+--- a/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
++++ b/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
+@@ -228,6 +228,13 @@ typedef struct _vcpu {
+   u32 vmx_guest_unrestricted;   //this is 1 if the CPU VMX implementation supports unrestricted guest execution
+   struct _vmx_vmcsfields vmcs;   //the VMCS fields
+ 
++  /* Stack canary at the bottom */
++#ifdef __DEBUG_QEMU__
++  spa_t stack_top;
++  spa_t stack_bottom;
++  uintptr_t canary_value;
++#endif /* __DEBUG_QEMU__ */
++
+ } __attribute__((packed)) VCPU;
+ 
+ #define SIZE_STRUCT_VCPU    (sizeof(struct _vcpu))
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-smp.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-smp.c
+index a87e5738d..5dda01c5a 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-smp.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-smp.c
+@@ -68,7 +68,16 @@ void xmhf_baseplatform_arch_x86_64vmx_allocandsetupvcpus(u32 cpu_vendor){
+     vcpu->cpu_vendor = cpu_vendor;
+     
+ 	//allocate runtime stack
+-    vcpu->rsp = ((hva_t)g_cpustacks + (i * RUNTIME_STACK_SIZE)) + RUNTIME_STACK_SIZE;    
++    vcpu->rsp = ((hva_t)g_cpustacks + (i * RUNTIME_STACK_SIZE)) + RUNTIME_STACK_SIZE;
++
++    // set up stack canary at bottom of the stack to detect stack overflow
++#ifdef __DEBUG_QEMU__
++    vcpu->stack_top = vcpu->rsp;
++    vcpu->stack_bottom = vcpu->rsp - RUNTIME_STACK_SIZE;
++    /* "xmhfXMHF" in big endian */
++    vcpu->canary_value = 0x786d6866584d4846 + i;
++    *((uintptr_t *)vcpu->stack_bottom) = vcpu->canary_value;
++#endif /* __DEBUG_QEMU__ */
+ 
+     //allocate VMXON memory region
+     vcpu->vmx_vmxonregion_vaddr = ((hva_t)g_vmx_vmxon_buffers + (i * PAGE_SIZE_4K)) ;
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+index 541243637..8ba8cece8 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+@@ -832,5 +832,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
+ 	assert( (vcpu->vmcs.control_EPT_pointer_high == 0) && (vcpu->vmcs.control_EPT_pointer_full == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) );
+ #endif	
+ 
++#ifdef __DEBUG_QEMU__
++	/* Detect possible stack overflow */
++	HALT_ON_ERRORCOND(*((uintptr_t *)vcpu->stack_bottom) == vcpu->canary_value);
++#endif /* __DEBUG_QEMU__ */
++
+ 	return 1;
+ }

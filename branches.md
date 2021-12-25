@@ -125,7 +125,22 @@
 * Check `INVPCID` and `RDTSCP` before setting them in VMCS (`bug_005`)
 * (Now can boot Ubuntu 12.04 in HP, x86 and x64)
 
-`e74a28b83..`
+`e74a28b83..e945f7b27`
+* Change TrustVisor code to use correct size (`bug_006`)
+* Follow CR0 fields that need to be 1 (`bug_008`)
+* Do not forward read / write of EFER MSR (`bug_009`)
+* Set "IA-32e mode guest" VM Entry Control correctly (`bug_009`)
+* Do not forward read / write of GS base MSR (`bug_010`)
+* Disable x2APIC in CPUID (`bug_011`)
+* (Now can boot x64 Debian in QEMU, HP no regression, HP x86 Debian 11 success)
+
+`e945f7b27..565cef3cf`
+* Double runtime stack size for x64 (`bug_013`)
+* Update `hpt_emhf_get_guest_hpt_type()` to detect long mode paging (`bug_012`)
+* Fix typo of `assert(lvl<=3);` for `HPT_TYPE_LONG` (`bug_012`)
+* (Now can run TrustVisor `pal_demo` in x64 XMHF x64 Debian 11)
+
+`565cef3cf..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

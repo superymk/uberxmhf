@@ -112,6 +112,8 @@ In x86 Debian 11, a lot more accesses are made.
 
 ### Analyze how Linux wakes up CPUs
 
+#### x64
+
 We want to debug the `do_boot_cpu()` function in Linux. First break at
 `_vmx_handle_intercept_xsetbv`, 
 
@@ -207,20 +209,23 @@ do_boot_cpu()
 						...
 ```
 
-# Temporary notes
+#### x86
 
-TODO: compare how x86 and x64 Linux wakes up CPUs. Look different. See `do_boot_cpu()`
-Looks like the APIC is accessed through MSRs, not memory.
-* TODO: study x2apic, looks like need to edit wrmsr intercept.
-It is strange why x86 and x64 have different behavior
-* TODO: debug `do_boot_cpu()` in x86
+x86 only uses `native_apic_mem_write` and `native_apic_mem_read`. i.e. no
+`native_apic_msr_write` etc.
 
-```
-# Make sure RIP starts with 0xffffffff
-source gdb/x64_linux_sym.gdb
-b do_boot_cpu
-c
-b wakeup_cpu_via_init_nmi
-c
-```
+Currently not fully debugged yet.
+
+### x2APIC
+
+Intel volume 3 "10.12 EXTENDED XAPIC (X2APIC)" introduces x2APIC. Availability
+is tested through CPUID instruction, operation is done through MSRs.
+
+After removing `CPUID.(EAX=1):ECX.21`, x64 Debian 11 will no longer access
+x2APIC. It will fall back to normal APIC, and boot successfully.
+
+## Fix
+
+`de16a3daf..e945f7b27`
+* Remove x2APIC capability in CPUID, disallow x2APIC MSR access
 

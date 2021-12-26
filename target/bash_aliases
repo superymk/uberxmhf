@@ -1,2 +1,4 @@
 alias init0="sudo init 0"
 alias init6="sudo init 6"
+unalias grub 2> /dev/null
+grub () { sudo grub-editenv /boot/grub/grubenv set next_entry="$1"; }

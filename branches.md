@@ -138,7 +138,7 @@
 * Double runtime stack size for x64 (`bug_013`)
 * Update `hpt_emhf_get_guest_hpt_type()` to detect long mode paging (`bug_012`)
 * Fix typo of `assert(lvl<=3);` for `HPT_TYPE_LONG` (`bug_012`)
-* (Now can run TrustVisor `pal_demo` in x64 XMHF x64 Debian 11)
+* (Now can run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
 
 `565cef3cf..`
 

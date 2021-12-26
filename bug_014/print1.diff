@@ -1,0 +1,33 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+index 541243637..53614b36e 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+@@ -593,6 +593,28 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
+ 		HALT();
+ 	}
+ 
++	{
++		static u32 start_log = 0;
++		static u32 global_halt = 0;
++		if (!start_log) {
++			if (vcpu->id) {
++				start_log = 1;
++			}
++		}
++		if (start_log) {
++			printf("\nIntercept: 0x%02x 0x%08x 0x%016llx 0x%016llx ;", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.info_exit_qualification, vcpu->vmcs.guest_RIP);
++		}
++
++		if (global_halt) {
++			printf("\n0x%02x halt due to global_halt", vcpu->id);
++			HALT();
++		}
++		if (vcpu->vmcs.info_vmexit_reason == 0x2) {
++			printf("\n0x%02x set global_halt", vcpu->id);
++			global_halt = 1;
++		}
++	}
++
+ 	//handle intercepts
+ 	switch((u32)vcpu->vmcs.info_vmexit_reason){
+ 		//--------------------------------------------------------------

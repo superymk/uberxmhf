@@ -155,7 +155,6 @@ NG_PS_L32_MP_BIT));
 ## Fix
 
 `ae0968f19..565cef3cf`
-* Remove x2APIC capability in CPUID, disallow x2APIC MSR access
 * Update `hpt_emhf_get_guest_hpt_type()` to detect long mode paging
 * Fix typo of `assert(lvl<=3);` for `HPT_TYPE_LONG`
 

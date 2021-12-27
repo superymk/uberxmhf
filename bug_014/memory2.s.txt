@@ -1,0 +1,145 @@
+Source: arch/x86/realmode/rm/trampoline_64.S
+
+.code16
+<trampoline_start>
+   9a000:	fa                   	cli    
+   9a001:	0f 09                	wbinvd 
+   9a003:	ea 08 10 00 99       	ljmp   $0x9900,$0x1008
+   9a008:	8c c8                	mov    %cs,%ax
+   9a00a:	8e d8                	mov    %ax,%ds
+   9a00c:	8e c0                	mov    %ax,%es
+   9a00e:	8e d0                	mov    %ax,%ss
+   9a010:	66 bc 20 50 00 00    	mov    $0x5020,%esp
+   9a016:	e8 37 00             	call   0x9a050
+   9a019:	66 85 c0             	test   %eax,%eax
+   9a01c:	75 20                	jne    0x9a03e
+   9a01e:	66 0f 01 1e 50 00    	lidtl  0x50
+   9a024:	66 0f 01 16 30 00    	lgdtl  0x30
+   9a02a:	ba 18 00             	mov    $0x18,%dx
+   9a02d:	66 b8 01 00 00 00    	mov    $0x1,%eax
+   9a033:	0f 22 c0             	mov    %eax,%cr0
+   9a036:	66 ea 30 ae 09 00 08 	ljmpl  $0x8,$0x9ae30
+   9a03d:	00 
+   9a03e:	f4                   	hlt    
+   9a03f:	eb fd                	jmp    0x9a03e
+   9a041:	8d b4 26 00          	lea    0x26(%si),%si
+   9a045:	00 00                	add    %al,(%bx,%si)
+   9a047:	00 8d b4 26          	add    %cl,0x26b4(%di)
+   9a04b:	00 00                	add    %al,(%bx,%si)
+   9a04d:	00 00                	add    %al,(%bx,%si)
+   9a04f:	90                   	nop
+
+<verify_cpu>
+   9a050:	9c                   	pushf  
+   9a051:	6a 00                	push   $0x0
+   9a053:	9d                   	popf   
+   9a054:	66 9c                	pushfl 
+   9a056:	66 58                	pop    %eax
+   9a058:	66 89 c3             	mov    %eax,%ebx
+   9a05b:	66 35 00 00 20 00    	xor    $0x200000,%eax
+   9a061:	66 50                	push   %eax
+   9a063:	66 9d                	popfl  
+   9a065:	66 9c                	pushfl 
+   9a067:	66 58                	pop    %eax
+   9a069:	66 39 c3             	cmp    %eax,%ebx
+   9a06c:	0f 84 fb 00          	je     0x9a16b
+   9a070:	66 b8 00 00 00 00    	mov    $0x0,%eax
+   9a076:	0f a2                	cpuid  
+   9a078:	66 83 f8 01          	cmp    $0x1,%eax
+   9a07c:	0f 82 eb 00          	jb     0x9a16b
+   9a080:	31 ff                	xor    %di,%di
+   9a082:	66 81 fb 41 75 74 68 	cmp    $0x68747541,%ebx
+   9a089:	75 17                	jne    0x9a0a2
+   9a08b:	66 81 fa 65 6e 74 69 	cmp    $0x69746e65,%edx
+   9a092:	75 0e                	jne    0x9a0a2
+   9a094:	66 81 f9 63 41 4d 44 	cmp    $0x444d4163,%ecx
+   9a09b:	75 05                	jne    0x9a0a2
+   9a09d:	bf 01 00             	mov    $0x1,%di
+   9a0a0:	eb 5a                	jmp    0x9a0fc
+   9a0a2:	66 81 fb 47 65 6e 75 	cmp    $0x756e6547,%ebx
+   9a0a9:	75 51                	jne    0x9a0fc
+   9a0ab:	66 81 fa 69 6e 65 49 	cmp    $0x49656e69,%edx
+   9a0b2:	75 48                	jne    0x9a0fc
+   9a0b4:	66 81 f9 6e 74 65 6c 	cmp    $0x6c65746e,%ecx
+   9a0bb:	75 3f                	jne    0x9a0fc
+   9a0bd:	66 b8 01 00 00 00    	mov    $0x1,%eax
+   9a0c3:	0f a2                	cpuid  
+   9a0c5:	66 89 c1             	mov    %eax,%ecx
+   9a0c8:	66 25 00 0f f0 0f    	and    $0xff00f00,%eax
+   9a0ce:	66 c1 e8 08          	shr    $0x8,%eax
+   9a0d2:	66 83 f8 06          	cmp    $0x6,%eax
+   9a0d6:	77 13                	ja     0x9a0eb
+   9a0d8:	72 22                	jb     0x9a0fc
+   9a0da:	66 81 e1 f0 00 0f 00 	and    $0xf00f0,%ecx
+   9a0e1:	66 c1 e9 04          	shr    $0x4,%ecx
+   9a0e5:	66 83 f9 0d          	cmp    $0xd,%ecx
+   9a0e9:	72 11                	jb     0x9a0fc
+   9a0eb:	66 b9 a0 01 00 00    	mov    $0x1a0,%ecx
+   9a0f1:	0f 32                	rdmsr  
+   9a0f3:	66 0f ba f2 02       	btr    $0x2,%edx
+   9a0f8:	73 02                	jae    0x9a0fc
+   9a0fa:	0f 30                	wrmsr  
+   9a0fc:	66 b8 01 00 00 00    	mov    $0x1,%eax
+   9a102:	0f a2                	cpuid  
+   9a104:	66 81 e2 61 81 00 07 	and    $0x7008161,%edx
+   9a10b:	66 81 f2 61 81 00 07 	xor    $0x7008161,%edx
+   9a112:	75 57                	jne    0x9a16b
+   9a114:	66 b8 00 00 00 80    	mov    $0x80000000,%eax
+   9a11a:	0f a2                	cpuid  
+   9a11c:	66 3d 01 00 00 80    	cmp    $0x80000001,%eax
+   9a122:	72 47                	jb     0x9a16b
+   9a124:	66 b8 01 00 00 80    	mov    $0x80000001,%eax
+   9a12a:	0f a2                	cpuid  
+   9a12c:	66 81 e2 00 00 00 20 	and    $0x20000000,%edx
+   9a133:	66 81 f2 00 00 00 20 	xor    $0x20000000,%edx
+   9a13a:	75 2f                	jne    0x9a16b
+   9a13c:	66 b8 01 00 00 00    	mov    $0x1,%eax
+   9a142:	0f a2                	cpuid  
+   9a144:	66 81 e2 00 00 00 06 	and    $0x6000000,%edx
+   9a14b:	66 81 fa 00 00 00 06 	cmp    $0x6000000,%edx
+   9a152:	74 1f                	je     0x9a173
+   9a154:	85 ff                	test   %di,%di
+   9a156:	74 13                	je     0x9a16b
+   9a158:	66 b9 15 00 01 c0    	mov    $0xc0010015,%ecx
+   9a15e:	0f 32                	rdmsr  
+   9a160:	66 0f ba f0 0f       	btr    $0xf,%eax
+   9a165:	0f 30                	wrmsr  
+   9a167:	31 ff                	xor    %di,%di
+   9a169:	eb d1                	jmp    0x9a13c
+   9a16b:	9d                   	popf   
+   9a16c:	66 b8 01 00 00 00    	mov    $0x1,%eax
+   9a172:	c3                   	ret    
+   9a173:	9d                   	popf   
+   9a174:	66 31 c0             	xor    %eax,%eax
+   9a177:	c3                   	ret    
+
+.code32
+<startup_32>
+   9ae30:	8e d2                	mov    %edx,%ss
+   9ae32:	81 c4 00 90 09 00    	add    $0x99000,%esp
+   9ae38:	8e da                	mov    %edx,%ds
+   9ae3a:	8e c2                	mov    %edx,%es
+   9ae3c:	8e e2                	mov    %edx,%fs
+   9ae3e:	8e ea                	mov    %edx,%gs
+
+   9ae40:	0f ba 25 14 d0 09 00 	btl    $0x0,0x9d014
+   9ae47:	00 
+   9ae48:	73 0f                	jae    0x9ae59
+   9ae4a:	b9 10 00 01 c0       	mov    $0xc0010010,%ecx
+   9ae4f:	0f 32                	rdmsr  
+   9ae51:	0f ba e8 17          	bts    $0x17,%eax
+   9ae55:	72 02                	jb     0x9ae59
+   9ae57:	0f 30                	wrmsr  
+
+   9ae59:	a1 10 d0 09 00       	mov    0x9d010,%eax
+   9ae5e:	0f 22 e0             	mov    %eax,%cr4
+   9ae61:	b8 00 c0 09 00       	mov    $0x9c000,%eax
+   9ae66:	0f 22 d8             	mov    %eax,%cr3
+   9ae69:	a1 08 d0 09 00       	mov    0x9d008,%eax
+   9ae6e:	8b 15 0c d0 09 00    	mov    0x9d00c,%edx
+   9ae74:	b9 80 00 00 c0       	mov    $0xc0000080,%ecx
+   9ae79:	0f 30                	wrmsr  
+   9ae7b:	b8 01 00 01 80       	mov    $0x80010001,%eax
+   9ae80:	0f 22 c0             	mov    %eax,%cr0
+   9ae83:	ea e0 ae 09 00 10 00 	ljmp   $0x10,$0x9aee0
+

@@ -1,0 +1,66 @@
+Intercept: 0x01 0x00000020 0x0000000000000000 0x0008:0x000000000009ae79 ;
+	rax = 0x0000000000000901
+	rbx = 0x0000000001100800
+	rcx = 0x00000000c0000080
+	rdx = 0x0000000000000000
+	cr0 = 0x0000000000000031
+	cr3 = 0x000000000009c000
+	cr4 = 0x00000000000026b0
+	exc = 0x0000000000036fff
+	enc = 0x00000000000011ff
+	efer= 0x0000000000000000
+	mem *0009c000 = 0x0000000003201067
+	mem *03201000 = 0x0000000003202067
+	mem *03202000 = 0x0000000003203067
+	mem *032034d0 = 0x000000000009a061
+	mem *0009d000 = 0xffffffff81000040
+	mem *0009d008 = 0x0000000000000901
+	mem *0009d010 = 0x00000000000026b0
+	vmx_msrs[0] = 0x00da04000000000f
+	vmx_msrs[1] = 0x0000007f00000016
+	vmx_msrs[2] = 0xfff9fffe0401e172
+	vmx_msrs[3] = 0x007fffff00036dff
+	vmx_msrs[4] = 0x0000ffff000011ff
+	vmx_msrs[5] = 0x00000000000401e7
+	vmx_msrs[6] = 0x0000000080000021
+	vmx_msrs[7] = 0x00000000ffffffff
+	vmx_msrs[8] = 0x0000000000002000
+	vmx_msrs[9] = 0x00000000000267ff
+	vmx_msrs[10] = 0x000000000000002a
+	vmx_msrs[11] = 0x000000ff00000000
+	vmx_guest_unrestricted = 0x00000001
+	vmx_msr_efer = 0x0000000000000500
+	vmx_msr_efcr = 0x000000000000ff07
+Guest State follows:
+guest_CS_selector=0x0008
+guest_DS_selector=0x0018
+guest_ES_selector=0x0018
+guest_FS_selector=0x0018
+guest_GS_selector=0x0018
+guest_SS_selector=0x0018
+guest_TR_selector=0x0000
+guest_LDTR_selector=0x0000
+guest_CS_access_rights=0x0000c09b
+guest_DS_access_rights=0x0000c093
+guest_ES_access_rights=0x0000c093
+guest_FS_access_rights=0x0000c093
+guest_GS_access_rights=0x0000c093
+guest_SS_access_rights=0x0000c093
+guest_TR_access_rights=0x00000083
+guest_LDTR_access_rights=0x00010000
+guest_CS_base/limit=0x00000000/0xffff
+guest_DS_base/limit=0x00000000/0xffff
+guest_ES_base/limit=0x00000000/0xffff
+guest_FS_base/limit=0x00000000/0xffff
+guest_GS_base/limit=0x00000000/0xffff
+guest_SS_base/limit=0x00000000/0xffff
+guest_GDTR_base/limit=0x00099030/0x001f
+guest_IDTR_base/limit=0x00000000/0x0000
+guest_TR_base/limit=0x00000000/0x0000
+guest_LDTR_base/limit=0x00000000/0x0000
+guest_CR0=0x00000031, guest_CR4=0x000026b0, guest_CR3=0x0009c000
+guest_RSP=0x0009e020
+guest_RIP=0x0009ae79
+guest_RFLAGS=0x00200002
+	NOP Loop
+

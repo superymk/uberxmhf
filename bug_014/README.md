@@ -189,12 +189,233 @@ IA-32e Mode and 4-Level Paging" may be helpful.
 * CS points to the correct GDT entry
 * (TODO: Incomplete)
 
+### Compare full VMCS
+
+Use `amt.py` to automatically save serial output to file (`/tmp/hpamt`).
+Use grep to remove uninteresting data above intercepts.
+```
+grep -A100000 Intercept /tmp/amt > /tmp/q
+grep -A100000 Intercept /tmp/hpamt > /tmp/h
+```
+
+Program in `print4.c`, output in `intercept_4_hp.txt` and
+`intercept_4_qemu.txt`.
+
+Difference in VMCS fields are:
+* `vcpu->vmx_msrs`
+	* Should be unrelated
+* `vcpu->vmx_msr_efcr`
+	* HP:   `0x000000000000ff07`
+	* QEMU: `0x0000000000000005`
+	* Should be unrelated
+* `vcpu->vmcs.control_VMX_seccpu_based`
+	* HP:   `0x000000aa`
+	* QEMU: `0x000010aa`
+	* HP does not enable `Enable INVPCID` because not supported. OK.
+* `vcpu->vmcs.host_CR4`
+	* HP  : `0x0000000000002668`
+	* QEMU: `0x0000000000042020`
+	* Looks like unrelated fields. Also this is **host** CR4, should be OK
+* `vcpu->vmcs.info_vminstr_error`
+	* HP  : `0x00000000`
+	* QEMU: `0x0000000c`
+	* Related to unsupported VMREAD / VMWRITE in QEMU, OK.
+* `vcpu->vmcs.info_guest_linear_address`
+	* HP  : `0x0000000000000000`
+	* QEMU: `0x000000000009d014`
+	* This field is undefined for intercepts not using this field. So OK.
+
+### Running normal virtual machines in HP
+
+Just to make sure that HP supports x64 SMP virtual machines.
+
+Install QEMU and KVM in HP, can boot x64 Debian with 4 cores. VMX are also
+enabled in the QEMU virtual machine. So HP hardware should be OK.
+
+### Intercepting change in CR0.PG
+
+A better NOP loop for GDB (just change RAX to exit the loop):
+```c
+asm volatile("xor %%rax, %%rax; 1: test %%rax, %%rax; jz 1b; nop; nop;" : : : "%rax", "cc");
+```
+
+We intercept change to CR0's PG (paging) bit. First, we need to make sure
+intercepting this bit works correctly.
+
+Patch commit `ff1efb9d3` with `cr0_5.diff`, and run it in x64 XMHF x86 Debian
+QEMU, we see that everything works well.
+
+If run it in x64 XMHF x64 Debian QEMU, see VM-ENTRY error in AP. The behavior
+of HP and QEMU are the same. Ideally, adding this interception should only
+cause performance downgrade. So the error means that the hypervisor should be
+making some invalid configurations.
+
+We have now reproduced some bug on QEMU. QEMU allows debugging, so it makes our
+life easier. Also, there is a check list in Intel's manual for checking the
+reason of VM-ENTRY error.
+
+### Changes in CR0
+
+The two CR0 intercepts in QEMU are:
+
+```
+[cr0-01] MOV TO, current=0x00000020, proposed=0x00000001
+[cr0-01]       mask: 0x00000000e0000020
+[cr0-01] requested : 0x0000000000000001
+[cr0-01] old gstCR0: 0x0000000000000020
+[cr0-01] old shadow: 0x0000000000000020
+[cr0-01] old entctl: 0x00000000000011ff
+[cr0-01] guest efer: 0x0000000000000000
+[cr0-01] new gstCR0: 0x0000000000000021
+[cr0-01] new shadow: 0x0000000000000001
+[cr0-01] new entctl: 0x00000000000011ff
+[cr0-01] MOV TO, current=0x00000021, proposed=0x80010001
+[cr0-01]       mask: 0x00000000e0000020
+[cr0-01] requested : 0x0000000080010001
+[cr0-01] old gstCR0: 0x0000000000000021
+[cr0-01] old shadow: 0x0000000000000001
+[cr0-01] old entctl: 0x00000000000011ff
+[cr0-01] guest efer: 0x0000000000000901
+[cr0-01] new gstCR0: 0x0000000080010021
+[cr0-01] new shadow: 0x0000000080010001
+[cr0-01] new entctl: 0x00000000000013ff
+VM-ENTRY error: reason=0x80000021, qualification=0x0000000000000000
+...
+```
+
+For reference, there are 3 intercepts on BSP that changes CR0.PG:
+```
+[cr0-00] MOV TO, current=0x00000021, proposed=0x80000001
+[cr0-00]       mask: 0x00000000e0000020
+[cr0-00] requested : 0x0000000080000001
+[cr0-00] old gstCR0: 0x0000000000000021
+[cr0-00] old shadow: 0x0000000000000020
+[cr0-00] old entctl: 0x00000000000011ff
+[cr0-00] guest efer: 0x0000000000000100
+[cr0-00] new gstCR0: 0x0000000080000021
+[cr0-00] new shadow: 0x0000000080000001
+[cr0-00] new entctl: 0x00000000000013ff
+[cr0-00] MOV TO, current=0x80000021, proposed=0x00000001
+[cr0-00]       mask: 0x00000000e0000020
+[cr0-00] requested : 0x0000000000000001
+[cr0-00] old gstCR0: 0x0000000080000021
+[cr0-00] old shadow: 0x0000000080000001
+[cr0-00] old entctl: 0x00000000000013ff
+[cr0-00] guest efer: 0x0000000000000500
+[cr0-00] new gstCR0: 0x0000000000000021
+[cr0-00] new shadow: 0x0000000000000001
+[cr0-00] new entctl: 0x00000000000011ff
+[cr0-00] MOV TO, current=0x00000021, proposed=0x80000001
+[cr0-00]       mask: 0x00000000e0000020
+[cr0-00] requested : 0x0000000080000001
+[cr0-00] old gstCR0: 0x0000000000000021
+[cr0-00] old shadow: 0x0000000000000001
+[cr0-00] old entctl: 0x00000000000011ff
+[cr0-00] guest efer: 0x0000000000000100
+[cr0-00] new gstCR0: 0x0000000080000021
+[cr0-00] new shadow: 0x0000000080000001
+[cr0-00] new entctl: 0x00000000000013ff
+```
+
+There are 3 transitions from no paging to long mode. One in AP (failed), and
+two in BSP (good). We can compare them:
+```
+Same fields:
+		  mask = 0xe0000020
+	old gstCR0 = 0x00000021
+	old entctl = 0x000011ff
+	new entctl = 0x000013ff
+
+stat	requested 	old shadow	guest efer	new gstCR0	new shadow
+bad 	0x80010001	0x00000001	0x00000901	0x80010021	0x80010001
+good	0x80000001	0x00000020	0x00000100	0x80000021	0x80000001
+good	0x80000001	0x00000001	0x00000100	0x80000021	0x80000001
+```
+
+We guess that if we change CR0 and EFER from bad value to good value, VM-ENTRY
+should now succeed. Also, if we do not change anything, VM-ENTRY should
+still succeed.
+
+Changed bits are:
+	* `control_VM_entry_controls`.(bit 9)
+	* CR0.WP
+	* CR0.PG
+
+Different bits between good and bad are:
+	* CR0.WP (`bit 12, 0x10000`, Intel v3 page 75)
+	* EFER.SCE (`bit 0, 0x1`, Intel v4 page 70)
+	* EFER.NXE (`bit 11, 0x800`, Intel v4 page 70)
+
+### Experiment with set CR0 intercept
+
+Experiment cases:
+* No change: bad
+* Prevent setting CR0.PG: good
+* Prevent setting CR0.WP: bad
+* Prevent setting CR0.WP, remove EFER.SCE and EFER.NXE: bad
+
+Currently the state printed in serial output looks like the second good above.
+This is strange.
+
+Following Intel volume 3 "25.3.1 Checks on the Guest State Area", the
+"Access-rights fields" for "TR"'s "Bits 3:0 (Type)" says:
+> If the guest will be IA-32e mode, the Type must be 11 (64-bit busy TSS).
+
+However, after halt and connecting GDB, looks like type is 3:
+```
+(gdb) p/x vcpu->vmcs.guest_TR_access_rights & 0xf
+$14 = 0x3
+(gdb) 
+```
+
+### Checking TR access rights
+
+Looks like a likely cause. In all CR0 intercepts on BSP,
+`vcpu->vmcs.guest_TR_access_rights = 0x0000808b`. But on AP,
+`vcpu->vmcs.guest_TR_access_rights = 0x00000083`.
+
+In Intel's manual, there are no useful information if search for
+"TR access rights". Should search for "access rights".
+
+The access rights structure is defined in
+Intel v3 "23.4.1 Guest Register State": see Table 23-2
+
+According to Intel v3 "25.3.1.2 Checks on Guest Segment Registers" and
+"25.3.2.2 Loading Guest Segment Registers and Descriptor-Table Registers",
+TR must be usable.
+
 ### Temporary notes
 
-TODO: write script to record HP AMT to file
-TODO: dump VMCS in serial output and compare
-TODO: try to change VMCS to let the first fault in the triple fault cause VMEXIT
+TODO: why?
+
+TODO: check `vcpu->vmcs.guest_TR_access_rights = 0x83;` in `part-x86_64vmx.c`
+
+TODO: LAR-Load Access Rights Byte
+TODO: Some places mention that "segment selector is not null"
+
+TODO: if not intercepting CR0.PG, will QEMU automatically change TR access right?
+TODO: does changing TR access right fix the problem?
+(TODO: check TR)
+
+```
+t 2
+symbol-file xmhf/src/xmhf-core/xmhf-runtime/runtime.exe
+p $rax = 1
+b vmx_handle_intercept_cr0access_ug thread 2
+c
+
+p/x vcpu->vmcs.guest_CR0
+p/x vcpu->vmcs.control_CR0_shadow
+p/x vcpu->vmcs.control_CR0_mask
+p/x vcpu->vmcs.control_VM_entry_controls
+
+b xmhf_parteventhub_arch_x86_64vmx_intercept_handler thread 2
+```
+
 TODO: try to intercept the write to CR0, and see whether VMENTRY fail occurs
+	TODO: does masking CR0.PG work correctly in x64 XMHF x86 Debian?
+TODO: try to change VMCS to let the first fault in the triple fault cause VMEXIT
 TODO: try to capture entire guest state and simulate (costs a lot of time)
-TODO: write triple fault check list
+TODO: consider fixing the problem in `bug_012`
+TODO: is it possible that QEMU has a bug?
 

@@ -1,0 +1,1226 @@
+fail
+10
+
+eXtensible Modular Hypervisor Framework (XMHF) v6.1.0
+Build revision: xmhf64-050a8138efa5d1899b06c607d8da146c11a4bc48
+
+INIT(early): initializing, total modules=3
+INIT(early): detected an Intel CPU
+Checking whether MBI module 2 is SINIT...
+YES! SINIT found @ 0x101000, 35776 bytes
+
+Finding SMP info. via ACPI...
+ACPI RSDP at 0x000f5870
+ACPI RSDT at 0x1ffe1a1c
+	len=0x00000034, headerlen=0x00000024, numentries=4
+ACPI MADT at 0x1ffe192c
+	len=0x00000090, record-length=100 bytes
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x00
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x01
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x02
+rec type=0x00, length=8 bytes, flags=0x00000001, id=0x03
+rec type=0x01, length=12 bytes, flags=0xfec00000, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000002, id=0x00
+rec type=0x02, length=10 bytes, flags=0x00000005, id=0x05
+rec type=0x02, length=10 bytes, flags=0x00000009, id=0x09
+rec type=0x02, length=10 bytes, flags=0x0000000a, id=0x0a
+rec type=0x02, length=10 bytes, flags=0x0000000b, id=0x0b
+rec type=0x04, length=6 bytes, flags=0x50480100, id=0x00
+original system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000f0000, size=0x0000000000010000 (2)
+0x0000000000100000, size=0x000000001fee0000 (1)
+0x000000001ffe0000, size=0x0000000000020000 (2)
+0x00000000feffc000, size=0x0000000000004000 (2)
+0x00000000fffc0000, size=0x0000000000040000 (2)
+proceeding to revise E820...
+E820 revision complete.
+revised system E820 map follows:
+
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000f0000, size=0x0000000000010000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x000000000a400000 (2)
+0x000000001a400000, size=0x0000000005be0000 (1)
+0x000000001ffe0000, size=0x0000000000020000 (2)
+0x00000000feffc000, size=0x0000000000004000 (2)
+0x00000000fffc0000, size=0x0000000000040000 (2)
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    INIT(early): *UNTRUSTED* gold runtime: 00 00 00 00
+hashandprint: processing 0x0a053000 bytes at addr 0x10200000
+    INIT(early): *UNTRUSTED* comp runtime: : 77 ca 4b 31 53 3f 30 71 a3 d3 48 04 d7 0e f1 9a a9 96 db 18
+
+    INIT(early): *UNTRUSTED* gold SL low 64K: c8 3b ce ea e6 bb 65 e1 f6 d4 e6 a3 e0 d0 70 20
+    INIT(early): *UNTRUSTED* gold SL low 64K: 61 51 38 12
+hashandprint: processing 0x00010000 bytes at addr 0x10000000
+    INIT(early): *UNTRUSTED* comp SL low 64K: : c8 3b ce ea e6 bb 65 e1 f6 d4 e6 a3 e0 d0 70 20 61 51 38 12
+
+    INIT(early): *UNTRUSTED* gold SL above 64K: 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be
+    INIT(early): *UNTRUSTED* gold SL above 64K: 47 6a 52 8a
+hashandprint: processing 0x001f0000 bytes at addr 0x10010000
+    INIT(early): *UNTRUSTED* comp SL above 64K): : 26 cd 5d 0e 54 05 ef e1 15 05 5d d4 a5 52 0e be 47 6a 52 8a
+
+INIT(early): relocated hypervisor binary image to 0x10000000
+INIT(early): 2M aligned size = 0x0a400000
+INIT(early): un-aligned size = 0x0a253000
+setupvcpus: cpustacks range 0x01e1f000-0x01e3f000 in 0x00004000 chunks
+setupvcpus: vcpubuffers range 0x01e0b080-0x01e16a00 in 0x00001730 chunks
+CPU #0: vcpu_vaddr_ptr=0x01e0b080, esp=0x01e23000
+CPU #1: vcpu_vaddr_ptr=0x01e0c7b0, esp=0x01e27000
+CPU #2: vcpu_vaddr_ptr=0x01e0dee0, esp=0x01e2b000
+CPU #3: vcpu_vaddr_ptr=0x01e0f610, esp=0x01e2f000
+Sending INIT IPI to all APs...Done.
+Sending SIPI-0...
+AP(0x01): Waiting for DRTM establishment...
+AP(0x03): Waiting for DRTM establishment...Done.
+AP(0x02): Waiting for DRTM establishment...
+Sending SIPI-1...Done.
+APs should be awake!
+BSP(0x00): Rallying APs...
+BSP(0x00): APs ready, doing DRTM...
+LAPIC base and status=0xfee00900
+Sending INIT IPI to all APs...
+Done.
+
+INIT(early): sent INIT IPI to APs
+****** NO DRTM startup ******
+
+slbase=0x10000000, sl_entry_point_offset=0x00003080
+SL entry point to transfer control to: 0x10003080
+SL(early-init): at 0x10000000, starting...
+SL: slpb at = 0x00010000
+	errorHandler=0x00000000
+	isEarlyInit=0x00000001
+	numE820Entries=9
+	system memory map buffer at 0x00010010
+	numCPUEntries=4
+	cpuinfo buffer at 0x00010514
+	runtime size= 168112128 bytes
+	OS bootmodule at 0x00100000, size=512 bytes
+	cmdline = "serial=115200,8n1,0x3f8"
+SL: RDTSC before_drtm 0x0, after_drtm 0x6298a895b
+SL: [PERF] RDTSC DRTM elapsed cycles: 0x6298a895b
+SL: runtime at 0x10200000; size=0x0a053000 bytes adjusted to 0x0a200000 bytes (2M aligned)
+SL: RPB, magic=0xf00ddead
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_64_pci_initialize: Done with PCI bus enumeration.
+SL: setup runtime TSS.
+SL (xmhf_sl_arch_x86_64_setup_runtime_paging): runtime_spa=0000000010200000, runtime_sva=0000000010200000, totalsize=000000000a200000
+	pa xpml4=0x0x994d000, xpdpt=0x0x994e000, xpdt=0x0x994f000
+SL: setup runtime paging structures.
+Transferring control to runtime
+runtime initializing...
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI type-1 access supported.
+xmhf_baseplatform_arch_x86_64_pci_initialize: PCI bus enumeration follows:
+xmhf_baseplatform_arch_x86_64_pci_initialize: Done with PCI bus enumeration.
+Number of E820 entries = 9
+0x0000000000000000, size=0x000000000009fc00 (1)
+0x000000000009fc00, size=0x0000000000000400 (2)
+0x00000000000f0000, size=0x0000000000010000 (2)
+0x0000000000100000, size=0x000000000ff00000 (1)
+0x0000000010000000, size=0x000000000a400000 (2)
+0x000000001a400000, size=0x0000000005be0000 (1)
+0x000000001ffe0000, size=0x0000000000020000 (2)
+0x00000000feffc000, size=0x0000000000004000 (2)
+0x00000000fffc0000, size=0x0000000000040000 (2)
+Number of MP entries = 4
+CPU #0: bsp=1, lapic_id=0x00
+CPU #1: bsp=0, lapic_id=0x01
+CPU #2: bsp=0, lapic_id=0x02
+CPU #3: bsp=0, lapic_id=0x03
+xmhf_xcphandler_arch_initialize: setting up runtime IDT...
+xmhf_xcphandler_arch_initialize: IDT setup done.
+Runtime: Re-initializing DMA protection...
+Runtime: Protected SL+Runtime (10000000-1a253000) from DMA.
+BSP: Using APIC to awaken APs...
+BSP: APs should be awake.
+Relinquishing BSP thread and moving to common...
+BSP rallying APs...
+BSP(0x00): My RSP is 0x0000000019a53000
+APs all awake...Setting them free...
+AP(0x02): My RSP is 0x0000000019c53000, proceeding...
+CPU(0x00): UNRESTRICTED-GUEST supported.
+CPU(0x02): UNRESTRICTED-GUEST supported.
+CPU(0x00): MSR_EFER=0x0000000000000500
+AP(0x01): My RSP is 0x0000000019b53000, proceeding...
+AP(0x03): My RSP is 0x0000000019d53000, proceeding...
+CPU(0x01): UNRESTRICTED-GUEST supported.
+CPU(0x03): UNRESTRICTED-GUEST supported.
+CPU(0x01): MSR_EFER=0x0000000000000500
+CPU(0x00): MSR_EFCR=0x0000000000000005
+CPU(0x02): MSR_EFER=0x0000000000000500
+CPU(0x00): enabled VMX
+CPU(0x01): MSR_EFCR=0x0000000000000005
+CPU(0x03): MSR_EFER=0x0000000000000500
+CPU(0x01): enabled VMX
+CPU(0x00): Entered VMX root operation
+CPU(0x02): MSR_EFCR=0x0000000000000005
+CPU(0x03): MSR_EFCR=0x0000000000000005
+CPU(0x01): Entered VMX root operation
+CPU(0x03): enabled VMX
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=0
+CPU(0x03): Entered VMX root operation
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=0
+CPU(0x00, BSP): initializing INT 15 hook for UG mode...
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+CPU(0x00): original INT 15h handler at 0xf000:0xf859
+CPU(0x02): enabled VMX
+BSP(0x00): copying boot-module to boot guest
+CPU(0x02): Entered VMX root operation
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=0
+IA32_MTRRCAP: VCNT=8, FIX=1, WC=1, SMRR=0
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+_vmx_gathermemorytypes: gathered MTRR details, number of entries=96
+CPU(0x01): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x01)
+
+CPU(0x01): AP, waiting for SIPI signal...
+CPU(0x03): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x03)
+
+CPU(0x03): AP, waiting for SIPI signal...
+CPU(0x00): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x00)
+TV[0]:appmain.c:tv_app_main:144:                   CPU(0x00): init
+
+TV[0]:appmain.c:tv_app_main:146:                   CPU(0x00) apb->cmdline: "serial=115200,8n1,0x3f8"
+TV[0]:appmain.c:parse_boot_cmdline:129:            NV Enforcement ENABLED
+
+NV uPCR[0] required to be: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+NV uPCR[0] required to be: 00 00 00 00
+TV[0]:scode.c:init_scode:331:                      alloc 110KB mem for scode_list at 1027c730!
+TV[0]:scode.c:init_scode:333:                      alloc 512KB mem for pfn_bitmap at 10297fd8!
+TV[0]:scode.c:init_scode:335:                      alloc 512KB mem for pfn_bitmap_2M at 10317fe0!
+
+CPU(0x02): Activated VMX EPTs.TV[0]:appmain.c:tv_app_main:141:                   CPU(0x02)
+TV[0]:scode.c:init_scode:343:                      whitelist max = 100!
+TV[0]:scode.c:init_scode:360:                      DEVELOPMENT ONLY: skipping trustvisor_master_crypto_init().
+
+CPU(0x00): Waiting for all cores to cycle through appmain...
+CPU(0x00): All cores have successfully been through appmain.
+CPU(0x02): AP, waiting for SIPI signal...
+CPU(0x00): setup x86vmx SMP guest capabilities
+xmhf_runtime_main[00]: starting partition...
+CPU(0x00): VMCLEAR success.
+CPU(0x00): VMPTRLD success.
+CPU(0x00): Ignoring VMWRITE failure 21 0x6008 0x0
+Hidding future VMWRITE failures
+CPU(0x00): VMWRITEs success.
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000000, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000001, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000002, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000003, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000004, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000005, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000006, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000007, ECX=0x00000014, ES=0x6800, DI=0x0004
+CPU(0x00): INT 15(e820): AX=0xe820, EDX=0x534d4150, EBX=0x00000008, ECX=0x00000014, ES=0x6800, DI=0x0004
+Set bit 9 of 'IA-32e mode guest' to EFER.LME && CR0.PG
+CPU(0x00): CS:EIP=0x0008:0x0009e059 MOV CR4, xx
+MOV TO CR4 (flush TLB?), current=0x00002020, proposed=0x00000020
+CPU(0x00): CS:EIP=0x0010:0x1ae00057 MOV CR4, xx
+MOV TO CR4 (flush TLB?), current=0x00002020, proposed=0x000000a0
+_vmx_handle_intercept_xsetbv: xcr_value=7
+_vmx_handle_intercept_xsetbv: host cr4 value=00042020
+_vmx_handle_intercept_xsetbv: xcr_value=7
+_vmx_handle_intercept_xsetbv: host cr4 value=00042020
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069a
+CPU(0x00): processSIPI, dest_lapic_id is 0x01
+CPU(0x00): found AP to pass SIPI; id=0x01, vcpu=0x1024af98
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x01): SIPI signal received, vector=0x9a
+xmhf_runtime_main[01]: starting partition...
+CPU(0x01): VMCLEAR success.
+CPU(0x01): VMPTRLD success.
+0x0010:0x92462b68 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069a
+CPU(0x01): VMWRITEs success.
+CPU(0x00): processSIPI, dest_lapic_id is 0x01
+CPU(0x00): found AP to pass SIPI; id=0x01, vcpu=0x1024af98
+CPU(0x00): destination CPU #0x01 has already received SIPI, ignoring
+CPU(0x01): CS:EIP=0x0010:0x92400057 MOV CR4, xx
+MOV TO CR4 (flush TLB?), current=0x000426b0, proposed=0x000000a0
+_vmx_handle_intercept_xsetbv: xcr_value=7
+_vmx_handle_intercept_xsetbv: host cr4 value=00042020
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069a
+CPU(0x00): processSIPI, dest_lapic_id is 0x02
+CPU(0x00): found AP to pass SIPI; id=0x02, vcpu=0x1024c710
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x02): SIPI signal received, vector=0x9a
+xmhf_runtime_main[02]: starting partition...
+CPU(0x02): VMCLEAR success.
+CPU(0x02): VMPTRLD success.
+CPU(0x02): VMWRITEs success.
+0x0010:0x92462b68 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069a
+CPU(0x00): processSIPI, dest_lapic_id is 0x02
+CPU(0x00): found AP to pass SIPI; id=0x02, vcpu=0x1024c710
+CPU(0x00): destination CPU #0x02 has already received SIPI, ignoring
+CPU(0x02): CS:EIP=0x0010:0x92400057 MOV CR4, xx
+MOV TO CR4 (flush TLB?), current=0x000426b0, proposed=0x000000a0
+_vmx_handle_intercept_xsetbv: xcr_value=7
+_vmx_handle_intercept_xsetbv: host cr4 value=00042020
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x0000c500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) INIT IPI detected and skipped, value=0x00008500
+0x0010:0x92462b68 -> (ICR=0x00000300 write) STARTUP IPI detected, value=0x0000069a
+CPU(0x00): processSIPI, dest_lapic_id is 0x03
+CPU(0x00): found AP to pass SIPI; id=0x03, vcpu=0x1024de88
+CPU(0x00): Sent SIPI command to AP, should awaken it!
+CPU(0x03): SIPI signal received, vector=0x9a
+xmhf_smpguest_arch_x86_64vmx_eventhandler_dbexception: delinking LAPIC interception since all cores have SIPI
+xmhf_runtime_main[03]: starting partition...
+CPU(0x03): VMCLEAR success.
+CPU(0x03): VMPTRLD success.
+CPU(0x03): VMWRITEs success.
+CPU(0x03): CS:EIP=0x0010:0x92400057 MOV CR4, xx
+MOV TO CR4 (flush TLB?), current=0x000426b0, proposed=0x000000a0
+_vmx_handle_intercept_xsetbv: xcr_value=7
+_vmx_handle_intercept_xsetbv: host cr4 value=00042020
+Found in xcph tableTV[0]:scode.c:scode_register:508:                  cpu 0 setting root pm from 0x10680000 to 0x10682000
+TV[0]:scode.c:scode_register:508:                  cpu 1 setting root pm from 0x10681000 to 0x10682000
+TV[0]:scode.c:scode_register:508:                  cpu 2 setting root pm from 0x10682000 to 0x10682000
+TV[0]:scode.c:scode_register:508:                  cpu 3 setting root pm from 0x10683000 to 0x10682000
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x02): add to whitelist,  scode_info 0x57fd11b0, scode_pm 0x57fd1230, gventry 0xf7f28006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x2c5f803, entry point vaddr is 0xf7f28006, paddr is 0xaa6b006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x57fd1230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 57fd11b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f28000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7ef6000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7ef5000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7ef4000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f28000 to 00000000f7f28000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6b867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ef6000 to 00000000f7ef6000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6c867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ef5000 to 00000000f7ef5000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6d867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ef4000 to 00000000f7ef4000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6e867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0xf7f28006, gpa=0xaa6b006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0xf7f28006, gcr3 0x2c5f803, gpaddr 0xaa6b006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f28006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x566355fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xff9fbaac, switch to sensitive code stack 0xf7ef5ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7ef4010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xff9fbafc)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x1)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7ef5fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7ef4010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xff9fbafc)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7ef5fe8 back to regular stack 0xff9fbaac
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xff9fbab0
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(02): remove from whitelist gcr3 0x2c5f803, gvaddr 0xf7f28006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x01): add to whitelist,  scode_info 0x574a01b0, scode_pm 0x574a0230, gventry 0xf7f15006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x7ddb805, entry point vaddr is 0xf7f15006, paddr is 0xa85b006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x574a0230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 574a01b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f15000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7ee3000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7ee2000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7ee1000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f15000 to 00000000f7f15000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a85b867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee3000 to 00000000f7ee3000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8e7867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee2000 to 00000000f7ee2000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8d3867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee1000 to 00000000f7ee1000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a857867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x01): gva=0xf7f15006, gpa=0xa85b006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(01): nested page fault!(rip 0xf7f15006, gcr3 0x7ddb805, gpaddr 0xa85b006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f15006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x565cc5fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffcfca4c, switch to sensitive code stack 0xf7ee2ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7ee1010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffcfca9c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x2)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7ee2fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x01): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(01): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7ee1010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffcfca9c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7ee2fe8 back to regular stack 0xffcfca4c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffcfca50
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(01): remove from whitelist gcr3 0x7ddb805, gvaddr 0xf7f15006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x02): add to whitelist,  scode_info 0x576941b0, scode_pm 0x57694230, gventry 0xf7fe5006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x2c5f805, entry point vaddr is 0xf7fe5006, paddr is 0xa902006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x57694230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 576941b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7fe5000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7fb3000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7fb2000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7fb1000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fe5000 to 00000000f7fe5000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a902867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fb3000 to 00000000f7fb3000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8ed867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fb2000 to 00000000f7fb2000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6d867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fb1000 to 00000000f7fb1000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6c867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0xf7fe5006, gpa=0xa902006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0xf7fe5006, gcr3 0x2c5f805, gpaddr 0xa902006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7fe5006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x566135fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffba304c, switch to sensitive code stack 0xf7fb2ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7fb1010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffba309c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x3)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7fb2fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7fb1010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffba309c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7fb2fe8 back to regular stack 0xffba304c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffba3050
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(02): remove from whitelist gcr3 0x2c5f805, gvaddr 0xf7fe5006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x02): add to whitelist,  scode_info 0x57e621b0, scode_pm 0x57e62230, gventry 0xf7f08006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x2c5f801, entry point vaddr is 0xf7f08006, paddr is 0xaa99006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x57e62230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 57e621b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f08000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7ed6000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7ed5000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7ed4000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f08000 to 00000000f7f08000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa99867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ed6000 to 00000000f7ed6000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa9f867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ed5000 to 00000000f7ed5000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa6d867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ed4000 to 00000000f7ed4000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8ed867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0xf7f08006, gpa=0xaa99006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0xf7f08006, gcr3 0x2c5f801, gpaddr 0xaa99006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f08006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x5656b5fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xff8b09dc, switch to sensitive code stack 0xf7ed5ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7ed4010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xff8b0a2c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x4)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7ed5fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7ed4010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xff8b0a2c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7ed5fe8 back to regular stack 0xff8b09dc
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xff8b09e0
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(02): remove from whitelist gcr3 0x2c5f801, gvaddr 0xf7f08006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x01): add to whitelist,  scode_info 0x573681b0, scode_pm 0x57368230, gventry 0xf7f8a006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x7ddb801, entry point vaddr is 0xf7f8a006, paddr is 0xa8a5006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x57368230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 573681b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f8a000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7f58000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7f57000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7f56000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f8a000 to 00000000f7f8a000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8a5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f58000 to 00000000f7f58000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8df867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f57000 to 00000000f7f57000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8d3867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f56000 to 00000000f7f56000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8e7867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x01): gva=0xf7f8a006, gpa=0xa8a5006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(01): nested page fault!(rip 0xf7f8a006, gcr3 0x7ddb801, gpaddr 0xa8a5006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f8a006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x5656b5fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xff8bb93c, switch to sensitive code stack 0xf7f57ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7f56010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xff8bb98c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x5)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7f57fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x01): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(01): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7f56010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xff8bb98c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7f57fe8 back to regular stack 0xff8bb93c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xff8bb940
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(01): remove from whitelist gcr3 0x7ddb801, gvaddr 0xf7f8a006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x03): add to whitelist,  scode_info 0x5705c1b0, scode_pm 0x5705c230, gventry 0xf7fcb006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x2c5f806, entry point vaddr is 0xf7fcb006, paddr is 0xa8ec006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x5705c230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 5705c1b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7fcb000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7f99000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7f98000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7f97000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fcb000 to 00000000f7fcb000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8ec867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f99000 to 00000000f7f99000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaad867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f98000 to 00000000f7f98000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aac7867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f97000 to 00000000f7f97000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aac8867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0xf7fcb006, gpa=0xa8ec006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0xf7fcb006, gcr3 0x2c5f806, gpaddr 0xa8ec006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7fcb006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x565625fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffa6581c, switch to sensitive code stack 0xf7f98ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7f97010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffa6586c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x6)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7f98fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7f97010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffa6586c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7f98fe8 back to regular stack 0xffa6581c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffa65820
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(03): remove from whitelist gcr3 0x2c5f806, gvaddr 0xf7fcb006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x00): add to whitelist,  scode_info 0x56f001b0, scode_pm 0x56f00230, gventry 0xf7fed006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x7d93802, entry point vaddr is 0xf7fed006, paddr is 0xaaa7006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x56f00230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 56f001b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7fed000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7fbb000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7fba000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7fb9000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fed000 to 00000000f7fed000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaa7867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fbb000 to 00000000f7fbb000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaa8867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fba000 to 00000000f7fba000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a86d867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fb9000 to 00000000f7fb9000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a868867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x00): gva=0xf7fed006, gpa=0xaaa7006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(00): nested page fault!(rip 0xf7fed006, gcr3 0x7d93802, gpaddr 0xaaa7006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7fed006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x565895fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffe5ab3c, switch to sensitive code stack 0xf7fbaff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7fb9010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffe5ab8c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x7)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7fbafe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x00): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(00): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7fb9010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffe5ab8c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7fbafe8 back to regular stack 0xffe5ab3c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffe5ab40
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(00): remove from whitelist gcr3 0x7d93802, gvaddr 0xf7fed006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x03): add to whitelist,  scode_info 0x5846e1b0, scode_pm 0x5846e230, gventry 0xf7f15006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x5eb9802, entry point vaddr is 0xf7f15006, paddr is 0xaab5006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x5846e230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 5846e1b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f15000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7ee3000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7ee2000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7ee1000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f15000 to 00000000f7f15000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aab5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee3000 to 00000000f7ee3000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a857867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee2000 to 00000000f7ee2000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aac7867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7ee1000 to 00000000f7ee1000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaad867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0xf7f15006, gpa=0xaab5006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0xf7f15006, gcr3 0x5eb9802, gpaddr 0xaab5006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f15006 in scode 0 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x566215fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffa663cc, switch to sensitive code stack 0xf7ee2ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7ee1010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffa6641c)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x8)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7ee2fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0x4, gcr3 0x10399800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7ee1010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffa6641c)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7ee2fe8 back to regular stack 0xffa663cc
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffa663d0
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(00): remove from whitelist gcr3 0x5eb9804, gvaddr 0xf7f15006
+TV[3]:scode.c:scode_unregister:718:                EU_CHK( i < whitelist_max) failed
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x03): add to whitelist,  scode_info 0x571201b0, scode_pm 0x57120230, gventry 0xf7fa7006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x70fd804, entry point vaddr is 0xf7fa7006, paddr is 0xaa9e006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x57120230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 571201b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7fa7000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7f75000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7f74000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7f73000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7fa7000 to 00000000f7fa7000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aa9e867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f75000 to 00000000f7f75000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8d5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f74000 to 00000000f7f74000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaa5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f73000 to 00000000f7f73000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aab4867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0xf7fa7006, gpa=0xaa9e006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0xf7fa7006, gcr3 0x70fd804, gpaddr 0xaa9e006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7fa7006 in scode 1 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x566155fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xffc40f7c, switch to sensitive code stack 0xf7f74ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7f73010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xffc40fcc)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0x9)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7f74fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0x4, gcr3 0x10499800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7f73010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xffc40fcc)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7f74fe8 back to regular stack 0xffc40f7c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xffc40f80
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(03): remove from whitelist gcr3 0x70fd804, gvaddr 0xf7fa7006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:scode.c:scode_register:525:                  *** scode register ***
+TV[0]:scode.c:scode_register:529:                  CPU(0x03): add to whitelist,  scode_info 0x573f91b0, scode_pm 0x573f9230, gventry 0xf7f45006
+TV[0]:scode.c:scode_register:541:                  CR3 value is 0x70fd802, entry point vaddr is 0xf7f45006, paddr is 0xa85c006
+TV[0]:scode.c:parse_params_info:378:               pm_info 0x573f9230, # of parameters is 2
+TV[0]:scode.c:parse_params_info:388:               parameter 0 type 1 size 4
+TV[0]:scode.c:parse_params_info:388:               parameter 1 type 2 size 4
+TV[0]:scode.c:memsect_info_copy_from_guest:408:    scode_info addr 573f91b0, # of section is 4
+TV[0]:scode.c:memsect_info_register:472:           section 0 type 1 addr 0xf7f45000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 1 type 2 addr 0xf7f13000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 2 type 4 addr 0xf7f12000 size 1
+TV[0]:scode.c:memsect_info_register:472:           section 3 type 3 addr 0xf7f11000 size 1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:0 num_alocd:127
+TV[0]:scode.c:scode_register:587:                  adding gpl to pal's npt:
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:scode.c:scode_register:603:                  adding sections to pal's npts and gpts:
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f45000 to 00000000f7f45000, size 4096, pal_prot 5
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a85c867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:1 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:2 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:3 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f13000 to 00000000f7f13000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a0f6867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f12000 to 00000000f7f12000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000aaa5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[0]:pages.c:pagelist_get_page:72:                num_used:6 num_alocd:127
+TV[0]:pt.c:scode_lend_section:209:                 Mapping from 00000000f7f11000 to 00000000f7f11000, size 4096, pal_prot 3
+TV[0]:pt.c:scode_lend_section:236:                 got pme 000000000a8d5867, level 1, type 2
+TV[0]:pt.c:scode_lend_section:268:                 got reg gpt prots:0x7, user:1
+TV[2]:scode.c:scode_register:623:                  skipping scode_clone_gdt
+TV[0]:scode.c:scode_register:647:                  generated pme for return gva address 4: lvl:1 5
+TV[0]:pages.c:pagelist_get_page:72:                num_used:4 num_alocd:127
+TV[0]:pages.c:pagelist_get_page:72:                num_used:5 num_alocd:127
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0xf7f45006, gpa=0xa85c006, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0xf7f45006, gcr3 0x70fd802, gpaddr 0xa85c006, errorcode 4)
+TV[0]:scode.c:scode_in_list:192:                   find gvaddr 0xf7f45006 in scode 1 section No.0
+TV[0]:scode.c:hpt_scode_switch_scode:917:          *** to scode ***
+TV[0]:scode.c:hpt_scode_switch_scode:921:          got pal_running lock!
+TV[0]:scode.c:hpt_scode_switch_scode:927:          scode return vaddr is 0x566285fb
+TV[0]:scode.c:hpt_scode_switch_scode:930:          saved guest regular stack 0xfffe679c, switch to sensitive code stack 0xf7f12ff0
+TV[0]:scode.c:scode_marshall:801:                  marshalling scode parameters!
+TV[0]:scode.c:scode_marshall:806:                  parameter page base address is 0xf7f11010
+TV[0]:scode.c:scode_marshall:820:                  params number is 2
+TV[0]:scode.c:scode_marshall:831:                  copying param 1
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:869:                  PM 1 is a pointer (size 4, value 0xfffe67ec)
+TV[0]:scode.c:scode_marshall:831:                  copying param 0
+TV[0]:scode.c:scode_marshall:852:                  scode_marshal copied metadata to params area
+TV[0]:scode.c:scode_marshall:860:                  PM 0 is a integer (size 4, value 0xa)
+TV[0]:scode.c:hpt_scode_switch_scode:949:          host stack pointer before running scode is 0xf7f12fe4
+TV[0]:scode.c:hpt_scode_switch_scode:954:          change NPT permission to run PAL!
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x03): gva=0x4, gpa=0x4, code=0x4
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(03): nested page fault!(rip 0x4, gcr3 0x10499800, gpaddr 0x4, errorcode 4)
+TV[0]:scode.c:scode_in_list:199:                   no matching scode found for gvaddr 0x4!
+TV[0]:scode.c:hpt_scode_switch_regular:1108:       ************************************
+TV[0]:scode.c:hpt_scode_switch_regular:1109:       ***** switch to regular code  ******
+TV[0]:scode.c:hpt_scode_switch_regular:1110:       ************************************
+TV[0]:scode.c:scode_unmarshall:1021:               unmarshalling scode parameters!
+TV[0]:scode.c:scode_unmarshall:1026:               parameter page base address is 0xf7f11010
+TV[0]:scode.c:scode_unmarshall:1036:               params number is 2
+TV[0]:scode.c:scode_unmarshall:1074:               PM 0 is a pointer (size 16, addr 0xfffe67ec)
+TV[0]:scode.c:scode_unmarshall:1056:               skip an integer parameter!
+TV[0]:scode.c:hpt_scode_switch_regular:1134:       change NPT permission to exit PAL!
+TV[0]:scode.c:hpt_scode_switch_regular:1140:       switch from scode stack 0xf7f12fe8 back to regular stack 0xfffe679c
+TV[0]:scode.c:hpt_scode_switch_regular:1147:       stack pointer before exiting scode is 0xfffe67a0
+TV[0]:scode.c:hpt_scode_switch_regular:1154:       released pal_running lock!
+TV[0]:scode.c:scode_unregister:706:                *** scode unregister ***
+TV[0]:scode.c:scode_unregister:710:                CPU(03): remove from whitelist gcr3 0x70fd802, gvaddr 0xf7f45006
+TV[1]:scode.c:scode_unregister:721:                performance counters:
+TV[1]:scode.c:scode_unregister:723:                  npf total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_scode total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  switch_regular total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  safemalloc total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  marshall total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  expose_arch total: 0 count: 0
+TV[1]:scode.c:scode_unregister:723:                  nested_switch_scode total: 0 count: 0
+TV[0]:scode.c:scode_unregister:740:                zeroing section 1
+TV[0]:scode.c:scode_unregister:740:                zeroing section 2
+TV[0]:scode.c:scode_unregister:740:                zeroing section 3
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:584: CPU(0x02): gva=0xaaad000, gpa=0xaaad000, code=0x2
+TV[0]:scode.c:hpt_scode_npf:1190:                  CPU(02): nested page fault!(rip 0x928d3097, gcr3 0x49a0002, gpaddr 0xaaad000, errorcode 2)
+TV[3]:scode.c:hpt_scode_npf:1193:                  EU_CHK( hpt_error_wasInsnFetch(vcpu, errorcode)) failed
+TV[0]:appmain.c:tv_app_handleintercept_hwpgtblviolation:587: FATAL ERROR: Unexpected return value from page fault handling

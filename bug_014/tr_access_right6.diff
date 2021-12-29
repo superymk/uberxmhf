@@ -1,0 +1,163 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+index ab9163bfd..ba6c44290 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+@@ -495,8 +495,26 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
+ 	
+ 	cr0_value = *((u32 *)_vmx_decode_reg(gpr, vcpu, r));
+ 
+-	//printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
+-	//	(u32)vcpu->vmcs.guest_CR0, cr0_value);
++	printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
++		(u32)vcpu->vmcs.guest_CR0, cr0_value);
++	if (0 && vcpu->id && vcpu->vmcs.guest_RIP == (u64)0x9ae80) {
++		msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
++		HALT_ON_ERRORCOND(efer->index == MSR_EFER);
++		printf("\n[cr0-%02x] Change request", vcpu->id);
++		printf("\n[cr0-%02x] old cr0 : 0x%016llx", vcpu->id, cr0_value);
++		printf("\n[cr0-%02x] old efer: 0x%016llx", vcpu->id, efer->data);
++		cr0_value &= ~0x80000000;
++		// cr0_value &= ~0x10000;
++		// efer->data &= ~0x801;
++		printf("\n[cr0-%02x] new cr0 : 0x%016llx", vcpu->id, cr0_value);
++		printf("\n[cr0-%02x] new efer: 0x%016llx", vcpu->id, efer->data);
++	}
++	printf("\n[cr0-%02x] TR_acc_rts: 0x%016x", vcpu->id, vcpu->vmcs.guest_TR_access_rights);
++	printf("\n[cr0-%02x]       mask: 0x%016llx", vcpu->id, vcpu->vmcs.control_CR0_mask);
++	printf("\n[cr0-%02x] requested : 0x%016llx", vcpu->id, cr0_value);
++	printf("\n[cr0-%02x] old gstCR0: 0x%016llx", vcpu->id, vcpu->vmcs.guest_CR0);
++	printf("\n[cr0-%02x] old shadow: 0x%016llx", vcpu->id, vcpu->vmcs.control_CR0_shadow);
++	printf("\n[cr0-%02x] old entctl: 0x%016x", vcpu->id, vcpu->vmcs.control_VM_entry_controls);
+ 
+ 	/*
+ 	 * Make the guest think that move to CR0 succeeds (by changing shadow).
+@@ -511,7 +529,7 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
+ 	 */
+ 
+ 	vcpu->vmcs.control_CR0_shadow = cr0_value;
+-	vcpu->vmcs.guest_CR0 = (cr0_value | vcpu->vmcs.control_CR0_mask) & ~(CR0_CD | CR0_NW);
++	vcpu->vmcs.guest_CR0 = (cr0_value | (vcpu->vmcs.control_CR0_mask & ~CR0_PG)) & ~(CR0_CD | CR0_NW);
+ 
+ 	// TODO: this is only needed when (vcpu->vmcs.guest_CR0 & CR0_PG) changes
+ 	{
+@@ -519,11 +537,16 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
+ 		u32 value = vcpu->vmcs.control_VM_entry_controls;
+ 		msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
+ 		HALT_ON_ERRORCOND(efer->index == MSR_EFER);
++		printf("\n[cr0-%02x] guest efer: 0x%016llx", vcpu->id, efer->data);
+ 		value &= ~(1U << 9);
+ 		value |= ((cr0_value & CR0_PG) && (efer->data & (0x1U << EFER_LME))) << 9;
+ 		vcpu->vmcs.control_VM_entry_controls = value;
+ 	}
+ 
++	printf("\n[cr0-%02x] new gstCR0: 0x%016llx", vcpu->id, vcpu->vmcs.guest_CR0);
++	printf("\n[cr0-%02x] new shadow: 0x%016llx", vcpu->id, vcpu->vmcs.control_CR0_shadow);
++	printf("\n[cr0-%02x] new entctl: 0x%016x", vcpu->id, vcpu->vmcs.control_VM_entry_controls);
++
+ 	//flush mappings
+ 	xmhf_memprot_arch_x86_64vmx_flushmappings(vcpu);
+ }
+@@ -594,6 +617,89 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
+ 		HALT();
+ 	}
+ 
++	if (0) {
++		static u32 global_halt = 0;
++
++		if (vcpu->id) {
++			printf("\nIntercept: 0x%02x 0x%08x 0x%016llx 0x%04x:0x%016llx ;", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.info_exit_qualification, (u16)vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
++			printf("\n[int-%02x] TR_acc_rts: 0x%016x", vcpu->id, vcpu->vmcs.guest_TR_access_rights);
++			if (0) {
++			// if (vcpu->vmcs.guest_RIP == 0x000000000009ae79) {
++				// Change state etc
++				printf("\n\tChange state!");
++				printf("\n\told CR0: 0x%016lx", vcpu->vmcs.guest_CR0);
++				vcpu->vmcs.guest_CR0 &= ~0x10U;
++				printf("\n\tnew CR0: 0x%016lx", vcpu->vmcs.guest_CR0);
++				printf("\n\told CR4: 0x%016lx", vcpu->vmcs.guest_CR4);
++				vcpu->vmcs.guest_CR4 &= ~0x40000U;
++				printf("\n\tnew CR4: 0x%016lx", vcpu->vmcs.guest_CR4);
++			}
++			if (0) {
++				printf("\n\trax = 0x%016llx", r->rax);
++				printf("\n\trbx = 0x%016llx", r->rbx);
++				printf("\n\trcx = 0x%016llx", r->rcx);
++				printf("\n\trdx = 0x%016llx", r->rdx);
++				printf("\n\tcr0 = 0x%016llx", vcpu->vmcs.guest_CR0);
++				printf("\n\tcr3 = 0x%016llx", vcpu->vmcs.guest_CR3);
++				printf("\n\tcr4 = 0x%016llx", vcpu->vmcs.guest_CR4);
++				printf("\n\tcr0M= 0x%016llx", vcpu->vmcs.control_CR0_mask);
++				printf("\n\tcr4M= 0x%016llx", vcpu->vmcs.control_CR4_mask);
++				printf("\n\tcr0S= 0x%016llx", vcpu->vmcs.control_CR0_shadow);
++				printf("\n\tcr4S= 0x%016llx", vcpu->vmcs.control_CR4_shadow);
++				printf("\n\texc = 0x%016llx", vcpu->vmcs.control_VM_exit_controls);
++				printf("\n\tenc = 0x%016llx", vcpu->vmcs.control_VM_entry_controls);
++			}
++			if (0) {
++				msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
++				HALT_ON_ERRORCOND(efer->index == MSR_EFER);
++				printf("\n\tefer= 0x%016llx", efer->data);
++			}
++			if (0 && vcpu->vmcs.guest_RIP == 0x000000000009ae79) {
++#define LXY_DUMP_MEMORY(x) ({uintptr_t xx = (uintptr_t)(x); u64 ans = *(u64*)xx; printf("\n\tmem *%08x = 0x%016llx", (u32)xx, ans); ans;})
++				u64 pte = 0x9c000;
++				pte = LXY_DUMP_MEMORY(pte & ~0xfff);
++				pte = LXY_DUMP_MEMORY(pte & ~0xfff);
++				pte = LXY_DUMP_MEMORY(pte & ~0xfff);
++				pte = LXY_DUMP_MEMORY((pte & ~0xfff) | (0x9a * 8));
++				LXY_DUMP_MEMORY(0x9d000);
++				LXY_DUMP_MEMORY(0x9d008);
++				LXY_DUMP_MEMORY(0x9d010);
++				LXY_DUMP_MEMORY(0x99030);
++				LXY_DUMP_MEMORY(0x99038);
++				LXY_DUMP_MEMORY(0x99040);
++				LXY_DUMP_MEMORY(0x99048);
++				for (int i = 0; i < IA32_VMX_MSRCOUNT; i++) {
++					printf("\n\tvmx_msrs[%d] = 0x%016llx", i, vcpu->vmx_msrs[i]);
++				}
++				printf("\n\tvmx_guest_unrestricted = 0x%08x", vcpu->vmx_guest_unrestricted);
++				printf("\n\tvmx_msr_efer = 0x%016llx", vcpu->vmx_msr_efer);
++				printf("\n\tvmx_msr_efcr = 0x%016llx", vcpu->vmx_msr_efcr);
++
++				xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
++				xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(vcpu);
++				if (0) {
++					printf("\n\tNOP Loop\n");
++					asm volatile("xor %%rax, %%rax; 1: test %%rax, %%rax; jz 1b; nop; nop;" : : : "%rax", "cc");
++				}
++				// for (u64 i = 0x000000000009ae00; i < 0x000000000009af00; i += 4) {
++				// 	printf("\nmem: *0x%016lx = 0x%08lx", i, *(u32*)i);
++				// }
++			}
++		}
++
++		if (0) {
++			if (global_halt) {
++				printf("\n0x%02x halt due to global_halt", vcpu->id);
++				HALT();
++			}
++			if (vcpu->vmcs.info_vmexit_reason == 0x2 ||
++				(vcpu->id && vcpu->vmcs.guest_RIP > 0x100000000ULL)) {
++				printf("\n0x%02x set global_halt", vcpu->id);
++				global_halt = 1;
++			}
++		}
++	}
++
+ 	//handle intercepts
+ 	switch((u32)vcpu->vmcs.info_vmexit_reason){
+ 		//--------------------------------------------------------------
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
+index aacce2e74..5c30fd908 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
+@@ -415,7 +415,8 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+ 	vcpu->vmcs.guest_TR_base = 0;
+ 	vcpu->vmcs.guest_TR_limit = 0;
+ 	vcpu->vmcs.guest_TR_selector = 0;
+-	vcpu->vmcs.guest_TR_access_rights = 0x83; //present, 16-bit busy TSS
++	// TODO
++	vcpu->vmcs.guest_TR_access_rights = 0x8b; //present, 16-bit busy TSS
+ 	//RSP
+ 	vcpu->vmcs.guest_RSP = 0x0;
+ 	//RIP

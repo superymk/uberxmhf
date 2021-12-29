@@ -1,0 +1,332 @@
+diff --git a/xmhf/src/libbaremetal/libxmhfutil/include/hpt_emhf.h b/xmhf/src/libbaremetal/libxmhfutil/include/hpt_emhf.h
+index bcdd41e3f..24c51c225 100644
+--- a/xmhf/src/libbaremetal/libxmhfutil/include/hpt_emhf.h
++++ b/xmhf/src/libbaremetal/libxmhfutil/include/hpt_emhf.h
+@@ -156,7 +156,7 @@ static inline hpt_type_t hpt_emhf_get_guest_hpt_type(VCPU *vcpu) {
+   u64 cr4 = VCPU_gcr4(vcpu);
+   if (!(cr4 & CR4_PAE)) {
+     return HPT_TYPE_NORM;
+-  } else if (!(VCPU_glm(vcpu))) {
++  } else if (!(VCPU_gefer(vcpu) & (1U << EFER_LMA))) {
+     return HPT_TYPE_PAE;
+   } else if (!(cr4 & CR4_LA57)) {
+     return HPT_TYPE_LONG;
+diff --git a/xmhf/src/xmhf-core/include/arch/x86/_vmx.h b/xmhf/src/xmhf-core/include/arch/x86/_vmx.h
+index 50da65344..8dacb226d 100644
+--- a/xmhf/src/xmhf-core/include/arch/x86/_vmx.h
++++ b/xmhf/src/xmhf-core/include/arch/x86/_vmx.h
+@@ -476,6 +476,9 @@ struct _vmx_vmcsfields {
+   unsigned int  host_FS_selector;
+   unsigned int  host_GS_selector;
+   unsigned int  host_TR_selector;
++  // Full 64-bit Host-State fields
++  unsigned int  host_IA32_EFER_full;
++  unsigned int  host_IA32_EFER_high;
+   // Natural 64-bit Guest-State fields
+   unsigned long long  guest_CR0;
+   unsigned long long  guest_CR3;
+@@ -534,6 +537,8 @@ struct _vmx_vmcsfields {
+   unsigned int  guest_VMCS_link_pointer_high;
+   unsigned int  guest_IA32_DEBUGCTL_full;
+   unsigned int  guest_IA32_DEBUGCTL_high;
++  unsigned int  guest_IA32_EFER_full;
++  unsigned int  guest_IA32_EFER_high;
+   #if defined(__NESTED_PAGING__)
+     unsigned int 	guest_paddr_full;
+     unsigned int 	guest_paddr_high;
+diff --git a/xmhf/src/xmhf-core/include/arch/x86/xmhf-baseplatform-arch-x86.h b/xmhf/src/xmhf-core/include/arch/x86/xmhf-baseplatform-arch-x86.h
+index 68b559461..8eb245cba 100644
+--- a/xmhf/src/xmhf-core/include/arch/x86/xmhf-baseplatform-arch-x86.h
++++ b/xmhf/src/xmhf-core/include/arch/x86/xmhf-baseplatform-arch-x86.h
+@@ -471,10 +471,10 @@ static inline u64 VCPU_gcr4(VCPU *vcpu)
+   }
+ }
+ 
+-/* Return whether guest is in long mode (boolean value) */
+-static inline u32 VCPU_glm(VCPU *vcpu) {
++static inline u64 VCPU_gefer(VCPU *vcpu) {
+     if (vcpu->cpu_vendor == CPU_VENDOR_INTEL) {
+-        return (vcpu->vmcs.control_VM_entry_controls >> 9) & 1U;
++        return (((u64) vcpu->vmcs.guest_IA32_EFER_high) << 32) |
++               vcpu->vmcs.guest_IA32_EFER_full;
+     } else if (vcpu->cpu_vendor == CPU_VENDOR_AMD) {
+         /* Not implemented */
+         HALT_ON_ERRORCOND(false);
+diff --git a/xmhf/src/xmhf-core/include/arch/x86_64/_vmx.h b/xmhf/src/xmhf-core/include/arch/x86_64/_vmx.h
+index 0d4e6c20b..a74cd8890 100644
+--- a/xmhf/src/xmhf-core/include/arch/x86_64/_vmx.h
++++ b/xmhf/src/xmhf-core/include/arch/x86_64/_vmx.h
+@@ -476,6 +476,9 @@ struct _vmx_vmcsfields {
+   unsigned int  host_FS_selector;
+   unsigned int  host_GS_selector;
+   unsigned int  host_TR_selector;
++  // Full 64-bit Host-State fields
++  unsigned int  host_IA32_EFER_full;
++  unsigned int  host_IA32_EFER_high;
+   // Natural 64-bit Guest-State fields
+   unsigned long long  guest_CR0;
+   unsigned long long  guest_CR3;
+@@ -534,6 +537,8 @@ struct _vmx_vmcsfields {
+   unsigned int  guest_VMCS_link_pointer_high;
+   unsigned int  guest_IA32_DEBUGCTL_full;
+   unsigned int  guest_IA32_DEBUGCTL_high;
++  unsigned int  guest_IA32_EFER_full;
++  unsigned int  guest_IA32_EFER_high;
+   #if defined(__NESTED_PAGING__)
+     unsigned int 	guest_paddr_full;
+     unsigned int 	guest_paddr_high;
+diff --git a/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h b/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
+index a6357e89e..4fed3a9ac 100644
+--- a/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
++++ b/xmhf/src/xmhf-core/include/arch/x86_64/xmhf-baseplatform-arch-x86_64.h
+@@ -471,10 +471,10 @@ static inline u64 VCPU_gcr4(VCPU *vcpu)
+   }
+ }
+ 
+-/* Return whether guest is in long mode (boolean value) */
+-static inline u32 VCPU_glm(VCPU *vcpu) {
++static inline u64 VCPU_gefer(VCPU *vcpu) {
+     if (vcpu->cpu_vendor == CPU_VENDOR_INTEL) {
+-        return (vcpu->vmcs.control_VM_entry_controls >> 9) & 1U;
++        return (((u64) vcpu->vmcs.guest_IA32_EFER_high) << 32) |
++               vcpu->vmcs.guest_IA32_EFER_full;
+     } else if (vcpu->cpu_vendor == CPU_VENDOR_AMD) {
+         /* Not implemented */
+         HALT_ON_ERRORCOND(false);
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86/vmx/bplt-x86vmx-data.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86/vmx/bplt-x86vmx-data.c
+index 9c6eba641..77220f0c8 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86/vmx/bplt-x86vmx-data.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86/vmx/bplt-x86vmx-data.c
+@@ -156,6 +156,9 @@ struct _vmx_vmcsrwfields_encodings g_vmx_vmcsrwfields_encodings[] __attribute__(
+ 	{ 0x0C08, offsetof(struct _vmx_vmcsfields, host_FS_selector) },
+ 	{ 0x0C0A, offsetof(struct _vmx_vmcsfields, host_GS_selector) },
+ 	{ 0x0C0C, offsetof(struct _vmx_vmcsfields, host_TR_selector) },
++	// Full 64-bit Host-State fields
++	{ 0x2C02, offsetof(struct _vmx_vmcsfields, host_IA32_EFER_full) },
++	{ 0x2C03, offsetof(struct _vmx_vmcsfields, host_IA32_EFER_high) },
+ 	// Guest-State fields
+ 	// Natural 64-bit Guest-State fields
+ 	{ 0x6800, offsetof(struct _vmx_vmcsfields, guest_CR0) },
+@@ -224,7 +227,9 @@ struct _vmx_vmcsrwfields_encodings g_vmx_vmcsrwfields_encodings[] __attribute__(
+ 	{ 0x2800, offsetof(struct _vmx_vmcsfields, guest_VMCS_link_pointer_full) },
+ 	{ 0x2801, offsetof(struct _vmx_vmcsfields, guest_VMCS_link_pointer_high) },
+ 	{ 0x2802, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_full) },
+-	{ 0x2803, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_high) } 
++	{ 0x2803, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_high) },
++	{ 0x2806, offsetof(struct _vmx_vmcsfields, guest_IA32_EFER_full) },
++	{ 0x2807, offsetof(struct _vmx_vmcsfields, guest_IA32_EFER_high) }
+ };
+ 
+ //count of VMX VMCS read-write fields
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-data.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-data.c
+index 9c6eba641..77220f0c8 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-data.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-baseplatform/arch/x86_64/vmx/bplt-x86_64vmx-data.c
+@@ -156,6 +156,9 @@ struct _vmx_vmcsrwfields_encodings g_vmx_vmcsrwfields_encodings[] __attribute__(
+ 	{ 0x0C08, offsetof(struct _vmx_vmcsfields, host_FS_selector) },
+ 	{ 0x0C0A, offsetof(struct _vmx_vmcsfields, host_GS_selector) },
+ 	{ 0x0C0C, offsetof(struct _vmx_vmcsfields, host_TR_selector) },
++	// Full 64-bit Host-State fields
++	{ 0x2C02, offsetof(struct _vmx_vmcsfields, host_IA32_EFER_full) },
++	{ 0x2C03, offsetof(struct _vmx_vmcsfields, host_IA32_EFER_high) },
+ 	// Guest-State fields
+ 	// Natural 64-bit Guest-State fields
+ 	{ 0x6800, offsetof(struct _vmx_vmcsfields, guest_CR0) },
+@@ -224,7 +227,9 @@ struct _vmx_vmcsrwfields_encodings g_vmx_vmcsrwfields_encodings[] __attribute__(
+ 	{ 0x2800, offsetof(struct _vmx_vmcsfields, guest_VMCS_link_pointer_full) },
+ 	{ 0x2801, offsetof(struct _vmx_vmcsfields, guest_VMCS_link_pointer_high) },
+ 	{ 0x2802, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_full) },
+-	{ 0x2803, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_high) } 
++	{ 0x2803, offsetof(struct _vmx_vmcsfields, guest_IA32_DEBUGCTL_high) },
++	{ 0x2806, offsetof(struct _vmx_vmcsfields, guest_IA32_EFER_full) },
++	{ 0x2807, offsetof(struct _vmx_vmcsfields, guest_IA32_EFER_high) }
+ };
+ 
+ //count of VMX VMCS read-write fields
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
+index ee5f61120..ab422cebc 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86/vmx/peh-x86vmx-main.c
+@@ -314,7 +314,10 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
+ 		case IA32_MSR_GS_BASE:
+ 			vcpu->vmcs.guest_GS_base = (u64)write_data;
+ 			break;
+-		case MSR_EFER: /* fallthrough */
++		case MSR_EFER:
++			vcpu->vmcs.guest_IA32_EFER_full = r->eax;
++			vcpu->vmcs.guest_IA32_EFER_high = r->edx;
++			break;
+ 		case MSR_IA32_PAT: /* fallthrough */
+ 		case MSR_K6_STAR: {
+ 			u32 found = 0;
+@@ -367,7 +370,10 @@ static void _vmx_handle_intercept_rdmsr(VCPU *vcpu, struct regs *r){
+ 		case IA32_MSR_GS_BASE:
+ 			read_result = (u64)vcpu->vmcs.guest_GS_base;
+ 			break;
+-		case MSR_EFER: /* fallthrough */
++		case MSR_EFER:
++			r->eax = vcpu->vmcs.guest_IA32_EFER_full;
++			r->edx = vcpu->vmcs.guest_IA32_EFER_high;
++			goto no_assign_read_result;
+ 		case MSR_IA32_PAT: /* fallthrough */
+ 		case MSR_K6_STAR: {
+ 			u32 found = 0;
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+index ab9163bfd..b105d9797 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+@@ -314,7 +314,15 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
+ 		case IA32_MSR_GS_BASE:
+ 			vcpu->vmcs.guest_GS_base = (u64)write_data;
+ 			break;
+-		case MSR_EFER: /* fallthrough */
++		case MSR_EFER:
++			printf("\nWRITE EFER 0x%02x [ 0x%08x  0x%08x 0x%08x  0x%08x  0x%08x 0x%08x ]", vcpu->id, vcpu->vmcs.control_VM_entry_controls, vcpu->vmcs.guest_IA32_EFER_full, vcpu->vmcs.guest_IA32_EFER_high, vcpu->vmcs.guest_CR0, r->eax, r->edx);
++			if (r->edx != 0) {
++				printf("\nWARNING: WRMSR EFER EDX != 0");
++				r->edx = 0;
++			}
++			vcpu->vmcs.guest_IA32_EFER_full = r->eax;
++			vcpu->vmcs.guest_IA32_EFER_high = r->edx;
++			break;
+ 		case MSR_IA32_PAT: /* fallthrough */
+ 		case MSR_K6_STAR: {
+ 			u32 found = 0;
+@@ -367,7 +375,10 @@ static void _vmx_handle_intercept_rdmsr(VCPU *vcpu, struct regs *r){
+ 		case IA32_MSR_GS_BASE:
+ 			read_result = (u64)vcpu->vmcs.guest_GS_base;
+ 			break;
+-		case MSR_EFER: /* fallthrough */
++		case MSR_EFER:
++			r->eax = vcpu->vmcs.guest_IA32_EFER_full;
++			r->edx = vcpu->vmcs.guest_IA32_EFER_high;
++			goto no_assign_read_result;
+ 		case MSR_IA32_PAT: /* fallthrough */
+ 		case MSR_K6_STAR: {
+ 			u32 found = 0;
+@@ -517,11 +528,14 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
+ 	{
+ 		/* Set bit 9 of "IA-32e mode guest" to EFER.LME && CR0.PG */
+ 		u32 value = vcpu->vmcs.control_VM_entry_controls;
+-		msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
+-		HALT_ON_ERRORCOND(efer->index == MSR_EFER);
++		u32 efer = vcpu->vmcs.guest_IA32_EFER_full;
++		u32 lme = (efer >> EFER_LME) & 0x1U;
+ 		value &= ~(1U << 9);
+-		value |= ((cr0_value & CR0_PG) && (efer->data & (0x1U << EFER_LME))) << 9;
++		value |= ((cr0_value & CR0_PG) && lme) << 9;
+ 		vcpu->vmcs.control_VM_entry_controls = value;
++		efer &= ~(1U << EFER_LMA);
++		efer |= ((cr0_value & CR0_PG) && lme) << EFER_LMA;
++		vcpu->vmcs.guest_IA32_EFER_full = efer;
+ 	}
+ 
+ 	//flush mappings
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86/vmx/part-x86vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86/vmx/part-x86vmx.c
+index af521d1a4..a0b08c61a 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86/vmx/part-x86vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86/vmx/part-x86vmx.c
+@@ -59,7 +59,6 @@ extern u32 x_gdt_start[], x_idt_start[]; //runtimesup.S
+ //critical MSRs that need to be saved/restored across guest VM switches
+ // _vmx_handle_intercept_rdmsr() relies on the order of elements in this array
+ static const u32 vmx_msr_area_msrs[] = {
+-	MSR_EFER, 
+ 	MSR_IA32_PAT,
+ 	MSR_K6_STAR,
+ };
+@@ -315,6 +314,10 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+ 	vcpu->vmcs.control_VM_exit_controls = vcpu->vmx_msrs[INDEX_IA32_VMX_EXIT_CTLS_MSR];
+ 	vcpu->vmcs.control_VM_entry_controls = vcpu->vmx_msrs[INDEX_IA32_VMX_ENTRY_CTLS_MSR];
+ 
++	/* Enable Load / Store IA32_EFER in VM exit / entry controls */
++	vcpu->vmcs.control_VM_exit_controls |= (1UL << 20) | (1UL << 21);
++	vcpu->vmcs.control_VM_entry_controls |= (1UL << 15);
++
+ 	//IO bitmap support
+ 	vcpu->vmcs.control_IO_BitmapA_address_full = (u32)hva2spa((void*)vcpu->vmx_vaddr_iobitmap);
+ 	vcpu->vmcs.control_IO_BitmapA_address_high = 0;
+@@ -322,6 +325,16 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+ 	vcpu->vmcs.control_IO_BitmapB_address_high = 0;
+ 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 25); //enable use IO Bitmaps
+ 
++	/* Read MSR_EFER from host */
++	{
++		u32 eax, edx;
++		rdmsr(MSR_EFER, &eax, &edx);
++		vcpu->vmcs.host_IA32_EFER_full = eax;
++		vcpu->vmcs.host_IA32_EFER_high = edx;
++		vcpu->vmcs.guest_IA32_EFER_full = eax;
++		vcpu->vmcs.guest_IA32_EFER_high = edx;
++	}
++
+ 	//Critical MSR load/store
+ 	{
+ 		u32 i;
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
+index 8f93d99df..5c92d24ac 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-partition/arch/x86_64/vmx/part-x86_64vmx.c
+@@ -59,7 +59,6 @@ extern u32 x_gdt_start[], x_idt_start[]; //runtimesup.S
+ //critical MSRs that need to be saved/restored across guest VM switches
+ // _vmx_handle_intercept_rdmsr() relies on the order of elements in this array
+ static const u32 vmx_msr_area_msrs[] = {
+-	MSR_EFER, 
+ 	MSR_IA32_PAT,
+ 	MSR_K6_STAR,
+ };
+@@ -323,6 +322,10 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+ 	HALT_ON_ERRORCOND(vcpu->vmx_msrs[INDEX_IA32_VMX_EXIT_CTLS_MSR] & (1UL << (9 + 32)));
+ 	vcpu->vmcs.control_VM_exit_controls |= (1UL << 9);
+ 
++	/* Enable Load / Store IA32_EFER in VM exit / entry controls */
++	vcpu->vmcs.control_VM_exit_controls |= (1UL << 20) | (1UL << 21);
++	vcpu->vmcs.control_VM_entry_controls |= (1UL << 15);
++
+ 	//IO bitmap support
+ 	{
+ 	    u64 addr = hva2spa((void*)vcpu->vmx_vaddr_iobitmap);
+@@ -336,6 +339,26 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+     }
+ 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 25); //enable use IO Bitmaps
+ 
++	/* Read MSR_EFER from host */
++	{
++		u32 eax, edx;
++		rdmsr(MSR_EFER, &eax, &edx);
++
++		vcpu->vmcs.host_IA32_EFER_full = eax;
++		vcpu->vmcs.host_IA32_EFER_high = edx;
++
++	    /*
++	     * Host is in x86-64, but guest should enter from x86.
++	     * Need to manually clear MSR_EFER's 8th bit (LME) and
++	     * 10th bit (LMA). Otherwise when guest enables paging
++	     * a #GP exception will occur.
++	     */
++	    eax &= ~((1LU << EFER_LME) | (1LU << EFER_LMA));
++
++		vcpu->vmcs.guest_IA32_EFER_full = eax;
++		vcpu->vmcs.guest_IA32_EFER_high = edx;
++	}
++
+ 	//Critical MSR load/store
+ 	{
+ 		u32 i;
+@@ -350,16 +373,8 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
+ 			rdmsr(msr, &eax, &edx);
+ 			hmsr[i].index = gmsr[i].index = msr;
+ 			hmsr[i].data = gmsr[i].data = ((u64)edx << 32) | (u64)eax;
+-			if (msr == MSR_EFER) {
+-			    /*
+-			     * Host is in x86-64, but guest should enter from x86.
+-			     * Need to manually clear MSR_EFER's 8th bit (LME) and
+-			     * 10th bit (LMA). Otherwise when guest enables paging
+-			     * a #GP exception will occur.
+-			     */
+-			    gmsr[i].data &= ~((1LU << EFER_LME) | (1LU << EFER_LMA));
+-			}
+ 		}
++
+ 		#endif
+ 
+ 		//host MSR load on exit, we store it ourselves before entry

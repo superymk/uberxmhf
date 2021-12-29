@@ -384,38 +384,107 @@ According to Intel v3 "25.3.1.2 Checks on Guest Segment Registers" and
 "25.3.2.2 Loading Guest Segment Registers and Descriptor-Table Registers",
 TR must be usable.
 
-### Temporary notes
+Also note this sentence and footnote in "23.4.1 Guest Register State":
+> Bit 16 indicates an unusable segment. Attempts to use such a segment fault
+  except in 64-bit mode. In general, a segment register is unusable if it has
+  been loaded with a null selector. [2]
+> [2] There are a few exceptions to this statement. ... In contrast, the TR
+  register is usable after processor reset despite having a null selector;
+  see Table 10-1 in the Intel(R) 64 and IA-32 Architectures Software
+  Developer's Manual, Volume 3A.
 
-TODO: why?
+Not sure why Table 10-1 is related to this. But we now know that TR is defined
+to be usable.
 
-TODO: check `vcpu->vmcs.guest_TR_access_rights = 0x83;` in `part-x86_64vmx.c`
+### Experimenting with TR access rights
 
-TODO: LAR-Load Access Rights Byte
-TODO: Some places mention that "segment selector is not null"
+(Remove CR0.PG intercept)
 
-TODO: if not intercepting CR0.PG, will QEMU automatically change TR access right?
-TODO: does changing TR access right fix the problem?
-(TODO: check TR)
-
+In QEMU, if print `vcpu->vmcs.guest_TR_access_rights` for each interrupt, see
 ```
-t 2
-symbol-file xmhf/src/xmhf-core/xmhf-runtime/runtime.exe
-p $rax = 1
-b vmx_handle_intercept_cr0access_ug thread 2
-c
-
-p/x vcpu->vmcs.guest_CR0
-p/x vcpu->vmcs.control_CR0_shadow
-p/x vcpu->vmcs.control_CR0_mask
-p/x vcpu->vmcs.control_VM_entry_controls
-
-b xmhf_parteventhub_arch_x86_64vmx_intercept_handler thread 2
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x0000000000001076 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x00000000000010c3 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000001f 0x0000000000000000 0x9900:0x00000000000010f1 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x0000000000001102 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x000000000000111a ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x000000000000112a ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x9900:0x0000000000001142 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000001c 0x0000000000000000 0x9900:0x0000000000001033 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+[cr0-01] MOV TO, current=0x00000020, proposed=0x00000001
+[cr0-01] TR_acc_rts: 0x0000000000000083
+[cr0-01]       mask: 0x0000000060000020
+[cr0-01] requested : 0x0000000000000001
+[cr0-01] old gstCR0: 0x0000000000000020
+[cr0-01] old shadow: 0x0000000000000020
+[cr0-01] old entctl: 0x00000000000011ff
+[cr0-01] guest efer: 0x0000000000000000
+[cr0-01] new gstCR0: 0x0000000000000021
+[cr0-01] new shadow: 0x0000000000000001
+[cr0-01] new entctl: 0x00000000000011ff
+Intercept: 0x01 0x00000020 0x0000000000000000 0x0008:0x000000000009ae79 ;
+[int-01] TR_acc_rts: 0x0000000000000083
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x0010:0xffffffff81000109 ;
+[int-01] TR_acc_rts: 0x000000000000008b
+Intercept: 0x01 0x0000000a 0x0000000000000000 0x0010:0xffffffff81000152 ;
+[int-01] TR_acc_rts: 0x000000000000008b
 ```
 
-TODO: try to intercept the write to CR0, and see whether VMENTRY fail occurs
-	TODO: does masking CR0.PG work correctly in x64 XMHF x86 Debian?
-TODO: try to change VMCS to let the first fault in the triple fault cause VMEXIT
-TODO: try to capture entire guest state and simulate (costs a lot of time)
-TODO: consider fixing the problem in `bug_012`
-TODO: is it possible that QEMU has a bug?
+So the CPU should be automatically changing TR access rights after MOV CR0.
+
+In `part-x86_64vmx.c`, can see where TR access rights is initialized:
+`vcpu->vmcs.guest_TR_access_rights = 0x83;`
+
+If change this to `vcpu->vmcs.guest_TR_access_rights = 0x8b;`, and add CR0.PG
+intercept back, QEMU and HP can all boot correctly.
+
+If only change initial `guest_TR_access_rights`, and remove CR0.PG intercept,
+still can work correctly.
+
+Currently, the git repo is commit `ff1efb9d3` patched with
+`tr_access_right6.diff`. Will clean up debug code and commit.
+
+### Untried ideas for debugging
+
+Related to TR access rights
+
+* Intel v2 "LAR-Load Access Rights Byte" mentioned "access right"
+	* But not related to TR access rights in VMX
+* Some places mention that "segment selector is not null"
+	* Most segment selectors are unusable when null, but not TR
+
+General ideas
+
+* Try to change VMCS to let the first fault in the triple fault cause VMEXIT
+	* Will be interesting to see which exception will occur. But fixed before
+	  trying.
+* Try to capture entire guest state and simulate (costs a lot of time)
+	* Too costly
+* Consider fixing the problem in `bug_012`
+	TODO
+* Is it possible that QEMU has a bug?
+	* QEMU and HP's behavior are different. Not sure which one is correct, or
+	  maybe both are correct.
+
+### `bug_012` `load IA32_EFER` problem
+
+Tried to see the `load IA32_EFER` problem found in `bug_012` is fixed.
+The idea is to revert `66265c823` and then revert `9b2327510`, but need to fix
+git conflicts. After reverting and fixing a compile error, the git repo is
+same as patching commit `da32a4e60` with `bug_012_rebase.diff`.
+
+Unfortunately, still see `WARNING: WRMSR EFER EDX != 0` (Linux trying to WRMSR
+`IA32_EFER` with edx != 0). Not going to fix for now.
+
+## Fix
+
+`565cef3cf..da32a4e60`
+* Change TR access right initialization
 

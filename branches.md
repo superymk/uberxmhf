@@ -141,8 +141,37 @@
 * (Now can run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
 
 `565cef3cf..`
+* Implement `xmhf_baseplatform_arch_x86_64vmx_dump_vcpu()` for debugging
+* Update `vmx_handle_intercept_cr0access_ug()`
+* Change TR access right initialization (`bug_014`)
+* Only update "IA-32e mode guest" in VMCS when CR0.PG changes (`bug_015`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
 * Decide a coding format.
+
+## Support Status
+```rst
++----+---+------------------+------------+-------------------------------------+
+|    |   |                  |            | Status                              |
+|    |   |Operating         |            +------------------+------------------+
+|XMHF|DRT|System            |Application | HP               | QEMU             |
++====+===+==================+============+==================+==================+
+| x86| N | Ubuntu 12.04 x86 |pal_demo x86| good                                |
+|    |   +------------------+------------+                                     |
+|    |   | Debian 11 x86    |pal_demo x86|                                     |
++----+   +------------------+------------+                                     |
+| x64|   | Ubuntu 12.04 x86 |pal_demo x86|                                     |
+|    |   +------------------+------------+------------------+------------------+
+|    |   | Debian 11 x86    |pal_demo x86| app not stable   | good             |
+|    |   +------------------+------------+------------------+------------------+
+|    |   | Debian 11 x64    |pal_demo x86| app not stable (bug_17)             |
+|    |   |                  +------------+-------------------------------------+
+|    |   |                  |pal_demo x64| not supported                       |
++----+---+------------------+------------+-------------------------------------+
+```
+
+## Limits
+* QEMU cannot reboot (`bug_007` fixes part of this problem)
+* Grub graphical mode does not work in HP (`bug_016`)
 

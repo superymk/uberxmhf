@@ -140,11 +140,18 @@
 * Fix typo of `assert(lvl<=3);` for `HPT_TYPE_LONG` (`bug_012`)
 * (Now can run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
 
-`565cef3cf..`
+`565cef3cf..36fc963ae`
 * Implement `xmhf_baseplatform_arch_x86_64vmx_dump_vcpu()` for debugging
 * Update `vmx_handle_intercept_cr0access_ug()`
 * Change TR access right initialization (`bug_014`)
 * Only update "IA-32e mode guest" in VMCS when CR0.PG changes (`bug_015`)
+* (Now can boot x64 Debian x64 XMHF in HP)
+* Change `scode.c` to extend integer sizes to 64-bits (`bug_017`)
+* Consider CR3 as match if address bits match (`bug_017`)
+* Increase runtime stack size from 32K to 64K (`bug_017`)
+* (Now can stably run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
+
+`36fc963ae..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -164,9 +171,9 @@
 | x64|   | Ubuntu 12.04 x86 |pal_demo x86|                                     |
 |    |   +------------------+------------+------------------+------------------+
 |    |   | Debian 11 x86    |pal_demo x86| app not stable   | good             |
-|    |   +------------------+------------+------------------+------------------+
-|    |   | Debian 11 x64    |pal_demo x86| app not stable (bug_17)             |
-|    |   |                  +------------+-------------------------------------+
+|    |   +------------------+------------+ (bug_018)        |                  |
+|    |   | Debian 11 x64    |pal_demo x86|                  |                  |
+|    |   |                  +------------+------------------+------------------+
 |    |   |                  |pal_demo x64| not supported                       |
 +----+---+------------------+------------+-------------------------------------+
 ```

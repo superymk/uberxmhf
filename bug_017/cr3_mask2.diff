@@ -1,0 +1,61 @@
+diff --git a/hypapps/trustvisor/src/scode.c b/hypapps/trustvisor/src/scode.c
+index 5472f19c7..611a08039 100644
+--- a/hypapps/trustvisor/src/scode.c
++++ b/hypapps/trustvisor/src/scode.c
+@@ -72,6 +72,9 @@ hptw_emhf_host_ctx_t g_hptw_reg_host_ctx;
+    instruction fetch of this address */
+ #define RETURN_FROM_PAL_ADDRESS 0x00000004
+ 
++// TODO: use hpt_cr3_set_address()
++#define CR3_ADDR_MASK (~0xFFFUL)
++
+ /* whitelist of all approved sensitive code regions */
+ /* whitelist_max and *whitelist is set up by BSP, no need to apply lock
+  * whitelist_size will only be updated in scode_register() and scode_unreg(), no need to apply lock
+@@ -188,7 +191,7 @@ int scode_in_list(u64 gcr3, uintptr_t gvaddr)
+ 
+   for (i = 0; i < whitelist_max; i ++)
+     {
+-      if (gcr3 == whitelist[i].gcr3) {
++      if ((gcr3 & CR3_ADDR_MASK) == whitelist[i].gcr3) {
+         for( j=0 ; j<(u32)(whitelist[i].scode_info.num_sections) ; j++ )  {
+           if( (gvaddr >= whitelist[i].scode_info.sections[j].start_addr) &&
+               (gvaddr < ((whitelist[i].scode_info.sections[j].start_addr)+((whitelist[i].scode_info.sections[j].page_num)<<PAGE_SHIFT_4K)))  )  {
+@@ -211,7 +214,8 @@ static whitelist_entry_t* find_scode_by_entry(u64 gcr3, uintptr_t gv_entry)
+   for (i = 0; i < whitelist_max; i ++)
+     {
+       /* find scode with correct cr3 and entry point */
+-      if ((whitelist[i].gcr3 == gcr3) && (whitelist[i].entry_v == gv_entry))
++      if ((whitelist[i].gcr3 == (gcr3 & CR3_ADDR_MASK)) &&
++          (whitelist[i].entry_v == gv_entry))
+         return &whitelist[i];
+     }
+   return NULL;
+@@ -535,7 +539,7 @@ u32 scode_register(VCPU *vcpu, u32 scode_info, u32 scode_pm, u32 gventry)
+    * so we know what to verify each time
+    */
+   whitelist_new.id = 0;
+-  whitelist_new.gcr3 = gcr3;
++  whitelist_new.gcr3 = gcr3 & CR3_ADDR_MASK;
+   whitelist_new.grsp = (uintptr_t)-1;
+ 
+   /* store scode entry point */
+@@ -714,7 +718,8 @@ u32 scode_unregister(VCPU * vcpu, u32 gvaddr)
+ 
+   for (i = 0; i < whitelist_max; i ++) {
+     /* find scode with correct cr3 and entry point */
+-    if ((whitelist[i].gcr3 == gcr3) && (whitelist[i].entry_v == gvaddr))
++    if ((whitelist[i].gcr3 == (gcr3 & CR3_ADDR_MASK)) &&
++        (whitelist[i].entry_v == gvaddr))
+       break;
+   }
+ 
+@@ -900,7 +905,7 @@ u32 scode_marshall(VCPU * vcpu)
+           err=7;
+           goto out;
+         }
+-      new_rsp = VCPU_grsp(vcpu)-4;
++      new_rsp = VCPU_grsp(vcpu)-sizeof(pm_tmp);
+       VCPU_grsp_set(vcpu, new_rsp);
+       EU_CHKN( hptw_checked_copy_to_va( &whitelist[curr].hptw_pal_checked_guest_ctx.super,
+                                         HPTW_CPL3,

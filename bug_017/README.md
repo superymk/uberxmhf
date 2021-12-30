@@ -103,6 +103,11 @@ likely `bug_013` did not increase stack size by an enough amount.
 
 Also use automated testing to test 32K stack size.
 
+Sample test command:
+```sh
+time p test.py --qemu-image $QEMU_DIR/c3a.qcow2 --nbd 0 --work-dir /tmp/0 --test-num 100 --no-display && mv -n /tmp/0/result result_stack_1M/`date +%Y%m%d%H%M%S` && echo SUCCESS
+```
+
 View the last line of serial output to categorize result
 * `zeroing section 3`: all tests pass
 * `...tv_app_handleintercept_hwpgtblviolation:587: FATAL ERROR: ...`: behavior 1
@@ -179,10 +184,12 @@ d
 Set break point for Behavior 1
 ```
 # 1A and 1B
+# eu_trace("FATAL ERROR: Unexpected return value from page fault handling");
 b appmain.c:587
 
 # 1B
-b scode.c:199
+# eu_trace("no matching scode found for gvaddr %#x!", gvaddr);
+b scode.c:199 if gvaddr != 4
 
 c
 ```
@@ -215,25 +222,108 @@ Changed list
 * `scode_in_list()`'s second argument (done)
 * `whitelist_entry_t` -> `gpmp`, `gssp`, `gpm_size`, `gss_size`, ... (done)
 * `hpt_scode_npf()`'s 2nd argument (done)
-* `copy_from_current_guest()`'s 4th argument (TODO)
-* `copy_to_current_guest()`'s 4th argument (TODO)
+* `copy_from_current_guest()`'s 4th argument (done)
+* `copy_to_current_guest()`'s 4th argument (done)
 
-TODO: change remaining
+### Continue debugging
 
-# tmp notes
+In 1B `scode_in_list()`, set a break point and print variables.
+`gcr3 = 0x55bb805, whitelist[0].gcr3 = 0x55bb803`.
 
-TODO: for all log messages, print CPU ID
-TODO: For behavior 2 - 5, may need to rewrite printf to print faster
+Lower 12 bits in CR3 are PCID. When CR4 != 0 looks like this field is ignored?
+See multiple answers in <https://stackoverflow.com/questions/20155304/>.
 
+Also useful:
+<https://kernelnewbies.org/Linux_4.14#Longer-lived_TLB_Entries_with_PCID>.
+
+Can see in logs that in x86, `CR3[0:12]` is always `0x000`, but in x64,
+it is one of `0x80[1-6]` (all values are equally likely)
+
+In Intel's volume 3, "2.5 CONTROL REGISTERS" says "If PCIDs are enabled, CR3
+has a format different from that illustrated in Figure 2-7. See Section 4.5,
+'4-Level Paging and 5-Level Paging.'". Then in section 4.5, Table 4-12 shows
+that most bits in `CR3[0:12]` are ignored. Only bit 3 and 4 (PWT and PCD) are
+used.
+
+For now, should be able to ignore all of `CR3[0:12]`.
+
+### GDB snippet for performing page walk
+
+```gdb
+set $a = vcpu->vmcs.guest_RSP
+set $c = vcpu->vmcs.guest_CR3
+set $p0 = $c & ~0xfff
+set $p1 = (*(long*)($p0)) & ~0xfff | ((($a >> 30) & 0x1ff) << 3)
+set $p2 = (*(long*)($p1)) & ~0xfff | ((($a >> 21) & 0x1ff) << 3)
+set $p3 = (*(long*)($p2)) & ~0xfff | ((($a >> 12) & 0x1ff) << 3)
+set $p4 = (*(long*)($p3)) & ~0xfff
+set $b = $p4 | ($a & 0xfff)
 ```
-time p test.py --qemu-image $QEMU_DIR/c3a.qcow2 --nbd 0 --work-dir /tmp/0 --test-num 100 --no-display && mv -n /tmp/0/result result_stack_1M/`date +%Y%m%d%H%M%S` && echo SUCCESS
 
-# after boot
+### Fixing behavior 1
 
-b scode.c
+Use `cr3_mask2.diff` as a quick way to test whether ignoring `CR3[0:12]` will
+fix behavior 1. Looks like the answer is yes.
 
-b appmain.c:587
-c
+For other behaviors, having an incomplete printf line is related to
+`xmhf_smpguest_arch_x86svm_quiesce()`. When interrupt is delivered to the CPU,
+the CPU is printing a line and holding the serial port lock. So the screen
+freezes.
 
-```
+After commit `324855612`, success rate of testing 100 `pal_demo`s increases a
+lot in QEMU. So looks like behavior 1 is fixed.
+
+However, on HP, other behaviors still exist.
+
+### Quiesce code analysis
+
+In `peh-x86_64vmx-main.c`, there are 3 locations where hypervisor wants to
+communicate with guest. `xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);` enters
+critical section and `xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);` leaves
+critical section.
+
+`xmhf_smpguest_arch_x86_64vmx_quiesce()` send NMI to all other CPUs and wait
+until these CPUs enter
+`xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception()`.
+
+If other CPUs receive NMI when in hypervisor mode (i.e. VMX root operating),
+it will call `xmhf_xcphandler_arch_hub`, then
+`xmhf_smpguest_arch_x86_64_eventhandler_nmiexception`, then
+`xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception`. If in guest mode
+(i.e. VMX non-root operating), it will call
+`xmhf_parteventhub_arch_x86_64vmx_intercept_handler`, then
+`xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception`.
+
+The problem is that if another process is holding the printf lock and is NMI
+interrupted, there will be a deadlock.
+
+A few possible solutions:
+* If NMI is like a Linux signal, we can mask it during critical section of
+  printf. However, it looks like not the case.
+* We can check the status of the lock in
+  `xmhf_smpguest_arch_x86_64vmx_quiesce()`. If locked, force it to unlock.
+  However, it is difficult to check whether a lock is deadlocked, so give up.
+* We can acquire the printf lock in `xmhf_smpguest_arch_x86_64vmx_quiesce()`
+  before sending NMI interrupts. (from `bug_018`, this can still cause
+  deadlock if `xmhf_smpguest_arch_x86_64vmx_quiesce()` raises an exception).
+* For strange behaviors like this, can remove the lock on printf.
+  Can encode each ASCII character (16 * x + y) on CPU z with two characters
+  (only need 64 possibilities for 4 CPUs): (16 * z + x, 16 * z + y)
+  This should work as long as parallel printing each character works on serial
+  port.
+
+Will handle other behaviors in `bug_018`
+
+### Attachments
+
+Test result of different stack sizes: `results.7z`
+* Contains 4 directories: `result_stack_1M`, `result_stack_32K`,
+  `result_stack_32K_c1a`, `result_stack_64K`
+
+## Fix
+
+`c23d4ff6c..36fc963ae`
+* Change `scode.c` to extend integer sizes to 64-bits
+* Consider CR3 as match if address bits match (allow lower bits to be different)
+* Increase runtime stack size from 32K to 64K (just in case)
 

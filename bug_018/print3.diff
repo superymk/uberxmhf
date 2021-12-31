@@ -1,0 +1,174 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+index d57357e24..17ae53039 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-eventhub/arch/x86_64/vmx/peh-x86_64vmx-main.c
+@@ -585,7 +585,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
+ 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
+ }						
+ 			
+-
++extern u32 lxy_flag;
+ 
+ //---hvm_intercept_handler------------------------------------------------------
+ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
+@@ -602,6 +602,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
+ 		HALT();
+ 	}
+ 
++	if (lxy_flag) {
++		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
++	}
++
+ 	//handle intercepts
+ 	switch((u32)vcpu->vmcs.info_vmexit_reason){
+ 		//--------------------------------------------------------------
+@@ -670,7 +674,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
+ 				case 0x02:	//NMI
+ 					#ifndef __XMHF_VERIFICATION__
+ 					//we currently discharge quiescing via manual inspection
++					printf("{%x,p}", vcpu->id);
+ 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r);
++					printf("{%x,P}", vcpu->id);
+ 					#endif // __XMHF_VERIFICATION__
+ 					break;
+ 				
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+index 3b370559f..98b85bf1a 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+@@ -417,6 +417,8 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
+ //note: we are in atomic processsing mode for this "vcpu"
+ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
+ 
++        printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
++
+         /* Acquire the printf lock to prevent deadlock */
+         emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
+ 
+@@ -435,18 +437,29 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
+         g_vmx_quiesce=1;  //we are now processing quiesce
+         _vmx_send_quiesce_signal(vcpu);
+ 
++		// For debugging release lock early and allow printf in other CPUs. We hope that other CPUs have all received the NMI at this point
++		emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
++
+         //wait for all the remaining CPUs to quiesce
+         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
+-        while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
++        //while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
++        for (u32 counter = 1; g_vmx_quiesce_counter < (g_midtable_numentries-1); counter++) {
++        	if (!(counter & 0xffff)) {
++        		printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter");
++        	}
++        }
+         //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
+ 
+         /* Release the printf lock to prevent deadlock */
+-        emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
++        // emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+ 
++        printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
+ }
+ 
+ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
+ 
++        printf("\nCPU(0x%02x): ending quiesce.", vcpu->id);
++
+         /*
+          * g_vmx_quiesce=0 must be before g_vmx_quiesce_resume_signal=1,
+          * otherwise if another CPU enters NMI exception handler again,
+@@ -473,11 +486,13 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
+         spin_unlock(&g_vmx_lock_quiesce_resume_signal);
+ 
+         //release quiesce lock
+-        //printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
++        printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
+         spin_unlock(&g_vmx_lock_quiesce);
+ 
+ }
+ 
++u32 lxy_flag = 0;
++
+ //quiescing handler for #NMI (non-maskable interrupt) exception event
+ //note: we are in atomic processsing mode for this "vcpu"
+ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r){
+@@ -485,6 +500,8 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
+ 	unsigned long _vmx_vmcs_info_vmexit_reason;
+ 
++	printf("{%x,n}", vcpu->id);
++
+     (void)r;
+ 
+ 	//determine if the NMI originated within the HVM or within the
+@@ -497,9 +514,13 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
+ 	
+ 	if(g_vmx_quiesce){ //if g_vmx_quiesce =1 process quiesce regardless of where NMI originated from
++		lxy_flag = 1;
+ 		//if this core has been quiesced, simply return
+-			if(vcpu->quiesced)
++			if(vcpu->quiesced) {
++				// Cannot print because of deadlock
++				printf("{%x,N1}", vcpu->id);
+ 				return;
++			}
+ 				
+ 			vcpu->quiesced=1;
+ 	
+@@ -508,10 +529,12 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 			g_vmx_quiesce_counter++;
+ 			spin_unlock(&g_vmx_lock_quiesce_counter);
+ 
++			printf("{%x,N2}", vcpu->id);
++
+ 			//wait until quiesceing is finished
+-			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
++			printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+ 			while(!g_vmx_quiesce_resume_signal);
+-			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
++			printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+ 
+ 			spin_lock(&g_vmx_lock_quiesce_resume_counter);
+ 			g_vmx_quiesce_resume_counter++;
+@@ -525,16 +548,21 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 		if(nmiinhvm){
+ 			if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
+ 				//TODO: hypapp has chosen to intercept NMI so callback
++				printf("{%x,N3}", vcpu->id);
+ 			}else{
++				printf("{%x,N4}", vcpu->id);
+ 				//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
+ 				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+ 				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+ 					INTR_TYPE_NMI |
+ 					INTR_INFO_VALID_MASK;
+ 			}
++		} else {
++			printf("{%x,N5}", vcpu->id);
+ 		}
+ 	}
+-	
++    
++	printf("{%x,N}", vcpu->id);
+ }
+ 
+ //----------------------------------------------------------------------
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-xcphandler/arch/x86_64/xcph-x86_64.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-xcphandler/arch/x86_64/xcph-x86_64.c
+index 455ab25cb..146ebcf63 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-xcphandler/arch/x86_64/xcph-x86_64.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-xcphandler/arch/x86_64/xcph-x86_64.c
+@@ -119,9 +119,13 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
+ 
+     vcpu = _svm_and_vmx_getvcpu();
+ 
++    printf("{%x,e,%d}", vcpu->id, vector);
++
+     switch(vector){
+     case CPU_EXCEPTION_NMI:
++        printf("{%x,s}", vcpu->id);
+         xmhf_smpguest_arch_x86_64_eventhandler_nmiexception(vcpu, r);
++        printf("{%x,S}", vcpu->id);
+         break;
+ 
+     default:

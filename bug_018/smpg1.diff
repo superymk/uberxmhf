@@ -1,0 +1,16 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+index 15303b8e5..b81f3b7ef 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+@@ -503,9 +503,9 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 			spin_unlock(&g_vmx_lock_quiesce_counter);
+ 
+ 			//wait until quiesceing is finished
+-			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
++			printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+ 			while(!g_vmx_quiesce_resume_signal);
+-			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
++			printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+ 
+ 			spin_lock(&g_vmx_lock_quiesce_resume_counter);
+ 			g_vmx_quiesce_resume_counter++;

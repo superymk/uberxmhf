@@ -1,0 +1,90 @@
+diff --git a/xmhf/src/libbaremetal/libxmhfc/subr_prf.c b/xmhf/src/libbaremetal/libxmhfc/subr_prf.c
+index a911f196c..7a0d5122c 100644
+--- a/xmhf/src/libbaremetal/libxmhfc/subr_prf.c
++++ b/xmhf/src/libbaremetal/libxmhfc/subr_prf.c
+@@ -319,6 +319,77 @@ printf(const char *fmt, ...)
+ 	return (retval);
+ }
+ 
++#if 1
++// Lock-free vprintf
++static inline void rdmsr(u32 msr, u32 *eax, u32 *edx){
++  __asm__("rdmsr"
++	  :"=a"(*eax), "=d"(*edx)
++	  :"c"(msr));
++}
++
++int
++vprintf(const char *fmt, va_list ap)
++{
++	/* struct putchar_arg pca; */
++	int retval;
++#define VPRINTF_MUX_BUFR_SIZE 256
++#define MSR_APIC_BASE 0x0000001B
++#define LAPIC_ID        (0x20)
++
++	char buf[VPRINTF_MUX_BUFR_SIZE];
++	static const char table[] =
++		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++	u32 cpu;
++
++	retval = vsnprintf(buf, sizeof(buf), fmt, ap);
++
++	{
++		u32 eax, edx, *lapic_reg, lapic_id;
++		rdmsr(MSR_APIC_BASE, &eax, &edx);
++		eax &= (u32)0xFFFFF000UL;
++		lapic_reg = (u32 *)((uintptr_t)eax+ (u32)LAPIC_ID);
++		lapic_id = *lapic_reg;
++		lapic_id = lapic_id >> 24;
++		switch (lapic_id) {
++			case 0: cpu = 0; break;
++			case 1: cpu = 1; break;
++			case 2: cpu = 2; break;
++			case 3: cpu = 3; break;
++			case 4: cpu = 2; break;
++			case 5: cpu = 3; break;
++			default: cpu = 4; break;
++		}
++	}
++
++	/*
++	 * +---+---+---+---+---+---+
++	 * | 5 | 4 | 3 | 2 | 1 | 0 |
++	 * +---+---+---+---+---+---+
++	 * |  cpu  | 1 | 0 | b7| b6|
++	 * +---+---+---+---+---+---+
++	 * |  cpu  | 0 | b5| b4| b3|
++	 * +---+---+---+---+---+---+
++	 * |  cpu  | 0 | b2| b1| b0|
++	 * +---+---+---+---+---+---+
++	 */
++
++	for (u32 i = 0; i < sizeof(buf); i++) {
++		u32 j = (u32)(buf[i]);
++		// emhfc_putchar(table[(cpu<<4) + (j>>4)], emhfc_putchar_arg);
++		// emhfc_putchar(table[(cpu<<4) + (j&0xf)], emhfc_putchar_arg);
++		emhfc_putchar(table[(cpu<<4) | 0x8 | ((j>>6)&0x7)], emhfc_putchar_arg);
++		emhfc_putchar(table[(cpu<<4) | 0x0 | ((j>>3)&0x7)], emhfc_putchar_arg);
++		emhfc_putchar(table[(cpu<<4) | 0x0 | ( j    &0x7)], emhfc_putchar_arg);
++		/* Will intentionally print a '\0' at the end */
++		if (!j) {
++			break;
++		}
++	}
++
++	return (retval);
++}
++#else
++// Normal line-atomic vprintf
+ int
+ vprintf(const char *fmt, va_list ap)
+ {
+@@ -419,6 +490,7 @@ vprintf(const char *fmt, va_list ap)
+ /* 	if ((flags & TOLOG)) */
+ /* 		msglogchar(c, ap->pri); */
+ /* } */
++#endif
+ 
+ /*
+  * Scaled down version of sprintf(3).

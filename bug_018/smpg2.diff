@@ -1,0 +1,48 @@
+diff --git a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+index 15303b8e5..daac9dcfd 100644
+--- a/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
++++ b/xmhf/src/xmhf-core/xmhf-runtime/xmhf-smpguest/arch/x86_64/vmx/smpg-x86_64vmx.c
+@@ -417,6 +417,8 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
+ //note: we are in atomic processsing mode for this "vcpu"
+ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
+ 
++        printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
++
+         /* Acquire the printf lock to prevent deadlock */
+         emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
+ 
+@@ -443,10 +445,13 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
+         /* Release the printf lock to prevent deadlock */
+         emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+ 
++        printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
+ }
+ 
+ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
+ 
++        printf("\nCPU(0x%02x): ending quiesce.", vcpu->id);
++
+         //set resume signal to resume the cores that are quiesced
+         //Note: we do not need a spinlock for this since we are in any
+         //case the only core active until this point
+@@ -467,7 +472,7 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
+         spin_unlock(&g_vmx_lock_quiesce_resume_signal);
+ 
+         //release quiesce lock
+-        //printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
++        printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
+         spin_unlock(&g_vmx_lock_quiesce);
+ 
+ }
+@@ -503,9 +508,9 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
+ 			spin_unlock(&g_vmx_lock_quiesce_counter);
+ 
+ 			//wait until quiesceing is finished
+-			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
++			printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+ 			while(!g_vmx_quiesce_resume_signal);
+-			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
++			printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+ 
+ 			spin_lock(&g_vmx_lock_quiesce_resume_counter);
+ 			g_vmx_quiesce_resume_counter++;

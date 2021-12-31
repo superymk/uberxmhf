@@ -28,6 +28,8 @@ if __name__ == '__main__':
 				out_file.write(c)
 				if cur_line == 'eXtensible Modular Hypervisor Framework':
 					# Truncate current file
+					out_file.truncate(0)
+					out_file.close()
 					out_file = open(args.out_name, 'w')
 					out_file.write(cur_line)
 				out_file.flush()

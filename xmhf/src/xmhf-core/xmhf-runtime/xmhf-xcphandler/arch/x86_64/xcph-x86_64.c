@@ -119,9 +119,13 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 
     vcpu = _svm_and_vmx_getvcpu();
 
+    printf("{%x,e,%d}", vcpu->id, vector);
+
     switch(vector){
     case CPU_EXCEPTION_NMI:
+        printf("{%x,s}", vcpu->id);
         xmhf_smpguest_arch_x86_64_eventhandler_nmiexception(vcpu, r, 1);
+        printf("{%x,S}", vcpu->id);
         break;
 
     default:

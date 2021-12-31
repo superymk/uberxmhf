@@ -417,6 +417,8 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
 //note: we are in atomic processsing mode for this "vcpu"
 void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
 
+        printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
+
         /* Acquire the printf lock to prevent deadlock */
         emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
 
@@ -435,17 +437,28 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         g_vmx_quiesce=1;  //we are now processing quiesce
         _vmx_send_quiesce_signal(vcpu);
 
+		// For debugging release lock early and allow printf in other CPUs. We hope that other CPUs have all received the NMI at this point
+		emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+
         //wait for all the remaining CPUs to quiesce
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
-        while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
+        //while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
+        for (u32 counter = 1; g_vmx_quiesce_counter < (g_midtable_numentries-1); counter++) {
+            if (!(counter & 0xffff)) {
+                printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter");
+            }
+        }
         //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
 
         /* Release the printf lock to prevent deadlock */
-        emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+        // emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
+        printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
 }
 
 void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
+
+        printf("\nCPU(0x%02x): ending quiesce.", vcpu->id);
 
         /*
          * g_vmx_quiesce=0 must be before g_vmx_quiesce_resume_signal=1,
@@ -473,10 +486,12 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
         spin_unlock(&g_vmx_lock_quiesce_resume_signal);
 
         //release quiesce lock
-        //printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
+        printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
         spin_unlock(&g_vmx_lock_quiesce);
 
 }
+
+u32 lxy_flag = 0;
 
 //quiescing handler for #NMI (non-maskable interrupt) exception event
 //note: we are in atomic processsing mode for this "vcpu"
@@ -484,6 +499,8 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	u32 nmiinhvm;	//1 if NMI originated from the HVM else 0 if within the hypervisor
 	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
 	unsigned long _vmx_vmcs_info_vmexit_reason;
+
+	printf("{%x,n}", vcpu->id);
 
     (void)r;
     (void)fromhvm;
@@ -515,10 +532,12 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 			g_vmx_quiesce_counter++;
 			spin_unlock(&g_vmx_lock_quiesce_counter);
 
+			printf("{%x,N2}", vcpu->id);
+
 			//wait until quiesceing is finished
-			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+			printf("\nCPU(0x%02x): Quiesced", vcpu->id);
 			while(!g_vmx_quiesce_resume_signal);
-			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+			printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
 
 			spin_lock(&g_vmx_lock_quiesce_resume_counter);
 			g_vmx_quiesce_resume_counter++;
@@ -528,6 +547,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 
 			return;
 		}
+		printf("{%x,N1}", vcpu->id);
 		return;	// TODO
 	}
 
@@ -535,15 +555,20 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 		//inject the NMI
 		if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
 			//TODO: hypapp has chosen to intercept NMI so callback
+			printf("{%x,N3}", vcpu->id);
 		}else{
 			//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
 			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
 			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
 				INTR_TYPE_NMI |
 				INTR_INFO_VALID_MASK;
+			printf("{%x,N4}", vcpu->id);
 		}
+	} else {
+		printf("{%x,N5}", vcpu->id);
 	}
 
+	printf("{%x,N}", vcpu->id);
 }
 
 //----------------------------------------------------------------------

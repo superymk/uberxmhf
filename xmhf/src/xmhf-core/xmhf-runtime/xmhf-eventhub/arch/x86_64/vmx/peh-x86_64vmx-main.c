@@ -585,7 +585,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }						
 			
-
+extern u32 lxy_flag;
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -600,6 +600,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			(u64)vcpu->vmcs.info_exit_qualification);
 		xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
 		HALT();
+	}
+
+	if (lxy_flag) {
+		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
 	}
 
 	//handle intercepts
@@ -670,7 +674,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				case 0x02:	//NMI
 					#ifndef __XMHF_VERIFICATION__
 					//we currently discharge quiescing via manual inspection
+					printf("{%x,p}", vcpu->id);
 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 0);
+					printf("{%x,P}", vcpu->id);
 					#endif // __XMHF_VERIFICATION__
 					break;
 				
@@ -840,6 +846,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
 	assert( (vcpu->vmcs.control_EPT_pointer_high == 0) && (vcpu->vmcs.control_EPT_pointer_full == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) );
 #endif	
+
+	if (lxy_flag) {
+		printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
+	}
 
 	return 1;
 }

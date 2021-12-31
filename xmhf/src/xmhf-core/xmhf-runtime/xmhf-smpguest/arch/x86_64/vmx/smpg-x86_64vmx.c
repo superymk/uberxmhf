@@ -480,12 +480,14 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
 
 //quiescing handler for #NMI (non-maskable interrupt) exception event
 //note: we are in atomic processsing mode for this "vcpu"
-void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r){
+void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r, u32 fromhvm){
 	u32 nmiinhvm;	//1 if NMI originated from the HVM else 0 if within the hypervisor
 	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
 	unsigned long _vmx_vmcs_info_vmexit_reason;
 
     (void)r;
+    (void)fromhvm;
+    (void)nmiinhvm;
 
 	//determine if the NMI originated within the HVM or within the
 	//hypervisor. we use VMCS fields for this purpose. note that we
@@ -500,47 +502,45 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	if(g_vmx_quiesce){
 		/*
 		 * If this core has been quiesced, simply return.
-		 * We want to implement {if(vcpu->quiesced){return;} vcpu->quiesced=1;}
-		 * here, but need to be atomic. Otherwise if an exception happens
-		 * during this code, things may go wrong. Since we are dealing with
-		 * exceptions, cannot use a spin lock.
+		 * We want to test and set vcpu->quiesced atomically. Otherwise if an
+		 * exception happens during this, things may go wrong. Since we are
+		 * dealing with exceptions, we cannot use a spin lock.
 		 */
 		u32 old_flag = 0;
 		asm volatile("lock btsl $0, %0; setb %%al; movzbl %%al, %1;" :
 			         "+m" (vcpu->quiesced), "=a" (old_flag) : : "cc");
-		if (old_flag) {
+		if (!old_flag) {
+			//increment quiesce counter
+			spin_lock(&g_vmx_lock_quiesce_counter);
+			g_vmx_quiesce_counter++;
+			spin_unlock(&g_vmx_lock_quiesce_counter);
+
+			//wait until quiesceing is finished
+			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+			while(!g_vmx_quiesce_resume_signal);
+			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+
+			spin_lock(&g_vmx_lock_quiesce_resume_counter);
+			g_vmx_quiesce_resume_counter++;
+			spin_unlock(&g_vmx_lock_quiesce_resume_counter);
+
+			vcpu->quiesced=0;
+
 			return;
 		}
+		return;	// TODO
+	}
 
-		//increment quiesce counter
-		spin_lock(&g_vmx_lock_quiesce_counter);
-		g_vmx_quiesce_counter++;
-		spin_unlock(&g_vmx_lock_quiesce_counter);
-
-		//wait until quiesceing is finished
-		//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
-		while(!g_vmx_quiesce_resume_signal);
-		//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
-
-		spin_lock(&g_vmx_lock_quiesce_resume_counter);
-		g_vmx_quiesce_resume_counter++;
-		spin_unlock(&g_vmx_lock_quiesce_resume_counter);
-
-		vcpu->quiesced=0;
-	}else{
-		//we are not in quiesce
-		//inject the NMI if it was triggered in guest mode
-
-		if(nmiinhvm){
-			if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
-				//TODO: hypapp has chosen to intercept NMI so callback
-			}else{
-				//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
-				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
-					INTR_TYPE_NMI |
-					INTR_INFO_VALID_MASK;
-			}
+	if (nmiinhvm) {
+		//inject the NMI
+		if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
+			//TODO: hypapp has chosen to intercept NMI so callback
+		}else{
+			//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
+			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+				INTR_TYPE_NMI |
+				INTR_INFO_VALID_MASK;
 		}
 	}
 

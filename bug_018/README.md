@@ -215,15 +215,200 @@ arrive first to other CPUs.
 After patching commit `29065357e` with `print3.diff`, collected
 `20211230172255 - 20211230180053`. However, maybe better to read code.
 
+### Debugging using QEMU
+
+In QEMU, can send nmi to CPU using `nmi` command in QEMU. If run `pal_demo` and
+type `nmi` a lot of times, can see this bug.
+
+Serial output in `20211231102445qemu`, looks like all cores are in guest mode
+in GDB
+```
+(gdb) info th
+  Id   Target Id                    Frame 
+* 1    Thread 1.1 (CPU#0 [running]) sched_show_task (p=0xfffffe000000dc30) at kernel/sched/core.c:6428
+  2    Thread 1.2 (CPU#1 [halted ]) 0xffffffff81035a1e in prefer_mwait_c1_over_halt (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:782
+  3    Thread 1.3 (CPU#2 [halted ]) 0xffffffff81035a1e in prefer_mwait_c1_over_halt (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:782
+  4    Thread 1.4 (CPU#3 [halted ]) 0xffffffff81035a1e in prefer_mwait_c1_over_halt (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:782
+(gdb) bt
+#0  sched_show_task (p=0xfffffe000000dc30) at kernel/sched/core.c:6428
+#1  sched_show_task (p=0xfffffe000000dc30) at kernel/sched/core.c:6418
+#2  0xfffffe000000dbe0 in ?? ()
+#3  0x577ebd705ac4b600 in ?? ()
+Backtrace stopped: Cannot access memory at address 0xc000
+(gdb) t 2
+[Switching to thread 2 (Thread 1.2)]
+#0  0xffffffff81035a1e in prefer_mwait_c1_over_halt (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:782
+782		if (!cpu_has(c, X86_FEATURE_MWAIT) || boot_cpu_has_bug(X86_BUG_MONITOR))
+(gdb) bt
+#0  0xffffffff81035a1e in prefer_mwait_c1_over_halt (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:782
+#1  select_idle_routine (c=0x0 <fixed_percpu_data>) at arch/x86/kernel/process.c:825
+#2  0xffffc90000083e20 in ?? ()
+Backtrace stopped: Cannot access memory at address 0xffffc900000c9000
+(gdb) 
+```
+
+The backtraces for thread 2 - 4 are incorrect. `0xffffc90000083e20` is stack
+address. By manually backtracing, the possible call stack is.
+```
+0xffffffff81a010e2 <asm_call_on_stack+2>
+0xffffffff818b65d2 <xen_build_mfn_list_list+82>
+0xffffffff81a00d82 <asm_sysvec_reboot+18>
+```
+
+In Debian's virtual terminal, see "BUG: kernel NULL pointer dereference", and
+`RIP: 0010:0x0`.
+
+Can try QEMU's QMP to send NMIs automatically:
+<https://wiki.qemu.org/Documentation/QMP>
+
+In `20211231114559`, looks like something happend during TrustVisor code.
+However, TrustVisor is printing something, so it should not fault. Other CPUs
+should be quiesced at this time. So there should be an interrupt or NMI that
+cause this problem.
+
+For now, things to try:
+* Try to reproduce this problem in QEMU
+* Replace TrustVisor with some simple code that does nothing (e.g. helloworld)
+* Read code carefully
+
+### QEMU Machine Protocol (QMP)
+Add `-qmp tcp:localhost:4444,server,nowait` to QEMU command line
+
+Then telnet to port 4444, first send `{ "execute": "qmp_capabilities" }`,
+then `{ "execute": "inject-nmi" }`.
+
+Using `qemu_inject_nmi.py` can do this automatically, with a fixed interval.
+
+Currently I guess the problem is that when multiple NMIs happen close in time,
+XMHF does not correctly inject NMI back to guest machine.
+
+### Execution sequences
+
+(These are markdown tables. Render this markdown file or view in GitHub)
+
+Normal quiesce:
+
+|Index|CPU 0|CPU 1|CPU 2|CPU 3|
+|-|-|-|-|-|
+|1|In guest|In guest|In guest|In hypervisor|
+|2|VMEXIT||||
+|3|quiesce()||||
+|4||NMI interrupted|NMI interrupted|NMI interrupted|
+|5||VMEXIT|VMEXIT|Xcph handler|
+|6||Update counter|Update counter|Update counter|
+|7||busy wait|busy wait|busy wait|
+|8|Call hypapp||||
+|9|Return from hypapp||||
+|10|endquiesce()||||
+|11||Update counter|Update counter|Update counter|
+|12||VMENTER|VMENTER|Iret|
+
+Normal guest exception:
+
+|Index|CPU 0|CPU 1|CPU 2|CPU 3|
+|-|-|-|-|-|
+|1|In guest|In hypervisor|In guest|In guest|
+|2|||Send NMI||
+|3|NMI interrupted|NMI interrupted||...|
+|4|VMEXIT|Xcph handler|||
+|5|Inject NMI to guest|Inject NMI to guest|||
+|6|VMENTRY|Iret|||
+
+Good nested exception case
+
+|Index|CPU 0|CPU 1|CPU 2|CPU 3|Hardware|
+|-|-|-|-|-|-|
+|1|In guest|In guest|In guest|In hypervisor||
+|2|VMEXIT|||||
+|3|quiesce()|||||
+|4||NMI interrupted|NMI interrupted|NMI interrupted||
+|5||VMEXIT|VMEXIT|Xcph handler||
+|6||Update counter|Update counter|Update counter||
+|7||busy wait|busy wait|busy wait||
+|8|Call hypapp|||||
+|9|||||Send NMI|
+|10||NMI interrupted|...|...||
+|11||Xcph handler||||
+|12||Inject NMI to guest||||
+|13||Iret||||
+|14|Return from hypapp|||||
+|15|endquiesce()|||||
+|16||Update counter|Update counter|Update counter||
+|17||VMENTER|VMENTER|Iret||
+
+Race condition
+
+|Index|CPU 0|CPU 1|CPU 2|CPU 3|
+|-|-|-|-|-|
+|1|In guest|In hypervisor|In guest|In guest|
+|2||||Send NMI|
+|3||NMI interrupted|||
+|4||Xcph handler|||
+|5|VMEXIT||||
+|6|quiesce()||||
+|7||(Blocked NMI)|NMI interrupted|NMI interrupted|
+|8|||VMEXIT|VMEXIT|
+|9||Update counter|Update counter|Update counter|
+|10||busy wait|busy wait|busy wait|
+|11|Call hypapp||||
+|12|Return from hypapp||||
+|13|endquiesce()||||
+|14||Update counter|Update counter|Update counter|
+|15||Iret|VMENTER|VMENTER|
+|16||(NMI unblocked)|||
+|17||NMI interrupted|||
+|18||(Ignore interrupt)|||
+|19||Iret|||
+|20||...|||
+|21||VMEXIT|||
+
+CPU 1 handles two NMI interrupts without nesting. The first one is from guest
+(should forward to guest). The second one is from quiesce.
+
+After index 8, CPU 1 checks the variable `g_vmx_quiesce`. This variable is
+true since CPU 0 is faster. So it executes quiesce code. At the second
+interrupt, it checks `g_vmx_quiesce` and see false. This interrupt is not from
+guest, so CPU 1 will not forward this interrupt to guest.
+
+As a result, CPU 1 will never deliver the NMI to guest. This is a bug in
+`xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception()` and should be fixed.
+
+At this point, code repo is equivalent to patching commit `29065357e` with
+`print4.diff`.
+
+However, this bug is not so easy to fix. Currently committed `aa2d65ef0`
+(Make access to `vcpu->quiesced` atomic in NMI handler). The next step should
+be fixing the race condition, but not sure how to implement at this point.
+Created another temporary branch.
+
+### Ruling out problems in TrustVisor
+
+Wrote `test.c` in `pal_demo` to make `TV_HC_TEST` VMCALL. Now the behavior can
+be simplified:
+
+Create a loop using `for i in {1..10000}; do ./test $i; done`. In QEMU run
+successfully. In HP or in (QEMU with manually injected NMIs), will crash.
+To make HP more likely to fail, can create a lot of new SSH connections.
+
+We are now sure that the problem is not related to TrustVisor. We also know
+that it is very unlikely to be a stack overflow. As a next step, we print-debug
+events (intercepts and exceptions) in XMHF.
+
+
 ## Fix
 
 `0b37c866d..`
 * Fix race condition in `xmhf_smpguest_arch_x86_64vmx_endquiesce()`
+* Make access to `vcpu->quiesced` atomic in NMI handler
 
 # tmp notes
 
-TODO: try NMI in QEMU
-TODO: print stack pointers to make sure no stack overflow occurs, also observe nested calls
+TODO: test on {x86,x64} QEMU x86 Debian
+TODO: print vmcs fields related to NMI. Likely Linux's state is corrupted (is it possible that XMHF injected 2 NMIs that violates NMI blocking)
+TODO: is there a problem if inject a lot of NMIs in QEMU, but not run any VMCALL?
+
+TODO: maybe EPT or XMHF's page table is not large enough?
+TODO: is "virtual NMIs" enabled? Is it needed?
 TODO: may need to move `emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);` line in smpg, or add documentation
 
 TODO: guess the reason for `vcpu->quiesced`, is it possible to be VM intercept then exception?

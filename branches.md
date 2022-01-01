@@ -152,6 +152,9 @@
 * (Now can stably run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
 
 `36fc963ae..`
+* Lock pages to RAM in `pal_demo`
+* Fix race condition in quiesce code (`bug_018`)
+* Make access to `vcpu->quiesced` atomic in NMI handler (`bug_018`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

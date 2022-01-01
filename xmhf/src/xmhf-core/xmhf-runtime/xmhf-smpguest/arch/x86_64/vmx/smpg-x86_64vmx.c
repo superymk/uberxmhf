@@ -419,13 +419,13 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
 
         printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
 
-        /* Acquire the printf lock to prevent deadlock */
-        emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
-
         //printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
         //grab hold of quiesce lock
         spin_lock(&g_vmx_lock_quiesce);
         //printf("\nCPU(0x%02x): grabbed quiesce lock.", vcpu->id);
+
+        /* Acquire the printf lock to prevent deadlock */
+        emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
 
         vcpu->quiesced = 1;
         //reset quiesce counter

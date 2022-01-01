@@ -444,8 +444,8 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
         //while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
         for (u32 counter = 1; g_vmx_quiesce_counter < (g_midtable_numentries-1); counter++) {
-            if (!(counter & 0xffff)) {
-                printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter");
+            if (!(counter & 0xfffff)) {
+                printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter", vcpu->id);
             }
         }
         //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);

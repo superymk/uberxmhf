@@ -675,7 +675,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					#ifndef __XMHF_VERIFICATION__
 					//we currently discharge quiescing via manual inspection
 					printf("{%x,p}", vcpu->id);
-					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 0);
+					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 1);
 					printf("{%x,P}", vcpu->id);
 					#endif // __XMHF_VERIFICATION__
 					break;

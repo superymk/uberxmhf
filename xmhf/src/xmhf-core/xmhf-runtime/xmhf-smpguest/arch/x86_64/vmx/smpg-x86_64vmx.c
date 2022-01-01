@@ -500,8 +500,6 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
 	unsigned long _vmx_vmcs_info_vmexit_reason;
 
-	printf("{%x,n}", vcpu->id);
-
     (void)r;
     (void)fromhvm;
     (void)nmiinhvm;
@@ -514,6 +512,8 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	__vmx_vmread(0x4402, &_vmx_vmcs_info_vmexit_reason);
 
 	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
+
+	printf("{%x,n,%d,%d}", vcpu->id, nmiinhvm, fromhvm);
 
 	// if g_vmx_quiesce=1 process quiesce regardless of where NMI originated from
 	if(g_vmx_quiesce){
@@ -568,7 +568,6 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 		printf("{%x,N5}", vcpu->id);
 	}
 
-	printf("{%x,N}", vcpu->id);
 }
 
 //----------------------------------------------------------------------

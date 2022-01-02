@@ -587,6 +587,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 }						
 			
 extern u32 lxy_flag;
+void xmhf_parteventhub_arch_x86_64vmx_iret(void);
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -683,9 +684,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				case 0x02:	//NMI
 					#ifndef __XMHF_VERIFICATION__
 					//we currently discharge quiescing via manual inspection
-					printf("{%x,p}", vcpu->id);
+					printf("{%x,p,%p}", vcpu->id, vcpu->vmcs.guest_RIP);
 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 1);
 					printf("{%x,P}", vcpu->id);
+					xmhf_parteventhub_arch_x86_64vmx_iret();
 					#endif // __XMHF_VERIFICATION__
 					break;
 				

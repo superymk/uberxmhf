@@ -500,6 +500,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	u32 nmiinhvm;	//1 if NMI originated from the HVM else 0 if within the hypervisor
 	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
 	unsigned long _vmx_vmcs_info_vmexit_reason;
+	unsigned long _vmx_vmcs_guest_interruptibility;
 
     (void)r;
     (void)fromhvm;
@@ -511,6 +512,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	//race conditions
 	__vmx_vmread(0x4404, &_vmx_vmcs_info_vmexit_interrupt_information);
 	__vmx_vmread(0x4402, &_vmx_vmcs_info_vmexit_reason);
+	__vmx_vmread(0x4824, &_vmx_vmcs_guest_interruptibility);
 
 	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
 
@@ -559,11 +561,17 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 			printf("{%x,N3}", vcpu->id);
 		}else{
 			//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
-			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
-				INTR_TYPE_NMI |
-				INTR_INFO_VALID_MASK;
-			printf("{%x,N4}", vcpu->id);
+			if (_vmx_vmcs_guest_interruptibility & 0x8) {
+				// nmi blocked, set NMI window exiting (i.e. inject later)
+				vcpu->vmcs.control_VMX_cpu_based |= (1U << 22);
+				printf("{%x,N6}", vcpu->id);
+			} else {
+				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+					INTR_TYPE_NMI |
+					INTR_INFO_VALID_MASK;
+				printf("{%x,N4}", vcpu->id);
+			}
 		}
 	} else {
 		printf("{%x,N5}", vcpu->id);

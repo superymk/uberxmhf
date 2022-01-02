@@ -603,6 +603,11 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
+	if(vcpu->vmcs.guest_interruptibility != 0){
+		printf("{%x,int,%#x}", vcpu->id, vcpu->vmcs.guest_interruptibility);
+		//vcpu->vmcs.guest_interruptibility = 0;
+	}
+
 	if (lxy_flag) {
 		HALT_ON_ERRORCOND(vcpu->vmcs.guest_interruptibility == 0);
 		HALT_ON_ERRORCOND(((uintptr_t)(&r) & 0xffff) == 0x3f38);
@@ -696,6 +701,15 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			}
 		}
 		break;
+
+		case 8 /* VMX_VMEXIT_NMI_WINDOW */:
+			printf("{%x,NMI,%#x}", vcpu->id, vcpu->vmcs.control_VMX_cpu_based);
+			vcpu->vmcs.control_VMX_cpu_based &= ~(1U << 22);
+			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+					INTR_TYPE_NMI |
+					INTR_INFO_VALID_MASK;
+			break;
 
  		case VMX_VMEXIT_CRX_ACCESS:{
 			u32 tofrom, gpr, crx; 
@@ -828,8 +842,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
  	//check and clear guest interruptibility state
 	if(vcpu->vmcs.guest_interruptibility != 0){
-		printf("{%x,nonzero interruptibility}", vcpu->id);
-		vcpu->vmcs.guest_interruptibility = 0;
+		printf("{%x,INT,%#x}", vcpu->id,
+				vcpu->vmcs.guest_interruptibility);
+		//vcpu->vmcs.guest_interruptibility = 0;
 	}
 
 	//make sure we have no nested events

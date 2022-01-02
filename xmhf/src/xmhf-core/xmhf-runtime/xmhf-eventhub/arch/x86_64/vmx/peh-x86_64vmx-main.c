@@ -612,7 +612,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	if (lxy_flag) {
 		HALT_ON_ERRORCOND(vcpu->vmcs.guest_interruptibility == 0);
 		HALT_ON_ERRORCOND(((uintptr_t)(&r) & 0xffff) == 0x3f38);
-		printf("{%x,i,%d,%#x}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, &r);
+		printf("{%x,i,%d,%#llx,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_RIP, vcpu->vmcs.info_vmexit_instruction_length);
 	}
 
 	//handle intercepts
@@ -870,7 +870,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 #endif	
 
 	if (lxy_flag) {
-		printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
+		printf("{%x,I,%d,%#llx,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_RIP, vcpu->vmcs.info_vmexit_instruction_length);
 	}
 
 	return 1;

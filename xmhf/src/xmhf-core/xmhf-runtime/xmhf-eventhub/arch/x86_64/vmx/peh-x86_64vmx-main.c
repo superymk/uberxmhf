@@ -244,6 +244,7 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 		
 		//update RIP to execute the IRET following the VMCALL instruction
 		//effectively returning from the INT 15 call made by the guest
+		HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 3);
 		vcpu->vmcs.guest_RIP += 3;
 	
 		return;
@@ -603,7 +604,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	}
 
 	if (lxy_flag) {
-		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
+		HALT_ON_ERRORCOND(vcpu->vmcs.guest_interruptibility == 0);
+		HALT_ON_ERRORCOND(((uintptr_t)(&r) & 0xffff) == 0x3f38);
+		printf("{%x,i,%d,%#x}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, &r);
 	}
 
 	//handle intercepts
@@ -629,6 +632,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					HALT();
 				}
 				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
+				HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 3);
 				vcpu->vmcs.guest_RIP += 3;
 			}
 		}
@@ -824,6 +828,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
  	//check and clear guest interruptibility state
 	if(vcpu->vmcs.guest_interruptibility != 0){
+		printf("{%x,nonzero interruptibility}", vcpu->id);
 		vcpu->vmcs.guest_interruptibility = 0;
 	}
 

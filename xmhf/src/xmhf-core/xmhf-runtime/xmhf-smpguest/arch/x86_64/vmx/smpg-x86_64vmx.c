@@ -412,10 +412,13 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
   //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
 }
 
+u32 lxy_flag = 0;
 
 //quiesce interface to switch all guest cores into hypervisor mode
 //note: we are in atomic processsing mode for this "vcpu"
 void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
+
+        lxy_flag = 1;
 
         printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
 
@@ -444,7 +447,7 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
         //while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
         for (u32 counter = 1; g_vmx_quiesce_counter < (g_midtable_numentries-1); counter++) {
-            if (!(counter & 0xfffff)) {
+            if (!(counter & 0xfffffff)) {
                 printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter", vcpu->id);
             }
         }
@@ -490,8 +493,6 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
         spin_unlock(&g_vmx_lock_quiesce);
 
 }
-
-u32 lxy_flag = 0;
 
 //quiescing handler for #NMI (non-maskable interrupt) exception event
 //note: we are in atomic processsing mode for this "vcpu"

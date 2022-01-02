@@ -119,7 +119,15 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 
     vcpu = _svm_and_vmx_getvcpu();
 
-    printf("{%x,e,%d}", vcpu->id, vector);
+    {
+		unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
+		unsigned long _vmx_vmcs_info_vmexit_reason;
+		__vmx_vmread(0x4404, &_vmx_vmcs_info_vmexit_interrupt_information);
+		__vmx_vmread(0x4402, &_vmx_vmcs_info_vmexit_reason);
+		(void)_vmx_vmcs_info_vmexit_interrupt_information;
+		printf("{%x,e,%d,%#x,%d}", vcpu->id, vector, &r, _vmx_vmcs_info_vmexit_reason);
+		// *(u64*)(r + 1) is RIP
+    }
 
     switch(vector){
     case CPU_EXCEPTION_NMI:

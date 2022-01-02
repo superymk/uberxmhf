@@ -516,6 +516,8 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 
 	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
 
+	HALT_ON_ERRORCOND(nmiinhvm == fromhvm);
+
 	printf("{%x,n,%d,%d}", vcpu->id, nmiinhvm, fromhvm);
 
 	// if g_vmx_quiesce=1 process quiesce regardless of where NMI originated from
@@ -552,8 +554,12 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 		}
 		printf("{%x,N1}", vcpu->id);
 		return;	// TODO
+	} else {
+		printf("{%x,N7}", vcpu->id);
 	}
 
+// To minimize debug surface, remove code
+#if 0
 	if (nmiinhvm) {
 		//inject the NMI
 		if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
@@ -576,6 +582,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	} else {
 		printf("{%x,N5}", vcpu->id);
 	}
+#endif
 
 }
 

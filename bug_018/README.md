@@ -394,6 +394,217 @@ We are now sure that the problem is not related to TrustVisor. We also know
 that it is very unlikely to be a stack overflow. As a next step, we print-debug
 events (intercepts and exceptions) in XMHF.
 
+### Checking behaviors
+
+Now re-test different configurations based on `1f0be0167`.
+
+* Test 1: one terminal run `pal_demo`'s `test`, one terminal inject NMIs
+  (for QEMU) or run SSH connections (for HP)
+* Test 2: two terminals running `pal_demo`
+* Test 3: test 1 + another terminal running `pal_demo`
+  (combine test 1 and test 2)
+* Test 4: Inject NMIs using `qemu_inject_nmi.py` with interval = 0 (QEMU only)
+
+Result
+* x86 Debian
+	* QEMU: Test 4 pass (detail below)
+* x64 Debian
+	* QEMU: Test 4 pass (detail below)
+* x86 XMHF, x86 Debian
+	* HP: Test 1 and 3 pass (assume test 2 also pass)
+	* QEMU: Test 1 and 3 pass (assume test 2 also pass),
+	  test 4 pass (same as bare-metal)
+* x64 XMHF, x86 Debian
+	* HP: Test 1 pass, test 2 and 3 fail
+	* QEMU: Test 1 pass, test 2 and 3 fail, test 4 pass (same as bare-metal)
+* x64 XMHF, x64 Debian
+	* HP: Test 1 fail, test 2 fail (assume test 3 fail)
+	* QEMU: Test 1 fail, test 2 fail (assume test 3 fail), test 4 fail
+
+For test 4, SSH may stuck if NMIs are continuously sent. After manually stop
+sending NMIs, the machine will resume.
+
+Now we found that test 2 is a way to reproduce this problem without relying on
+external things (e.g. NMI injections). Also due to the behavior of test 4 on
+bare-metal, should try not to use NMI injections to debug.
+
+This also means that the problem is likely to be within interceptions (less
+related to exception handling)
+
+### Continue debugging
+
+After debugging in x64 XMHF x64 Debian and test 2, found a deadlock in debug
+printf code. The debug code is to print a message in
+`xmhf_smpguest_arch_x86_64vmx_quiesce()` while waiting for other CPUs to update
+counter.
+
+Normal execution is
+
+|Index|CPU 0|CPU 1|
+|-|-|-|
+|1|lock printf||
+|2|lock quiesce||
+|3|send NMI||
+|4|wait for other CPUs||
+|5|print debug message||
+|6||handle NMI|
+|7||update counter|
+|8|check counter||
+|9|unlock printf||
+
+However, deadlock happens when
+
+|Index|CPU 0|CPU 1|CPU 2|
+|-|-|-|-|
+|1|lock printf|||
+|2|lock quiesce|||
+|3|send NMI|||
+|4|wait for other CPUs|||
+|5||handle NMI||
+|6||update counter||
+|7|||lock printf|
+|8|||lock quiesce|
+|9|print debug message||(blocked)|
+|10|(blocked)|||
+
+See `20220101125907` and `20220101125907.gdb`
+
+Looks like a fix is to lock quiesce first, then lock printf.
+
+A strange thing is why CPU 2 stucks at that place. Normally it should execute
+"handle NMI" first. In GDB the counter is 0, so looks like NMI has not arrived
+yet?
+
+After fixing, git is at `5dd564c78`, test result is `20220101132039{,.gdb}`.
+Looks like NMI is really blocked for some unknown reason. Should probably also
+print NMI blocking values in VMCS.
+
+In `20220101150830`, found something interesting:
+```
+{0,I,32}{3,i,10,0}...
+CPU(0x03): got quiesce signal...{1,i,32,0}{0,e,2}{1,I,32}{0,s}{0,n,0,0}{1,i,0,0}{0,N2}{1,p}
+CPU(0x00): Quiesced{1,n,1,1}{2,i,0,0}{1,N2}
+CPU(0x01): Quiesced{2,p}{2,n,1,1}{2,N2}
+CPU(0x03): all CPUs quiesced successfully.
+CPU(0x02): QuiescedTV[0]:appmain.c:do_TV_HC_TEST:202:                 CPU(0x03): test hypercall, ecx=0x00000002
+
+CPU(0x03): ending quiesce.
+CPU(0x02): EOQ received, resuming...
+CPU(0x00): EOQ received, resuming...
+CPU(0x01): EOQ received, resuming...{2,P}
+CPU(0x03): releasing quiesce lock.{2,I,0}{0,S}{1,P}{0,i,32,0}{1,I,0}{0,I,32}
+```
+
+For CPU 0, `{0,I,32}` is return from an intercept, then it immediately sees an NMI exception in `{0,e,2}`. After NMI exception handler returns at `{0,S}`, it see another intercept `{0,i,32,0}`. The exception is unlikely to happen before the previous intercept returns, because a lot of other things happend in between. It is possible that the exception happens before the next interception.
+
+So we try to set a break point at `xmhf_xcphandler_arch_hub`
+
+### Studying NMI
+
+"26.1 ARCHITECTURAL STATE BEFORE A VM EXIT"
+> * If an event causes a VM exit directly, it does not update architectural
+    state as it would have if it had it not caused the VM exit:
+>   * An NMI causes subsequent NMIs to be blocked, but only after the VM exit
+      completes.
+> * If an event causes a VM exit indirectly, the event does update
+  architectural state:
+>   * An NMI causes subsequent NMIs to be blocked before the VM exit commences.
+
+"24.3 CHANGES TO INSTRUCTION BEHAVIOR IN VMX NON-ROOT OPERATION"
+> IRET. Behavior of IRET with regard to NMI blocking (see Table 23-3) is
+  determined by the settings of the "NMI exiting" and "virtual NMIs"
+  VM-execution controls:
+> * If the "NMI exiting" VM-execution control is 0, IRET operates normally and
+  unblocks NMIs.
+> * If the "NMI exiting" VM-execution control is 1, IRET does not affect
+  blocking of NMIs. If, in addition, the "virtual NMIs" VM-execution control
+  is 1, the logical processor tracks virtual-NMI blocking. In this case, IRET
+  removes any virtual-NMI blocking.
+
+So my current guess to the intention of these settings is:
+* If set NMI exiting = 0, virtual NMIs = 0, then all NMIs will be handled by
+  the guest machine. IRET will also behave as expected.
+* If set NMI exiting = 1, virtual NMIs = 0, then all NMIs will be handled by
+  the host machine. In this case if the host injects an NMI to the guest,
+  IRET in guest will not correctly unblock.
+	* From what I can see in VMX documentation, after VMEXIT caused directly by
+	  NMI, NMI will still block.
+	* After VMENTRY, the NMI blocking is determined by interruptibility-state
+	  (`vcpu->vmcs.guest_interruptibility`)
+* If set NMI exiting = 1, virtual NMIs = 1, then all NMIs will be handled by
+  the host machine. If the host injects an NMI to the guest, IRET will behave
+  well.
+	* <del>
+	  The "NMI-window exiting" control is basically saying that "let me
+	  (hypervisor) know when the guest is ready to handle an NMI".
+	  Maybe this way the host can do something and then inject an NMI?
+	  </del>
+	* The "NMI-window exiting" control is basically the "NMI pending" bit
+	  for the CPU. When the guest can handle NMIs, VMEXIT will occur and
+	  the CPU should inject the NMI.
+
+The problem with Intel's manual is that it defines the behavior of virtual
+NMIs, but not the use case / design objective.
+
+<del>
+The VM-ENTRY Error I see earlier may be caused by this problem. When virtual
+NMIs is disabled, and the guest blocks NMIs, injecting NMI to guest will cause
+VM-ENTRY failure.
+</del> (actually VM-ENTRY Error happens when virtual NMI enabled)
+
+Also, a problem is that it is difficult to know whether currently hypervisor
+is blocking NMIs.
+
+Next steps:
+* Try to switch to virtual NMIs
+* Try to manually use IRET to unblock NMIs in hypervisor
+
+Important VMCS fields
+* `vcpu->vmcs.guest_interruptibility`: bit 3 / 0x8 is "Blocking by NMI" (p903)
+* `vcpu->vmcs.control_VMX_pin_based`: bit 3 / 0x8 is "NMI exiting" (p906)
+* `vcpu->vmcs.control_VMX_pin_based`: bit 5 / 0x20 is "Virtual NMIs" (p906)
+* `vcpu->vmcs.control_VMX_cpu_based`: bit 22 / 0x400000 is "NMI-window exiting"
+  (p907)
+* `vcpu->vmcs.control_VM_entry_interruption_information`: control NMI injection
+  when 0x80000202 (p918)
+
+If remove `vcpu->vmcs.guest_interruptibility = 0;` in injection handler, will
+see VM-ENTRY error easily. However in Intel's manual it says
+> If the "virtual NMIs" VM-execution control is 0, there is no requirement that
+  bit 3 be 0 if the valid bit in the VM-entry interruption-information field is
+  1 and the interruption type in that field has value 2.
+
+Not sure whether this is a bug in QEMU
+
+### Implementing virtual NMI
+
+First enable virtual NMI in pin based control. This is not enough, because
+`vcpu->vmcs.guest_interruptibility = 0;` in injection handler will not honor
+NMI blocking and corrupt Linux's state.
+
+Then remove `vcpu->vmcs.guest_interruptibility = 0;`. However, doing this will
+cause VM-ENTRY error. This is expected.
+
+Now in NMI handler, check interruptibility. If not interruptible, set NMI
+window exiting. Now see "Unhandled intercept in long mode: 0x00000008". This
+is expected.
+
+We then set up intercept code for exit reason = "NMI window". The changed code
+is `294de9b55..4a7f5b2bb`.
+
+However, after the change test 4 still fails. Behavior: Linux panics because of
+NULL pointer dereference. The erroring instruction should be:
+```
+0xffffffff818b5185 <exc_nmi+181>:	mov    %gs:0x7e765e13(%rip),%rsi        # 0x1afa0 <nmi_dr7>
+0xffffffff818b7015 <irqentry_nmi_exit+5>:	mov    %gs:0x7e764b64(%rip),%eax        # 0x1bb80 <__preempt_count>
+```
+
+Now I suspect that Linux may have a problem in this. May not be able to fix
+this problem at this point.
+
+Can try to print guest RIPs, but not very useful.
+
+After changing to virtual NMI, test 2 still see deadlock.
 
 ## Fix
 
@@ -403,9 +614,15 @@ events (intercepts and exceptions) in XMHF.
 
 # tmp notes
 
-TODO: test on {x86,x64} QEMU x86 Debian
+```
+for i in {1..1000..2}; do ./test $i; done & for i in {0..1000..2}; do ./test $i; done
+```
+
+TODO: use sleep to try to achieve deterministic run, test whether NMI is blocked
+TODO: in exception handler, when write to `vcpu->vmcs`, should also update the
+real VMCS using VMWRITE.
+
 TODO: print vmcs fields related to NMI. Likely Linux's state is corrupted (is it possible that XMHF injected 2 NMIs that violates NMI blocking)
-TODO: is there a problem if inject a lot of NMIs in QEMU, but not run any VMCALL?
 
 TODO: maybe EPT or XMHF's page table is not large enough?
 TODO: is "virtual NMIs" enabled? Is it needed?
@@ -416,11 +633,5 @@ TODO: remove deadlock
 
 TODO: consider disabling other CPUs
 
-TODO: try to simply remove printf lock
-TODO: or can try to use something like base64
 TODO: collect results of multiple runs
-
-
-TODO: for analyzing NMI, may be able to generate NMI in Linux with `perf`:
- <https://winddoing.github.io/post/98e04b95.html>
 

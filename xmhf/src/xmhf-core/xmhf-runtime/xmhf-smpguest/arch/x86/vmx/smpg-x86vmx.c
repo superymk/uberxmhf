@@ -417,13 +417,13 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
 //note: we are in atomic processsing mode for this "vcpu"
 void xmhf_smpguest_arch_x86vmx_quiesce(VCPU *vcpu){
 
-        /* Acquire the printf lock to prevent deadlock */
-        emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
-
-        //printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
+        printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
         //grab hold of quiesce lock
         spin_lock(&g_vmx_lock_quiesce);
         //printf("\nCPU(0x%02x): grabbed quiesce lock.", vcpu->id);
+
+        /* Acquire the printf lock to prevent deadlock */
+        emhfc_putchar_linelock(emhfc_putchar_linelock_arg);
 
         vcpu->quiesced = 1;
         //reset quiesce counter
@@ -435,13 +435,13 @@ void xmhf_smpguest_arch_x86vmx_quiesce(VCPU *vcpu){
         g_vmx_quiesce=1;  //we are now processing quiesce
         _vmx_send_quiesce_signal(vcpu);
 
+        /* Release the printf lock to prevent deadlock */
+        emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+
         //wait for all the remaining CPUs to quiesce
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
         while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
         //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
-
-        /* Release the printf lock to prevent deadlock */
-        emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
 }
 
@@ -496,6 +496,8 @@ void xmhf_smpguest_arch_x86vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs
 	
 	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
 	
+	printf("{%x,n,%d}", vcpu->id, nmiinhvm);
+
 	if(g_vmx_quiesce){ //if g_vmx_quiesce =1 process quiesce regardless of where NMI originated from
 		//if this core has been quiesced, simply return
 			if(vcpu->quiesced)

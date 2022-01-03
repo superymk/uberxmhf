@@ -565,7 +565,35 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }						
 			
+static void _vmx_send_quiesce_signal2(VCPU __attribute__((unused)) *vcpu){
+  volatile u32 *icr_low = (u32 *)(0xFEE00000 + 0x300);
+  volatile u32 *icr_high = (u32 *)(0xFEE00000 + 0x310);
+  u32 icr_high_value= 0xFFUL << 24;
+  u32 prev_icr_high_value;
+  u32 delivered;
+  
+  prev_icr_high_value = *icr_high;
+  
+  *icr_high = icr_high_value;    //send to all but self
+  *icr_low = 0x000C0400UL;      //send NMI        
+  
+  //check if IPI has been delivered successfully
+  //printf("\n%s: CPU(0x%02x): firing NMIs...", __FUNCTION__, vcpu->id);
+#ifndef __XMHF_VERIFICATION__  
+  do{
+	delivered = *icr_high;
+	delivered &= 0x00001000;
+  }while(delivered);
+#else
+	//TODO: plug in h/w model of LAPIC, for now assume hardware just
+	//works
+#endif
 
+  //restore icr high
+  *icr_high = prev_icr_high_value;
+    
+  //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
+}
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -598,12 +626,38 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);	
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
-				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
-					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
-					HALT();
+				const u32 base = 1000000;
+				if (r->ecx >= base) {
+					u32 op = r->ecx - base;
+					if (op < 5) {
+						if (op != vcpu->id && op != 4) {
+							r->eax = 1;
+						} else {
+							r->eax = 0;
+							printf("\nCPU(0x%02x): start busy loop", vcpu->id);
+							for (u64 i = 0; i < 0x40000000UL; i++);
+							printf("\nCPU(0x%02x): end busy loop", vcpu->id);
+						}
+					} else if (op <= 10) {
+						if (op - 5 != vcpu->id && op - 5 != 4) {
+							r->eax = 1;
+						} else {
+							printf("\nCPU(0x%02x): sending NMI", vcpu->id);
+							_vmx_send_quiesce_signal2(vcpu);
+							printf("\nCPU(0x%02x): sent NMI", vcpu->id);
+						}
+					} else {
+						printf("\nCPU(0x%02x): undefined %u", vcpu->id, op);
+						r->eax = 0;
+					}
+				} else {
+					xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
+					if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
+						printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
+						HALT();
+					}
+					xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
 				}
-				xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
 				vcpu->vmcs.guest_RIP += 3;
 			}
 		}

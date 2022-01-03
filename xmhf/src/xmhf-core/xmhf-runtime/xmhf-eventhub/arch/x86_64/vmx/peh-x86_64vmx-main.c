@@ -669,7 +669,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				const u32 base = 1000000;
 				if (r->ecx >= base) {
 					u32 op = r->ecx - base;
-					if (op <= 4) {
+					if (op < 5) {
 						if (op != vcpu->id && op != 4) {
 							r->eax = 1;
 						} else {
@@ -679,7 +679,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 							printf("\nCPU(0x%02x): end busy loop", vcpu->id);
 						}
 					} else if (op <= 8) {
-						if (op - 4 != vcpu->id && op - 4 != 4) {
+						if (op - 5 != vcpu->id && op - 5 != 4) {
 							r->eax = 1;
 						} else {
 							printf("\nCPU(0x%02x): sending NMI", vcpu->id);

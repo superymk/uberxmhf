@@ -116,16 +116,16 @@ xmhf_parteventhub_arch_x86_64vmx_entry:
 
 .global xmhf_parteventhub_arch_x86_64vmx_iret
 xmhf_parteventhub_arch_x86_64vmx_iret:
-	movq %rsp, %rsi;
-	xorq %rax, %rax;
-	movw %ss, %ax;
-	pushq %rax;
-	pushq %rsi;
-	pushfq;
-	xorq %rax, %rax;
-	movw %cs, %ax;
-	pushq %rax;
-	pushq $1f
+	movq    %rsp, %rsi
+	xorq    %rax, %rax
+	movw    %ss, %ax
+	pushq   %rax
+	pushq   %rsi
+	pushfq
+	xorq    %rax, %rax
+	movw    %cs, %ax
+	pushq   %rax
+	pushq   $1f
 	iretq
 1:
 	ret

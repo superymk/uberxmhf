@@ -86,19 +86,4 @@ xmhf_parteventhub_arch_x86vmx_entry:
     int $0x03
     hlt
   
-.global xmhf_parteventhub_arch_x86vmx_iret
-xmhf_parteventhub_arch_x86vmx_iret:
-	// movl    %esp, %ecx
-	// xorl    %eax, %eax
-	// movw    %ss, %ax
-	// pushl   %eax
-	// pushl   %ecx
-	pushfl
-	xorl    %eax, %eax
-	movw    %cs, %ax
-	pushl   %eax
-	pushl   $1f
-	iretl
-1:
-	ret
-
+  

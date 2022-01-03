@@ -616,7 +616,6 @@ static void _vmx_send_quiesce_signal2(VCPU __attribute__((unused)) *vcpu){
 }
 
 extern u32 lxy_flag;
-void xmhf_parteventhub_arch_x86_64vmx_iret(void);
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -745,7 +744,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					printf("{%x,p}", vcpu->id);
 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 1);
 					printf("{%x,P}", vcpu->id);
-					// xmhf_parteventhub_arch_x86_64vmx_iret();
 					#endif // __XMHF_VERIFICATION__
 					break;
 

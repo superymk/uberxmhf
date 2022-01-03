@@ -595,8 +595,6 @@ static void _vmx_send_quiesce_signal2(VCPU __attribute__((unused)) *vcpu){
   //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
 }
 
-void xmhf_parteventhub_arch_x86vmx_iret(void);
-
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 	//read VMCS from physical CPU/core
@@ -707,7 +705,6 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 					//we currently discharge quiescing via manual inspection
 					xmhf_smpguest_arch_x86vmx_eventhandler_nmiexception(vcpu, r, 1);
 					#endif // __XMHF_VERIFICATION__
-					xmhf_parteventhub_arch_x86vmx_iret();
 					break;
 
 				default:

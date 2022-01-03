@@ -441,8 +441,6 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         lxy_flag = 1;
 
         printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
-
-        //printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
         //grab hold of quiesce lock
         spin_lock(&g_vmx_lock_quiesce);
         //printf("\nCPU(0x%02x): grabbed quiesce lock.", vcpu->id);

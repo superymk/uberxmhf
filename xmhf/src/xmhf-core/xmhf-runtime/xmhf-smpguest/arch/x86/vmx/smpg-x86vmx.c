@@ -59,7 +59,7 @@ static u32 g_vmx_lapic_op __attribute__(( section(".data") )) = LAPIC_OP_RSVD;
 static u32 g_vmx_lapic_guest_eflags_tfifmask __attribute__(( section(".data") )) = 0;	 
 
 /*
- * xmhf_smpguest_arch_x86_64vmx_quiesce() needs to access printf locks defined
+ * xmhf_smpguest_arch_x86vmx_quiesce() needs to access printf locks defined
  * in xmhfc-putchar.c
  */
 extern void *emhfc_putchar_linelock_arg;
@@ -412,6 +412,20 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
   //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
 }
 
+/* Unblock NMI by executing iret, but do not jump to somewhere else */
+static void xmhf_smpguest_arch_x86vmx_unblock_nmi(void) {
+    asm volatile (
+        "pushfl                 \r\n"
+        "xorl    %%eax, %%eax   \r\n"
+        "movw    %%cs, %%ax     \r\n"
+        "pushl   %%eax          \r\n"
+        "pushl   $1f            \r\n"
+        "iretl                  \r\n"
+        "1: nop                 \r\n"
+        : // no output
+        : // no input
+        : "%eax", "cc", "memory");
+}
 
 //quiesce interface to switch all guest cores into hypervisor mode
 //note: we are in atomic processsing mode for this "vcpu"
@@ -435,7 +449,14 @@ void xmhf_smpguest_arch_x86vmx_quiesce(VCPU *vcpu){
         g_vmx_quiesce=1;  //we are now processing quiesce
         _vmx_send_quiesce_signal(vcpu);
 
-        /* Release the printf lock to prevent deadlock */
+        /*
+         * Release the printf lock to prevent deadlock
+         * If unlock after waiting for g_vmx_quiesce_counter, will deadlock if
+         * NMI handling code calls printf.
+         * If unlock before waiting for g_vmx_quiesce_counter, need to assume
+         * that NMI arrives to other CPUs before other CPUs observe the unlock.
+         * If this assumption is not met, will deadlock.
+         */
         emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
         //wait for all the remaining CPUs to quiesce
@@ -480,63 +501,57 @@ void xmhf_smpguest_arch_x86vmx_endquiesce(VCPU *vcpu){
 
 //quiescing handler for #NMI (non-maskable interrupt) exception event
 //note: we are in atomic processsing mode for this "vcpu"
-void xmhf_smpguest_arch_x86vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r){
-	u32 nmiinhvm;	//1 if NMI originated from the HVM else 0 if within the hypervisor
-	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
-	unsigned long _vmx_vmcs_info_vmexit_reason;
+// fromhvm: 1 if NMI originated from the HVM (i.e. caller is intercept handler),
+// otherwise 0 (within the hypervisor, i.e. caller is exception handler)
+void xmhf_smpguest_arch_x86vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r, u32 fromhvm){
+	(void)r;
+	(void)fromhvm;
 
-    (void)r;
+	/*
+	 * If g_vmx_quiesce = 1, process quiesce regardless of where NMI originated
+	 * from.
+	 *
+	 * If vcpu->quiesced = 1 (i.e. this core has been quiesced), simply return.
+	 * This can only happen for the CPU calling
+	 * xmhf_smpguest_arch_x86vmx_quiesce(). For other CPUs, NMIs are
+	 * blocked during the time where vcpu->quiesced = 1.
+	 */
+	if(g_vmx_quiesce && !vcpu->quiesced){
+		vcpu->quiesced=1;
 
-	//determine if the NMI originated within the HVM or within the
-	//hypervisor. we use VMCS fields for this purpose. note that we
-	//use vmread directly instead of relying on vcpu-> to avoid 
-	//race conditions
-	__vmx_vmread(0x4404, &_vmx_vmcs_info_vmexit_interrupt_information);
-	__vmx_vmread(0x4402, &_vmx_vmcs_info_vmexit_reason);
-	
-	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
-	
-	printf("{%x,n,%d}", vcpu->id, nmiinhvm);
+		//increment quiesce counter
+		spin_lock(&g_vmx_lock_quiesce_counter);
+		g_vmx_quiesce_counter++;
+		spin_unlock(&g_vmx_lock_quiesce_counter);
 
-	if(g_vmx_quiesce){ //if g_vmx_quiesce =1 process quiesce regardless of where NMI originated from
-		//if this core has been quiesced, simply return
-			if(vcpu->quiesced)
-				return;
-				
-			vcpu->quiesced=1;
-	
-			//increment quiesce counter
-			spin_lock(&g_vmx_lock_quiesce_counter);
-			g_vmx_quiesce_counter++;
-			spin_unlock(&g_vmx_lock_quiesce_counter);
+		//wait until quiesceing is finished
+		//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+		while(!g_vmx_quiesce_resume_signal);
+		//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
 
-			//wait until quiesceing is finished
-			//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
-			while(!g_vmx_quiesce_resume_signal);
-			//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
+		spin_lock(&g_vmx_lock_quiesce_resume_counter);
+		g_vmx_quiesce_resume_counter++;
+		spin_unlock(&g_vmx_lock_quiesce_resume_counter);
 
-			spin_lock(&g_vmx_lock_quiesce_resume_counter);
-			g_vmx_quiesce_resume_counter++;
-			spin_unlock(&g_vmx_lock_quiesce_resume_counter);
-			
-			vcpu->quiesced=0;
+		vcpu->quiesced=0;
 	}else{
-		//we are not in quiesce
-		//inject the NMI if it was triggered in guest mode
-		
-		if(nmiinhvm){
-			if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
-				//TODO: hypapp has chosen to intercept NMI so callback
-			}else{
-				//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
-				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
-					INTR_TYPE_NMI |
-					INTR_INFO_VALID_MASK;
-			}
+		//we are not in quiesce, inject the NMI to guest
+
+		if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
+			//TODO: hypapp has chosen to intercept NMI so callback
+		}else{
+			//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
+			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+				INTR_TYPE_NMI |
+				INTR_INFO_VALID_MASK;
 		}
 	}
-	
+
+	/* Unblock NMI in hypervisor */
+	if (fromhvm) {
+		xmhf_smpguest_arch_x86vmx_unblock_nmi();
+	}
 }
 
 //----------------------------------------------------------------------

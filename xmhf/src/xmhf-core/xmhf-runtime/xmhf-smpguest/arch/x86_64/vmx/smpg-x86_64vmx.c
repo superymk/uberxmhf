@@ -414,6 +414,26 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
 
 u32 lxy_flag = 0;
 
+/* Unblock NMI by executing iret, but do not jump to somewhere else */
+static void xmhf_smpguest_arch_x86_64vmx_unblock_nmi(void) {
+    asm volatile (
+        "movq    %%rsp, %%rsi   \r\n"
+        "xorq    %%rax, %%rax   \r\n"
+        "movw    %%ss, %%ax     \r\n"
+        "pushq   %%rax          \r\n"
+        "pushq   %%rsi          \r\n"
+        "pushfq                 \r\n"
+        "xorq    %%rax, %%rax   \r\n"
+        "movw    %%cs, %%ax     \r\n"
+        "pushq   %%rax          \r\n"
+        "pushq   $1f            \r\n"
+        "iretq                  \r\n"
+        "1: nop                 \r\n"
+        : // no output
+        : // no input
+        : "%rax", "%rsi", "cc", "memory");
+}
+
 //quiesce interface to switch all guest cores into hypervisor mode
 //note: we are in atomic processsing mode for this "vcpu"
 void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
@@ -440,8 +460,15 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         g_vmx_quiesce=1;  //we are now processing quiesce
         _vmx_send_quiesce_signal(vcpu);
 
-		// For debugging release lock early and allow printf in other CPUs. We hope that other CPUs have all received the NMI at this point
-		emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
+        /*
+         * Release the printf lock to prevent deadlock
+         * If unlock after waiting for g_vmx_quiesce_counter, will deadlock if
+         * NMI handling code calls printf.
+         * If unlock before waiting for g_vmx_quiesce_counter, need to assume
+         * that NMI arrives to other CPUs before other CPUs observe the unlock.
+         * If this assumption is not met, will deadlock.
+         */
+        emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
         //wait for all the remaining CPUs to quiesce
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
@@ -451,10 +478,6 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
                 printf("\nCPU(0x%02x): waiting for g_vmx_quiesce_counter", vcpu->id);
             }
         }
-        //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
-
-        /* Release the printf lock to prevent deadlock */
-        // emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
         printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
 }
@@ -496,94 +519,57 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
 
 //quiescing handler for #NMI (non-maskable interrupt) exception event
 //note: we are in atomic processsing mode for this "vcpu"
+// fromhvm: 1 if NMI originated from the HVM (i.e. caller is intercept handler),
+// otherwise 0 (within the hypervisor, i.e. caller is exception handler)
 void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r, u32 fromhvm){
-	u32 nmiinhvm;	//1 if NMI originated from the HVM else 0 if within the hypervisor
-	unsigned long _vmx_vmcs_info_vmexit_interrupt_information;
-	unsigned long _vmx_vmcs_info_vmexit_reason;
-	unsigned long _vmx_vmcs_guest_interruptibility;
+	(void)r;
+	(void)fromhvm;
 
-    (void)r;
-    (void)fromhvm;
-    (void)nmiinhvm;
+	/*
+	 * If g_vmx_quiesce = 1, process quiesce regardless of where NMI originated
+	 * from.
+	 *
+	 * If vcpu->quiesced = 1 (i.e. this core has been quiesced), simply return.
+	 * This can only happen for the CPU calling
+	 * xmhf_smpguest_arch_x86_64vmx_quiesce(). For other CPUs, NMIs are
+	 * blocked during the time where vcpu->quiesced = 1.
+	 */
+	if(g_vmx_quiesce && !vcpu->quiesced){
+		vcpu->quiesced=1;
 
-	//determine if the NMI originated within the HVM or within the
-	//hypervisor. we use VMCS fields for this purpose. note that we
-	//use vmread directly instead of relying on vcpu-> to avoid 
-	//race conditions
-	__vmx_vmread(0x4404, &_vmx_vmcs_info_vmexit_interrupt_information);
-	__vmx_vmread(0x4402, &_vmx_vmcs_info_vmexit_reason);
-	__vmx_vmread(0x4824, &_vmx_vmcs_guest_interruptibility);
+		//increment quiesce counter
+		spin_lock(&g_vmx_lock_quiesce_counter);
+		g_vmx_quiesce_counter++;
+		spin_unlock(&g_vmx_lock_quiesce_counter);
 
-	nmiinhvm = ( (_vmx_vmcs_info_vmexit_reason == VMX_VMEXIT_EXCEPTION) && ((_vmx_vmcs_info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 2) ) ? 1 : 0;
+		//wait until quiesceing is finished
+		//printf("\nCPU(0x%02x): Quiesced", vcpu->id);
+		while(!g_vmx_quiesce_resume_signal);
+		//printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
 
-	HALT_ON_ERRORCOND(nmiinhvm == fromhvm);
+		spin_lock(&g_vmx_lock_quiesce_resume_counter);
+		g_vmx_quiesce_resume_counter++;
+		spin_unlock(&g_vmx_lock_quiesce_resume_counter);
 
-	printf("{%x,n,%d,%d}", vcpu->id, nmiinhvm, fromhvm);
+		vcpu->quiesced=0;
+	}else{
+		//we are not in quiesce, inject the NMI to guest
 
-	// if g_vmx_quiesce=1 process quiesce regardless of where NMI originated from
-	if(g_vmx_quiesce){
-		/*
-		 * If this core has been quiesced, simply return.
-		 * We want to test and set vcpu->quiesced atomically. Otherwise if an
-		 * exception happens during this, things may go wrong. Since we are
-		 * dealing with exceptions, we cannot use a spin lock.
-		 */
-		u32 old_flag = 0;
-		asm volatile("lock btsl $0, %0; setb %%al; movzbl %%al, %1;" :
-			         "+m" (vcpu->quiesced), "=a" (old_flag) : : "cc");
-		if (!old_flag) {
-			//increment quiesce counter
-			spin_lock(&g_vmx_lock_quiesce_counter);
-			g_vmx_quiesce_counter++;
-			spin_unlock(&g_vmx_lock_quiesce_counter);
-
-			printf("{%x,N2}", vcpu->id);
-
-			//wait until quiesceing is finished
-			printf("\nCPU(0x%02x): Quiesced", vcpu->id);
-			while(!g_vmx_quiesce_resume_signal);
-			printf("\nCPU(0x%02x): EOQ received, resuming...", vcpu->id);
-
-			spin_lock(&g_vmx_lock_quiesce_resume_counter);
-			g_vmx_quiesce_resume_counter++;
-			spin_unlock(&g_vmx_lock_quiesce_resume_counter);
-
-			vcpu->quiesced=0;
-
-			return;
-		}
-		printf("{%x,N1}", vcpu->id);
-		return;	// TODO
-	} else {
-		printf("{%x,N7}", vcpu->id);
-	}
-
-// To minimize debug surface, remove code
-#if 0
-	if (nmiinhvm) {
-		//inject the NMI
 		if(vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI){
 			//TODO: hypapp has chosen to intercept NMI so callback
-			printf("{%x,N3}", vcpu->id);
 		}else{
 			//printf("\nCPU(0x%02x): Regular NMI, injecting back to guest...", vcpu->id);
-			if (_vmx_vmcs_guest_interruptibility & 0x8) {
-				// nmi blocked, set NMI window exiting (i.e. inject later)
-				vcpu->vmcs.control_VMX_cpu_based |= (1U << 22);
-				printf("{%x,N6}", vcpu->id);
-			} else {
-				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
-					INTR_TYPE_NMI |
-					INTR_INFO_VALID_MASK;
-				printf("{%x,N4}", vcpu->id);
-			}
+			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+				INTR_TYPE_NMI |
+				INTR_INFO_VALID_MASK;
 		}
-	} else {
-		printf("{%x,N5}", vcpu->id);
 	}
-#endif
 
+	/* Unblock NMI in hypervisor */
+	if (fromhvm) {
+		xmhf_smpguest_arch_x86_64vmx_unblock_nmi();
+	}
 }
 
 //----------------------------------------------------------------------

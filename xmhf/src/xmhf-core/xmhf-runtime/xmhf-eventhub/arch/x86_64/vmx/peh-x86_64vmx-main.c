@@ -585,7 +585,37 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	//skip the emulated XSETBV instruction
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }						
-			
+
+static void _vmx_send_quiesce_signal2(VCPU __attribute__((unused)) *vcpu){
+  volatile u32 *icr_low = (u32 *)(0xFEE00000 + 0x300);
+  volatile u32 *icr_high = (u32 *)(0xFEE00000 + 0x310);
+  u32 icr_high_value= 0xFFUL << 24;
+  u32 prev_icr_high_value;
+  u32 delivered;
+  
+  prev_icr_high_value = *icr_high;
+  
+  *icr_high = icr_high_value;    //send to all but self
+  *icr_low = 0x000C0400UL;      //send NMI        
+  
+  //check if IPI has been delivered successfully
+  //printf("\n%s: CPU(0x%02x): firing NMIs...", __FUNCTION__, vcpu->id);
+#ifndef __XMHF_VERIFICATION__  
+  do{
+	delivered = *icr_high;
+	delivered &= 0x00001000;
+  }while(delivered);
+#else
+	//TODO: plug in h/w model of LAPIC, for now assume hardware just
+	//works
+#endif
+
+  //restore icr high
+  *icr_high = prev_icr_high_value;
+    
+  //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
+}
+
 extern u32 lxy_flag;
 void xmhf_parteventhub_arch_x86_64vmx_iret(void);
 
@@ -611,8 +641,12 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
 	if (lxy_flag) {
 		HALT_ON_ERRORCOND(vcpu->vmcs.guest_interruptibility == 0);
-		HALT_ON_ERRORCOND(((uintptr_t)(&r) & 0xffff) == 0x3f38);
-		printf("{%x,i,%d,%#llx,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_RIP, vcpu->vmcs.info_vmexit_instruction_length);
+		if ((u32)vcpu->vmcs.info_vmexit_reason == 32) {
+			HALT_ON_ERRORCOND(vcpu->vmcs.guest_RIP == 0xffffffff8106b3e4);
+			HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 2);
+		} else {
+			printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
+		}
 	}
 
 	//handle intercepts
@@ -632,12 +666,38 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);	
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
-				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
-					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
-					HALT();
+				const u32 base = 1000000;
+				if (r->ecx >= base) {
+					u32 op = r->ecx - base;
+					if (op <= 4) {
+						if (op != vcpu->id && op != 4) {
+							r->eax = 1;
+						} else {
+							r->eax = 0;
+							printf("\nCPU(0x%02x): start busy loop", vcpu->id);
+							for (u64 i = 0; i < 0x40000000UL; i++);
+							printf("\nCPU(0x%02x): end busy loop", vcpu->id);
+						}
+					} else if (op <= 8) {
+						if (op - 4 != vcpu->id && op - 4 != 4) {
+							r->eax = 1;
+						} else {
+							printf("\nCPU(0x%02x): sending NMI", vcpu->id);
+							_vmx_send_quiesce_signal2(vcpu);
+							printf("\nCPU(0x%02x): sent NMI", vcpu->id);
+						}
+					} else {
+						printf("\nCPU(0x%02x): undefined %u", vcpu->id, op);
+						r->eax = 0;
+					}
+				} else {
+					xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
+					if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
+						printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
+						HALT();
+					}
+					xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 				}
-				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 				HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 3);
 				vcpu->vmcs.guest_RIP += 3;
 			}
@@ -684,10 +744,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				case 0x02:	//NMI
 					#ifndef __XMHF_VERIFICATION__
 					//we currently discharge quiescing via manual inspection
-					printf("{%x,p,%p}", vcpu->id, vcpu->vmcs.guest_RIP);
+					printf("{%x,p}", vcpu->id);
 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 1);
 					printf("{%x,P}", vcpu->id);
-					xmhf_parteventhub_arch_x86_64vmx_iret();
+					// xmhf_parteventhub_arch_x86_64vmx_iret();
 					#endif // __XMHF_VERIFICATION__
 					break;
 				
@@ -873,7 +933,12 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 #endif	
 
 	if (lxy_flag) {
-		printf("{%x,I,%d,%#llx,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_RIP, vcpu->vmcs.info_vmexit_instruction_length);
+		if ((u32)vcpu->vmcs.info_vmexit_reason == 32) {
+			HALT_ON_ERRORCOND(vcpu->vmcs.guest_RIP == 0xffffffff8106b3e6);
+			HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 2);
+		} else {
+			printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
+		}
 	}
 
 	return 1;

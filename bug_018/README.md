@@ -606,11 +606,145 @@ Can try to print guest RIPs, but not very useful.
 
 After changing to virtual NMI, test 2 still see deadlock.
 
+### Implementing IRET
+
+Implemented iret in `4a7f5b2bb..e0149361e`. Looks like no longer have
+deadlocks. But still have other problems, like page fault in Linux.
+
+In my current experiment, looks like the page fault happens after an NMI
+exception during intercept 31 (RDMSR). See `20220102113103{,.gdb}`. CPU 3 in
+Linux got the page fault, and the page fault address is `<native_write_msr+8>`.
+However, `<native_write_msr+4>` is rdmsr, `<native_write_msr+6>` is nop
+(5 bytes). So the hypervisor did not return RIP correctly?
+
+In `20220102120442`, see VMENTRY failure.
+
+### vmwrite in 64-bit
+
+VMX instruction reference says that the operand size for VMREAD and VMWRITE are
+32 bits in x86 and 64 bits in x64.
+
+Use the following gdb script to debug
+```
+# From gdb/x64_rt_pre.gdb
+b xmhf_baseplatform_arch_x86_64vmx_getVMCS
+b xmhf_baseplatform_arch_x86_64vmx_putVMCS
+c
+```
+
+Debug result is:
+```
+Thread 1 hit Breakpoint 4, 0x00000000102138c0 in ?? ()
+(gdb) b xmhf_baseplatform_arch_x86_64vmx_getVMCS
+Breakpoint 5 at 0x1020ea17: file arch/x86_64/vmx/bplt-x86_64vmx-vmcs.c, line 74.
+(gdb) b xmhf_baseplatform_arch_x86_64vmx_putVMCS
+Breakpoint 6 at 0x1020e98b: file arch/x86_64/vmx/bplt-x86_64vmx-vmcs.c, line 59.
+(gdb) c
+Continuing.
+
+Thread 1 hit Breakpoint 6, xmhf_baseplatform_arch_x86_64vmx_putVMCS (vcpu=0x10249820 <g_vcpubuffers>) at arch/x86_64/vmx/bplt-x86_64vmx-vmcs.c:59
+59	    for(i=0; i < g_vmx_vmcsrwfields_encodings_count; i++){
+(gdb) n
+77	        __vmx_vmread(encoding, field);
+(gdb) p encoding
+$1 = 0
+(gdb) p field
+$2 = (unsigned long *) 0x1024aca4 <g_vcpubuffers+5252>
+(gdb) p vcpu->vmcs
+$3 = {control_vpid = 1, control_VMX_pin_based = 30, ...}
+(gdb) p vcpu->vmcs.control_vpid
+$4 = 1
+(gdb) p vcpu->vmcs.control_VMX_pin_based
+$5 = 30
+(gdb) p g_vmx_vmcsrwfields_encodings[i].fieldoffset
+$6 = 0
+(gdb) n
+74	    for(i=0; i < g_vmx_vmcsrwfields_encodings_count; i++){
+(gdb) p vcpu->vmcs.control_vpid
+$7 = 1
+(gdb) p vcpu->vmcs.control_VMX_pin_based
+$8 = 0
+(gdb) n
+75	        unsigned int encoding = g_vmx_vmcsrwfields_encodings[i].encoding;
+(gdb) 
+76	        unsigned long *field = (unsigned long *)((hva_t)&vcpu->vmcs + (u32)g_vmx_vmcsrwfields_encodings[i].fieldoffset);
+(gdb) 
+77	        __vmx_vmread(encoding, field);
+(gdb) 
+74	    for(i=0; i < g_vmx_vmcsrwfields_encodings_count; i++){
+(gdb) p vcpu->vmcs.control_VMX_pin_based
+$9 = 30
+(gdb) 
+```
+
+Can see that during vmread of a 32-bit field, other fields are incorrectly
+cleared. The VMCS may be read incorrectly if order of read is not same as order
+of fields declared in the structure.
+
+This problem does not happen in x86 mode because all memory accesses are 4
+bytes, and all data types in the struct are >= 4 bytes.
+
+Fixed this problem in `231f0d65d..4b8f8b277` (only VMREAD is affected; ideally
+should change VMWRITE, but not now), but `bug_018` still not fixed.
+
+### Sleeping and NMI
+
+In `9d853eed9`, able to use VMCALL to sleep in hypervisor mode. Then can use
+QEMU to inject NMI and see whether hypervisor mode is blocking NMI.
+Use `while ! ./test 1000000; do true; done` to force executing sleep on CPU 0.
+QEMU will always inject NMI to CPU 0.
+
+Result is in `20220102211601`. NMIs are injected after "start busy loop", but
+after some time see "end busy loop", and then see NMI as interception
+`{0,p}{0,n,1,1}{0,N7}{0,P}`.
+
+Way to reproduce is:
+1. Inject an NMI
+2. Start busy loop
+3. Before busy loop ends, inject an NMI
+4. After when busy loop ends, see NMI handled (unexpected behavior):
+   `{0,p}{0,n,1,1}{0,N7}{0,P}`
+
+So in hypervisor mode NMIs are effectively blocked. NMIs can only be seen when
+in guest mode through NMI exiting.
+
+However, before the first NMI interception, if all NMIs are handled through
+exception handler, hypervisor will not be blocking NMI. e.g. `20220102212211`:
+1. Start busy loop
+2. Before busy loop ends, inject an NMI
+3. See exception handler handles NMI (expected):
+   `{0,e,2,0x19963dc8,18}{0,s}{0,n,0,0}{0,N7}{0,S}`
+4. See busy loop ends
+
+Also, note that `vcpu->vmcs.guest_interruptibility == 0` at all times.
+
+Currently, the code is using virtual NMIs. To remove virtual NMIs, just need
+to remove the `vcpu->vmcs.control_VMX_pin_based |= (1 << 5);` line, because
+we have already disabled injecting NMIs to guest. The behavior is the same.
+
+Also, when any CPU is busy looping in hypervisor mode, SSH freezes. Why?
+
+Then I tested this bug on x86, looks like the deadlock also occurs. In previous
+tests did not find the problem because the critical section is executed too
+quickly. If add the `printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);`
+line in `xmhf_smpguest_arch_x86vmx_quiesce`, can easily reproduce this bug.
+
+Fixing NMI deadlock:
+TODO: test sleep and inject NMI on x86
+TODO: test the iret fix on x86 XMHF
+TODO: write about guesses about NMI and VMX in a table, ask on stackoverflow
+
+Fixing actual bug:
+TODO: always dump full VMCS at end of VMWRITE, and compare with 20220102120442
+
 ## Fix
 
 `0b37c866d..`
 * Fix race condition in `xmhf_smpguest_arch_x86_64vmx_endquiesce()`
 * Make access to `vcpu->quiesced` atomic in NMI handler
+* Prevent accessing memory below RSP in xcph (likely unrelated)
+* Prevent overwriting other fields when reading 32-bit VMCS fields
+  (likely unrelated)
 
 # tmp notes
 

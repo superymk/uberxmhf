@@ -155,6 +155,7 @@
 * Lock pages to RAM in `pal_demo`
 * Fix race condition in quiesce code (`bug_018`)
 * Make access to `vcpu->quiesced` atomic in NMI handler (`bug_018`)
+* Prevent accessing memory below RSP in xcph
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

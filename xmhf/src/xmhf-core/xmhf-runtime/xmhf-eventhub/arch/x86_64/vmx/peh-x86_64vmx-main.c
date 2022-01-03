@@ -632,19 +632,8 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	if(vcpu->vmcs.guest_interruptibility != 0){
-		printf("{%x,int,%#x}", vcpu->id, vcpu->vmcs.guest_interruptibility);
-		//vcpu->vmcs.guest_interruptibility = 0;
-	}
-
 	if (lxy_flag) {
-		HALT_ON_ERRORCOND(vcpu->vmcs.guest_interruptibility == 0);
-		if ((u32)vcpu->vmcs.info_vmexit_reason == 32) {
-			HALT_ON_ERRORCOND(vcpu->vmcs.guest_RIP == 0xffffffff8106b3e4);
-			HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 2);
-		} else {
-			printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
-		}
+		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
 	}
 
 	//handle intercepts
@@ -929,12 +918,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 #endif
 
 	if (lxy_flag) {
-		if ((u32)vcpu->vmcs.info_vmexit_reason == 32) {
-			HALT_ON_ERRORCOND(vcpu->vmcs.guest_RIP == 0xffffffff8106b3e6);
-			HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_instruction_length == 2);
-		} else {
-			printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
-		}
+		printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
 	}
 
 	return 1;

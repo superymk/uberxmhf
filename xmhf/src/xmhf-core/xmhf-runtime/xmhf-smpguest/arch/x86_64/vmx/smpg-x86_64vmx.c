@@ -569,7 +569,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 			unsigned long __control_VMX_cpu_based;
 			HALT_ON_ERRORCOND(__vmx_vmread(0x4002, &__control_VMX_cpu_based));
 			__control_VMX_cpu_based |= (1U << 22);
-			vcpu->vmcs.control_VMX_cpu_based |= __control_VMX_cpu_based;
+			vcpu->vmcs.control_VMX_cpu_based = __control_VMX_cpu_based;
 			HALT_ON_ERRORCOND(__vmx_vmwrite(0x4002, __control_VMX_cpu_based));
 		}
 	}

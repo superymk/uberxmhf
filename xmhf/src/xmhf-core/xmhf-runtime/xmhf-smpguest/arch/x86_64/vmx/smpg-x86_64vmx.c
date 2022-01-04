@@ -515,6 +515,7 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
 // fromhvm: 1 if NMI originated from the HVM (i.e. caller is intercept handler),
 // otherwise 0 (within the hypervisor, i.e. caller is exception handler)
 void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r, u32 fromhvm){
+	// (void)vcpu;
 	(void)r;
 	(void)fromhvm;
 
@@ -528,6 +529,7 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	 * blocked during the time where vcpu->quiesced = 1.
 	 */
 	if(g_vmx_quiesce && !vcpu->quiesced){
+		HALT_ON_ERRORCOND(0);
 		vcpu->quiesced=1;
 
 		//increment quiesce counter

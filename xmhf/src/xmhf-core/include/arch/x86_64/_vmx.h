@@ -624,10 +624,15 @@ static inline u32 __vmx_vmread(unsigned long encoding, unsigned long *value){
                        "movq $1, %%rdx \r\n"
                        "jmp 2f \r\n"
                        "1: movq $0, %%rdx \r\n"
-                       "2: movq %%rdx, %1"
-	  : "=b"(*value), "=m"(status)
+                       "2: movq %%rdx, %0 \r\n"
+                       // "cmpl $0x19292093, %%ebx \r\n"
+                       // "jne 4f \r\n"
+                       // "movq $3, %0 \r\n"
+                       // "4: \r\n"
+	  : "=m"(status), "=b"(*value)
 	  : "a"(encoding)
 	  : "%rdx", "cc");
+	HALT_ON_ERRORCOND(status != 3);
 	return status;
 }
 

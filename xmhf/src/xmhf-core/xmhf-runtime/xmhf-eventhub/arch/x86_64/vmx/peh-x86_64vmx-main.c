@@ -666,7 +666,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 							for (u64 i = 0; i < 0x40000000UL; i++);
 							printf("\nCPU(0x%02x): end busy loop", vcpu->id);
 						}
-					} else if (op <= 8) {
+					} else if (op < 10) {
 						if (op - 5 != vcpu->id && op - 5 != 4) {
 							r->eax = 1;
 						} else {

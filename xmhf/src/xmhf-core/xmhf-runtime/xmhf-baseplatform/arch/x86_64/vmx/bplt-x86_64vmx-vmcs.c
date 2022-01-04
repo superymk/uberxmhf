@@ -66,14 +66,14 @@ void xmhf_baseplatform_arch_x86_64vmx_putVMCS(VCPU *vcpu){
             /* fallthrough */
         case 2: /* 32-bit */
             /* truncate higher 32 bits */
-            fieldvalue = (u64)(*(u32 *)field);
+            fieldvalue = (*(u64 *)field);
             break;
         case 1: /* 64-bit */
             /* fallthrough */
         case 3: /* natural width */
             if (encoding & 0x1) {
                 /* Accessing high bits, truncate higher 32 bits */
-                fieldvalue = (u64)(*(u32 *)field);
+                fieldvalue = (*(u64 *)field);
             } else {
                 /* Read all 64 bits */
                 fieldvalue = (*(u64 *)field);

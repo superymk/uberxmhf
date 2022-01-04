@@ -604,13 +604,6 @@ static inline void __vmx_vmxon(u64 vmxonRegion){
 
 static inline u32 __vmx_vmwrite(unsigned long encoding, unsigned long value){
   unsigned long status;
-  if (encoding == 0x401E) {
-    HALT_ON_ERRORCOND(((u32)value) != 0x86006172U);
-    HALT_ON_ERRORCOND((value >> 32) != 0x86006172U);
-  }
-  if ((((u32)value) == 0x86006172U) || ((value >> 32) == 0x86006172U)) {
-    HALT_ON_ERRORCOND(encoding == 0x4002);
-  }
   __asm__("vmwrite %%rbx, %%rax \r\n"
           "jbe 1f \r\n"
           "movq $1, %%rdx \r\n"

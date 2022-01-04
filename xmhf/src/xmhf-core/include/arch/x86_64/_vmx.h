@@ -628,13 +628,6 @@ static inline u32 __vmx_vmread(unsigned long encoding, unsigned long *value){
 	  : "=b"(*value), "=m"(status)
 	  : "a"(encoding)
 	  : "%rdx", "cc");
-    if (encoding == 0x401E) {
-        HALT_ON_ERRORCOND(((u32)*value) != 0x86006172U);
-        HALT_ON_ERRORCOND((*value >> 32) != 0x86006172U);
-    }
-    if ((((u32)*value) == 0x86006172U) || ((*value >> 32) == 0x86006172U)) {
-        HALT_ON_ERRORCOND(encoding == 0x4002);
-    }
 	return status;
 }
 

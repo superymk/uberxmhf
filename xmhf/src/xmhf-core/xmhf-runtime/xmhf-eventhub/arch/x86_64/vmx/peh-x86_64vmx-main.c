@@ -620,12 +620,6 @@ extern u32 lxy_flag;
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 	//read VMCS from physical CPU/core
-	{
-		u64 _control_VMX_seccpu_based;
-		HALT_ON_ERRORCOND(__vmx_vmread(0x401e, &_control_VMX_seccpu_based));
-		HALT_ON_ERRORCOND(_control_VMX_seccpu_based != 0x86006172);
-	}
-
 #ifndef __XMHF_VERIFICATION__
 	xmhf_baseplatform_arch_x86_64vmx_getVMCS(vcpu);
 #endif //__XMHF_VERIFICATION__
@@ -638,8 +632,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(vcpu);
 		HALT();
 	}
-
-	HALT_ON_ERRORCOND(vcpu->vmcs.control_VMX_seccpu_based != 0x86006172);
 
 	if (lxy_flag) {
 		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
@@ -913,18 +905,11 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	HALT_ON_ERRORCOND(vcpu->vmcs.control_VMX_seccpu_based != 0x86006172);
-
 	//write updated VMCS back to CPU
 #ifndef __XMHF_VERIFICATION__
 	xmhf_baseplatform_arch_x86_64vmx_putVMCS(vcpu);
 #endif // __XMHF_VERIFICATION__
 
-	{
-		u64 _control_VMX_seccpu_based;
-		HALT_ON_ERRORCOND(__vmx_vmread(0x401e, &_control_VMX_seccpu_based));
-		HALT_ON_ERRORCOND(_control_VMX_seccpu_based != 0x86006172);
-	}
 
 #ifdef __XMHF_VERIFICATION_DRIVEASSERTS__
 	//ensure that whenever a partition is resumed on a vcpu, we have extended paging

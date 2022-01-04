@@ -99,8 +99,6 @@ void xmhf_baseplatform_arch_x86_64vmx_read_field(u32 encoding, void *addr,
     HALT_ON_ERRORCOND(__vmx_vmread(encoding, &value));
     if (encoding == 0x401E) {
         HALT_ON_ERRORCOND(value != 0x86006172);
-    } else {
-        HALT_ON_ERRORCOND(((uintptr_t)addr - (uintptr_t)g_vcpubuffers) % sizeof(VCPU) != 0x1490);
     }
     /* For now, read 64-bit fields as 2 32-bit fields (same as in x86) */
     switch ((encoding >> 13) & 0x3) {

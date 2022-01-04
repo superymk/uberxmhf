@@ -381,6 +381,8 @@ However, this bug is not so easy to fix. Currently committed `aa2d65ef0`
 be fixing the race condition, but not sure how to implement at this point.
 Created another temporary branch.
 
+(Commit `aa2d65ef0` is found to be unnecessary later)
+
 ### Ruling out problems in TrustVisor
 
 Wrote `test.c` in `pal_demo` to make `TV_HC_TEST` VMCALL. Now the behavior can
@@ -587,7 +589,9 @@ cause VM-ENTRY error. This is expected.
 
 Now in NMI handler, check interruptibility. If not interruptible, set NMI
 window exiting. Now see "Unhandled intercept in long mode: 0x00000008". This
-is expected.
+is expected. (later: I think this implementation is incorrect, because NMI in
+exception handler may overwrite other injections. The correct way is to always
+set NMI window exiting, and inject NMI in next VMEXIT due to NMI windowing)
 
 We then set up intercept code for exit reason = "NMI window". The changed code
 is `294de9b55..4a7f5b2bb`.
@@ -729,32 +733,279 @@ tests did not find the problem because the critical section is executed too
 quickly. If add the `printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);`
 line in `xmhf_smpguest_arch_x86vmx_quiesce`, can easily reproduce this bug.
 
-Fixing NMI deadlock:
-TODO: test sleep and inject NMI on x86
-TODO: test the iret fix on x86 XMHF
-TODO: write about guesses about NMI and VMX in a table, ask on stackoverflow
+In x86, also see the same behavior by letting hypervisor busy wait and
+injecting NMI. Code is at `a3a9bfb45`, serial output in `20220103092828`.
+
+In x86, if use iret to unblock NMIs, the problem is fixed. Code in `a9caaed31`.
+
+### Reverting `aa2d65ef0`
+
+After reviewing the code using new understanding about NMI blocking, can see
+that commit `aa2d65ef0` is not necessary. Because when executing the critical
+section NMI is always blocked, regardless called from interception handler or
+exception handler.
+
+In `e7ff86ac0`, reverted `aa2d65ef0`
+
+### Updating code
+
+Did some code update on `xmhf64` branch `4b8f8b277..3cf7c7a38`. Revised the
+design of logic of nmi handler.
+
+When CPU 0 requests quiesce, on other CPUs look like:
+
+```
+time ----->
+
+hypervisor          ------- Quiesce ---- iret ----
+                   /(NMI)                         \
+guest       -------                                ---------
+
+event            ^ NMI for quiesce
+```
+
+When an NMI for guest is delivered during vmx-nonroot operation, look like:
+
+```
+hypervisor          ------- inject exception to guest ----
+                   /(NMI)                                 \
+guest       -------                                        ---------
+
+event            ^ NMI for guest
+```
+
+When an NMI for guest is delivered during vmx-root operation (e.g. by VMCALL):
+
+```
+exception                     ---- Quiesce ---
+                             /                \(iret)
+hypervisor          ---------                  -----------
+                   /(other)                               \
+guest       -------                                        ---------
+
+event                       ^ NMI for NMI
+```
+
+In this case, no need to execute iret explicitly because exception return is
+iret.
+
+When an NMI for guest is delivered during NMI intercept handler for quiesce:
+
+```
+hypervisor          ----- Quiesce -- iret ---   ------- inject --
+                   /(NMI)                    \ /(NMI)            \
+guest       -------                           -                   ---
+
+event             ^ NMI for quiesce
+                        ^ NMI for guest
+```
+
+This is actually the same for NMI for guest happening before NMI for quiesce.
+
+For each NMI received by the hypervisor, either through intercept or exception,
+it should either be handled as a quiesce request or an event injection to the
+guest. How it should be handled does not depend on whether called from
+intercept handler or exception.
+
+Since the guest needs to handle NMIs, virtual NMIs is likely needed (assuming
+my understanding about NMIs in VMX is correct).
+
+For the guest, the NMI handler may be executed late if it is blocked by
+quiesce. This is likely a valid behavior, and is difficult to be fixed.
+
+### NMI Write up
+
+Possible configurations
+* NMI exiting = 0, virtual NMIs = 0
+* NMI exiting = 1, virtual NMIs = 0
+* NMI exiting = 1, virtual NMIs = 1
+
+CPU states
+* VMX operation (root = hypervisor / non-root = guest)
+* NMI blocking
+* Virtual NMI blocking
+
+Events
+* CPU receive NMI
+* CPU executes iret
+* Inject NMI to guest during VMENTRY
+
+Table (may have errors and typo):
+
+|Event|Virtual NMI blocking|NMI blocking|VMX|NMI Exiting = 0, virtual NMIs = 0|NMI Exiting = 1, virtual NMIs = 0|NMI Exiting = 1, virtual NMIs = 1|
+|-|-|-|-|-|-|-|
+|Receive NMI|0|0|root|HV NMI handler, NMI Blocking = 1|HV NMI handler, NMI Blocking = 1|HV NMI handler, NMI Blocking = 1|
+||0|0|non-root|Guest NMI handler, NMI Blocking = 1|VMEXIT, NMI Blocking = 1|VMEXIT, NMI Blocking = 1|
+||0|1|root|Blocked|Blocked|Blocked|
+||0|1|non-root|Blocked|VMEXIT, NMI Blocking = 1|VMEXIT, NMI Blocking = 1|
+||1|0|root|N/A|N/A|HV NMI handler, NMI Blocking = 1|
+||1|0|non-root|N/A|N/A|VMEXIT, NMI Blocking = 1|
+||1|1|root|N/A|N/A|Blocked|
+||1|1|non-root|N/A|N/A|VMEXIT, NMI Blocking = 1|
+|VM Entry, host inject to guest|0|0|root -> non-root|?|NV NMI handler|NV NMI handler|
+||0|1|root -> non-root|?|NV NMI handler|NV NMI handler|
+||1|0|root -> non-root|N/A|N/A|Disallowed|
+||1|1|root -> non-root|N/A|N/A|Disallowed|
+|Execute iret|0|0|root|-|-|-|
+||0|0|non-root|-|-|-|
+||0|1|root|NMI Blocking = 0|NMI Blocking = 0|NMI Blocking = 0|
+||0|1|non-root|NMI Blocking = 0|-|-|
+||1|0|root|N/A|N/A|-|
+||1|0|non-root|N/A|N/A|Virtual NMI Blocking = 0|
+||1|1|root|N/A|N/A|NMI Blocking = 0|
+||1|1|non-root|N/A|N/A|Virtual NMI Blocking = 0|
+
+I believe that for our use case, virtual NMI have to be implemented.
+
+Also a blog post in Chinese that may be helpful:
+<https://www.cnblogs.com/haiyonghao/p/14389529.html>
+
+### Testing update
+
+After implemeting virtual NMIs in `xmhf64` branch, looks like the program is
+even less stable. Current commit is `26d22939d`.
+In x64 XMHF x64 Debian x86 pal, running
+`for i in {0..100..2}; do ./main $i $i; done` will result in VMENTRY error. For
+example `20220103155652`. Running `for i in {0..100..2}; do ./test $i $i; done`
+will also result in error. For example `20220103161912` (code `761be4751`).
+
+Also can see problems in x86 XMHF x86 Debian x86 pal.
+
+### Comparing VCPU dump
+
+A few errors are VMENTRY error. For example `20220103161912`. Collect the VCPU
+dump result in `results/20220103161912_vcpudump`, and dump VCPU during a normal
+run (result in `results/20220103162941_vcpudump`), find the difference.
+
+`vcpu->vmcs.info_vminstr_error=0x00000007` shows that control field has an
+error. Looks like the problem is that `control_VMX_seccpu_based` is changed
+to another value. This value is for `control_VMX_cpu_based`
+```diff
+@@ -46,3 +46,3 @@
+ CPU(0x03): vcpu->vmcs.control_VMX_cpu_based=0x86006172
+-CPU(0x03): vcpu->vmcs.control_VMX_seccpu_based=0x86006172
++CPU(0x03): vcpu->vmcs.control_VMX_seccpu_based=0x000010aa
+ CPU(0x03): vcpu->vmcs.control_exception_bitmap=0x00000000
+```
+
+Changed code to `238eb4c68`. Found that serial shows
+```
+Fatal: Halting! Condition 'value != 0x86006172' failed, line 78, file arch/x86_64/vmx/bplt-x86_64vmx-vmcs.c
+```
+
+This means that VMREAD is called with the correct encoding, but get wrong
+value. The next step is to check whether VMWRITE is called with the right
+value. If not, then maybe there is something wrong with KVM / QEMU.
+
+Also, looks like KVM nested virtualization does not use the region provided in
+VMPTRLD to store data. All fields are 0 except the version:
+```
+(gdb) p/x ((long*) g_vmx_vmcs_buffers)[0]@2048
+$22 = {0x11e57ed0, 0x0 <repeats 511 times>, 0x11e57ed0, 0x0 <repeats 511 times>, 0x11e57ed0, 0x0 <repeats 511 times>, 0x11e57ed0, 0x0 <repeats 511 times>}
+(gdb) 
+```
+
+Tried to check whether VMWRITE writes the incorrect value, but looks like not
+the case. Then changed VMWRITE such that when writing 32-bit fields, force
+upper-32 bits to 0. Currently upper-32 bits may be another 32-bit field. Then
+the problem is fixed. However, how it is fixed is strange.
+
+Currently, 
+`761be4751` is bad (see unhandled exception 3)
+`1e7d5f77c` is good (fix vmwrite)
+`b40aa6a5b` is good (essentially remove fix in vmwrite)
+`ce15316eb` is bad (`20220103213830`, VMENTRY error)
+
+The problem with `20220103213830` is that `guest_RFLAGS` is corrupted. Using
+`diff <(cut -b 10- 20220103213830_vcpudump) <(cut -b 10- 20220103162941_vcpudump)`
+to compare, can see that it is similar to `guest_RIP`. Looks like `guest_RFLAGS`
+is `guest_RIP` before VMEXIT, and the intercept handler added to `guest_RIP`.
+```
+118,120c117,119
+< : vcpu->vmcs.guest_RSP=0xffffc900000c8f50
+< : vcpu->vmcs.guest_RIP=0xffffffff8106b3e6
+< : vcpu->vmcs.guest_RFLAGS=0xffffffff8106b3e4
+---
+> : vcpu->vmcs.guest_RSP=0xffffc90000120e38
+> : vcpu->vmcs.guest_RIP=0xffffffff8106b3e4
+> : vcpu->vmcs.guest_RFLAGS=0x0000000000000003
+```
+
+Is the problem fixed by calling VMREAD slower?
+
+### Suspecting exception handler
+
+After reviewing serial log, looks like exception handler may have some
+problems.
+
+`20220103161912` (look for `{3,`):
+```
+I,32}{0,I,10}{3,i,32}{0,i,10}{3,I,32}{0,I,10}{1,i,32}{1,I,32}{0,i,10}{1,i,32}{0,
+I,10}{1,I,32}{0,i,10}{0,I,10}{0,i,10}{0,I,10}{0,i,32}{0,I,32}{0,i,18}{3,i,32}
+CPU(0x00): got quiesce signal...{3,I,32}{3,s}{2,i,0}{1,i,0}{2,p}{1,p}
+CPU(0x00): all CPUs quiesced successfully.TV[0]:appmain.c:do_TV_HC_TEST:202:    
+             CPU(0x00): test hypercall, ecx=0x0000001c
+
+CPU(0x00): ending quiesce.
+CPU(0x00): releasing quiesce lock.{2,P}{3,S}{1,P}{0,I,18}{2,I,0}{1,I,0}{3,i,32}{
+0,i,32}{3,I,32}{0,I,32}
+[03]: unhandled exception 3, halting!{1,i,32}{0,i,32}{1,I,32}{0,I,32}{1,i,32}
+[03]: state dump follows...{1,I,32}
+[03] CS:RIP 0x0010:0x0000000010206a3f with EFLAGS=0x0000000000000042{1,i,32}
+```
+
+`20220103213830` (look for `{1,`):
+```
+i,10}{1,i,32}{2,I,10}{0,i,32}{1,I,32}{2,i,32}{0,I,32}{2,I,32}{2,i,10}{2,I,10}{2,
+i,10}{2,I,10}{2,i,10}{2,I,10}{2,i,10}{2,I,10}{2,i,10}{2,I,10}{0,i,32}{2,i,32}{0,
+I,32}{2,I,32}{2,i,10}{2,I,10}{2,i,18}
+CPU(0x02): got quiesce signal...{1,s}{3,s}{0,i,0}{0,p}
+CPU(0x02): all CPUs quiesced successfully.TV[0]:appmain.c:do_TV_HC_TEST:202:    
+             CPU(0x02): test hypercall, ecx=0x0000002a
+
+CPU(0x02): ending quiesce.{0,P}
+CPU(0x02): releasing quiesce lock.{3,S}{1,S}{0,I,0}{2,I,18}{1,i,32}{0,i,32}{2,i,
+32}{1,I,32}{2,I,32}{0,I,32}
+CPU(0x01): VM-ENTRY error, reason=0x80000021, qualification=0x0000000000000000{2
+,i,10}
+Guest State follows:{0,i,32}{2,I,10}
+guest_CS_selector=0x0010
+guest_DS_selector=0x0000{2,i,32}{0,I,32}{2,I,32}
+```
+
+Can see that the sequences are: i, I, s, S, i, I, error. Intercept logic is
+read VMCS, i, handle, I, write VMCS. s and S means handling NMI exception.
+So likely the exception happens during read VMCS or write VMCS.
+
+Other 3 similar errors are `20220102120442` (same sequence), `20220103120431`
+(not in verbose mode), and `20220103155652` (not in verbose mode)
+
+Next steps:
+* If print before read VMCS / after write VMCS, can the bug still be reproduced?
+* In exception handlers, try to print the stack / RIP
+* Randomly add MFENCEs
+* Write an infinite loop to read VMCS, and inject NMI manually using QEMU
 
 Fixing actual bug:
-TODO: always dump full VMCS at end of VMWRITE, and compare with 20220102120442
+TODO: always dump full VMCS at end of VMWRITE, and compare with 20220102120442 or 20220103120431 or 20220103155652
+TODO: Using test 2, `ec37adbc9` looks good, but `787a0f8d1` looks bad. Try to bisect? (`for i in {0..100..2}; do ./test $i $i; done & for i in {1..100..2}; do ./test $i $i; done`)
 
 ## Fix
 
 `0b37c866d..`
 * Fix race condition in `xmhf_smpguest_arch_x86_64vmx_endquiesce()`
-* Make access to `vcpu->quiesced` atomic in NMI handler
+* Make access to `vcpu->quiesced` atomic in NMI handler (actually unnecessay,
+  reverted later)
 * Prevent accessing memory below RSP in xcph (likely unrelated)
 * Prevent overwriting other fields when reading 32-bit VMCS fields
   (likely unrelated)
+* Implement virtual NMI, unblock NMI when needed
 
 # tmp notes
 
 ```
 for i in {1..1000..2}; do ./test $i; done & for i in {0..1000..2}; do ./test $i; done
 ```
-
-TODO: use sleep to try to achieve deterministic run, test whether NMI is blocked
-TODO: in exception handler, when write to `vcpu->vmcs`, should also update the
-real VMCS using VMWRITE.
 
 TODO: print vmcs fields related to NMI. Likely Linux's state is corrupted (is it possible that XMHF injected 2 NMIs that violates NMI blocking)
 

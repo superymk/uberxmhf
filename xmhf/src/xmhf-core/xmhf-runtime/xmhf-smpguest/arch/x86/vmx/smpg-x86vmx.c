@@ -505,7 +505,6 @@ void xmhf_smpguest_arch_x86vmx_endquiesce(VCPU *vcpu){
 // otherwise 0 (within the hypervisor, i.e. caller is exception handler)
 void xmhf_smpguest_arch_x86vmx_eventhandler_nmiexception(VCPU *vcpu, struct regs *r, u32 fromhvm){
 	(void)r;
-	(void)fromhvm;
 
 	/*
 	 * If g_vmx_quiesce = 1, process quiesce regardless of where NMI originated

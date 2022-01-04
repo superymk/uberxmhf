@@ -122,7 +122,8 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
     switch(vector){
     case CPU_EXCEPTION_NMI: {
         u64 exception_rip = ((uintptr_t *)(r->rsp))[0];
-        printf("{%x,s,%p}", vcpu->id, exception_rip);
+        printf("{%x,s,%p,%#016lx,%#016lx}", vcpu->id, exception_rip, r->rax,
+               r->rbx);
         xmhf_smpguest_arch_x86_64_eventhandler_nmiexception(vcpu, r, 0);
         printf("{%x,S}", vcpu->id);
         break;

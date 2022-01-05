@@ -57,47 +57,20 @@
 void xmhf_baseplatform_arch_x86_64vmx_putVMCS(VCPU *vcpu){
     unsigned int i;
     for(i=0; i < g_vmx_vmcsrwfields_encodings_count; i++){
-        u32 encoding = g_vmx_vmcsrwfields_encodings[i].encoding;
-        u32 offset = g_vmx_vmcsrwfields_encodings[i].fieldoffset;
-        unsigned long *field = (unsigned long *)((hva_t)&vcpu->vmcs + offset);
-        unsigned long fieldvalue = 0;
-        switch ((encoding >> 13) & 0x3) {
-        case 0: /* 16-bit */
-            /* fallthrough */
-        case 2: /* 32-bit */
-            /* truncate higher 32 bits */
-            fieldvalue = (*(u64 *)field);
-            break;
-        case 1: /* 64-bit */
-            /* fallthrough */
-        case 3: /* natural width */
-            if (encoding & 0x1) {
-                /* Accessing high bits, truncate higher 32 bits */
-                fieldvalue = (*(u64 *)field);
-            } else {
-                /* Read all 64 bits */
-                fieldvalue = (*(u64 *)field);
-            }
-            break;
-        default:
-            HALT();
-        }
-        //printf("\nvmwrite: enc=0x%08x, value=0x%08x", encoding, fieldvalue);
-        if(!__vmx_vmwrite(encoding, fieldvalue)){
-          printf("\nCPU(0x%02x): VMWRITE failed. HALT!", vcpu->id);
-          HALT();
-        }
+      unsigned long *field = (unsigned long *)((hva_t)&vcpu->vmcs + (u32)g_vmx_vmcsrwfields_encodings[i].fieldoffset);
+      unsigned long fieldvalue = *field;
+      //printf("\nvmwrite: enc=0x%08x, value=0x%08x", vmcsrwfields_encodings[i].encoding, fieldvalue);
+      if(!__vmx_vmwrite(g_vmx_vmcsrwfields_encodings[i].encoding, fieldvalue)){
+        printf("\nCPU(0x%02x): VMWRITE failed. HALT!", vcpu->id);
+        HALT();
+      }
     }
 }
 
-extern u32 lxy_flag;
-extern VCPU g_vcpubuffers[0];
-
 void xmhf_baseplatform_arch_x86_64vmx_read_field(u32 encoding, void *addr,
                                                  u32 size) {
-    u64 value = 0x1928421419292093;
+    u64 value;
     HALT_ON_ERRORCOND(__vmx_vmread(encoding, &value));
-    HALT_ON_ERRORCOND(value != 0x1928421419292093);
     /* For now, read 64-bit fields as 2 32-bit fields (same as in x86) */
     switch ((encoding >> 13) & 0x3) {
     case 0: /* 16-bit */

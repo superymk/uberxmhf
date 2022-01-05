@@ -412,8 +412,6 @@ static void _vmx_send_quiesce_signal(VCPU __attribute__((unused)) *vcpu){
   //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
 }
 
-u32 lxy_flag = 0;
-
 /* Unblock NMI by executing iret, but do not jump to somewhere else */
 static void xmhf_smpguest_arch_x86_64vmx_unblock_nmi(void) {
     asm volatile (
@@ -438,9 +436,7 @@ static void xmhf_smpguest_arch_x86_64vmx_unblock_nmi(void) {
 //note: we are in atomic processsing mode for this "vcpu"
 void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
 
-        lxy_flag = 1;
-
-        printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
+        //printf("\nCPU(0x%02x): got quiesce signal...", vcpu->id);
         //grab hold of quiesce lock
         spin_lock(&g_vmx_lock_quiesce);
         //printf("\nCPU(0x%02x): grabbed quiesce lock.", vcpu->id);
@@ -471,13 +467,11 @@ void xmhf_smpguest_arch_x86_64vmx_quiesce(VCPU *vcpu){
         //wait for all the remaining CPUs to quiesce
         //printf("\nCPU(0x%02x): waiting for other CPUs to respond...", vcpu->id);
         while(g_vmx_quiesce_counter < (g_midtable_numentries-1) );
+        //printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
 
-        printf("\nCPU(0x%02x): all CPUs quiesced successfully.", vcpu->id);
 }
 
 void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
-
-        printf("\nCPU(0x%02x): ending quiesce.", vcpu->id);
 
         /*
          * g_vmx_quiesce=0 must be before g_vmx_quiesce_resume_signal=1,
@@ -505,7 +499,7 @@ void xmhf_smpguest_arch_x86_64vmx_endquiesce(VCPU *vcpu){
         spin_unlock(&g_vmx_lock_quiesce_resume_signal);
 
         //release quiesce lock
-        printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
+        //printf("\nCPU(0x%02x): releasing quiesce lock.", vcpu->id);
         spin_unlock(&g_vmx_lock_quiesce);
 
 }
@@ -527,7 +521,6 @@ void xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(VCPU *vcpu, struct r
 	 * blocked during the time where vcpu->quiesced = 1.
 	 */
 	if(g_vmx_quiesce && !vcpu->quiesced){
-		HALT_ON_ERRORCOND(0);
 		vcpu->quiesced=1;
 
 		//increment quiesce counter

@@ -138,26 +138,30 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 			{
 
 				if( ((sla_t)(vcpu->vmcs.guest_ES_base+(u16)r->edi)) < rpb->XtVmmRuntimePhysBase){
+					GRUBE820 *pe820entry;
 					#ifdef __XMHF_VERIFICATION__
-						GRUBE820 pe820entry;
-						pe820entry.baseaddr_low = g_e820map[r->ebx].baseaddr_low;
-						pe820entry.baseaddr_high = g_e820map[r->ebx].baseaddr_high;
-						pe820entry.length_low = g_e820map[r->ebx].length_low;
-						pe820entry.length_high = g_e820map[r->ebx].length_high;
-						pe820entry.type = g_e820map[r->ebx].type;
+						GRUBE820 e820entry;
+						pe820entry = &e820entry;
 					#else
-						GRUBE820 *pe820entry;
 						pe820entry = (GRUBE820 *)((sla_t)(vcpu->vmcs.guest_ES_base+(u16)r->edi));
-						pe820entry->baseaddr_low = g_e820map[r->ebx].baseaddr_low;
-						pe820entry->baseaddr_high = g_e820map[r->ebx].baseaddr_high;
-						pe820entry->length_low = g_e820map[r->ebx].length_low;
-						pe820entry->length_high = g_e820map[r->ebx].length_high;
-						pe820entry->type = g_e820map[r->ebx].type;
 					#endif //__XMHF_VERIFICATION__
+					pe820entry->baseaddr_low = g_e820map[r->ebx].baseaddr_low;
+					pe820entry->baseaddr_high = g_e820map[r->ebx].baseaddr_high;
+					pe820entry->length_low = g_e820map[r->ebx].length_low;
+					pe820entry->length_high = g_e820map[r->ebx].length_high;
+					pe820entry->type = g_e820map[r->ebx].type;
+					/* Check whether exceed supported memory */
+					{
+						u64 baseaddr = (((u64)pe820entry->baseaddr_high) << 32) |
+										pe820entry->baseaddr_low;
+						u64 length = (((u64)pe820entry->length_high) << 32) |
+									pe820entry->length_low;
+						HALT_ON_ERRORCOND(baseaddr + length <= MAX_PHYS_ADDR);
+					}
 				}else{
-						printf("\nCPU(0x%02x): INT15 E820. Guest buffer is beyond guest \
-							physical memory bounds. Halting!", vcpu->id);
-						HALT();
+					printf("\nCPU(0x%02x): INT15 E820. Guest buffer is beyond guest "
+							"physical memory bounds. Halting!", vcpu->id);
+					HALT();
 				}
 
 			}
@@ -217,21 +221,16 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 
 				//increment e820 descriptor continuation value
 				r->ebx=r->ebx+1;
-
-				if(r->ebx > (rpb->XtVmmE820NumEntries-1) ){
-					//we have reached the last record, so set CF and make EBX=0
+				if (r->ebx >= rpb->XtVmmE820NumEntries) {
+					//we have reached the last record, so make EBX=0
 					r->ebx=0;
-					guest_flags |= (u16)EFLAGS_CF;
-					#ifndef __XMHF_VERIFICATION__
-						gueststackregion[2] = guest_flags;
-					#endif
-				}else{
-					//we still have more records, so clear CF
-					guest_flags &= ~(u16)EFLAGS_CF;
-					#ifndef __XMHF_VERIFICATION__
-						gueststackregion[2] = guest_flags;
-					#endif
 				}
+
+				// clear CF when success
+				guest_flags &= ~(u16)EFLAGS_CF;
+				#ifndef __XMHF_VERIFICATION__
+					gueststackregion[2] = guest_flags;
+				#endif
 
 			}
 
@@ -583,39 +582,9 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 
 	//skip the emulated XSETBV instruction
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
-}						
-
-static void _vmx_send_quiesce_signal2(VCPU __attribute__((unused)) *vcpu){
-  volatile u32 *icr_low = (u32 *)(0xFEE00000 + 0x300);
-  volatile u32 *icr_high = (u32 *)(0xFEE00000 + 0x310);
-  u32 icr_high_value= 0xFFUL << 24;
-  u32 prev_icr_high_value;
-  u32 delivered;
-  
-  prev_icr_high_value = *icr_high;
-  
-  *icr_high = icr_high_value;    //send to all but self
-  *icr_low = 0x000C0400UL;      //send NMI        
-  
-  //check if IPI has been delivered successfully
-  //printf("\n%s: CPU(0x%02x): firing NMIs...", __FUNCTION__, vcpu->id);
-#ifndef __XMHF_VERIFICATION__  
-  do{
-	delivered = *icr_high;
-	delivered &= 0x00001000;
-  }while(delivered);
-#else
-	//TODO: plug in h/w model of LAPIC, for now assume hardware just
-	//works
-#endif
-
-  //restore icr high
-  *icr_high = prev_icr_high_value;
-    
-  //printf("\n%s: CPU(0x%02x): NMIs fired!", __FUNCTION__, vcpu->id);
 }
 
-extern u32 lxy_flag;
+
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -629,12 +598,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason,
 			(u64)vcpu->vmcs.info_exit_qualification);
 		xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
-		xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(vcpu);
 		HALT();
-	}
-
-	if (lxy_flag) {
-		printf("{%x,i,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
 	}
 
 	//handle intercepts
@@ -654,38 +618,12 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				const u32 base = 1000000;
-				if (r->ecx >= base) {
-					u32 op = r->ecx - base;
-					if (op < 5) {
-						if (op != vcpu->id && op != 4) {
-							r->eax = 1;
-						} else {
-							r->eax = 0;
-							printf("\nCPU(0x%02x): start busy loop", vcpu->id);
-							for (u64 i = 0; i < 0x40000000UL; i++);
-							printf("\nCPU(0x%02x): end busy loop", vcpu->id);
-						}
-					} else if (op < 10) {
-						if (op - 5 != vcpu->id && op - 5 != 4) {
-							r->eax = 1;
-						} else {
-							printf("\nCPU(0x%02x): sending NMI", vcpu->id);
-							_vmx_send_quiesce_signal2(vcpu);
-							printf("\nCPU(0x%02x): sent NMI", vcpu->id);
-						}
-					} else {
-						printf("\nCPU(0x%02x): undefined %u", vcpu->id, op);
-						r->eax = 0;
-					}
-				} else {
-					xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
-					if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
-						printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
-						HALT();
-					}
-					xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
+				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
+				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
+					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
+					HALT();
 				}
+				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
 		}
@@ -731,9 +669,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				case 0x02:	//NMI
 					#ifndef __XMHF_VERIFICATION__
 					//we currently discharge quiescing via manual inspection
-					printf("{%x,p}", vcpu->id);
 					xmhf_smpguest_arch_x86_64vmx_eventhandler_nmiexception(vcpu, r, 1);
-					printf("{%x,P}", vcpu->id);
 					#endif // __XMHF_VERIFICATION__
 					break;
 
@@ -917,10 +853,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
 	assert( (vcpu->vmcs.control_EPT_pointer_high == 0) && (vcpu->vmcs.control_EPT_pointer_full == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) );
 #endif
-
-	if (lxy_flag) {
-		printf("{%x,I,%d}", vcpu->id, (u32)vcpu->vmcs.info_vmexit_reason);
-	}
 
 	return 1;
 }

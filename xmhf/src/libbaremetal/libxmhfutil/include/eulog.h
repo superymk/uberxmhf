@@ -57,7 +57,7 @@
 #endif
 
 #ifndef EU_LOG_LVL
-#define EU_LOG_LVL 2
+#define EU_LOG_LVL 3
 #endif
 
 #ifndef EU_LOG_PRINTLN

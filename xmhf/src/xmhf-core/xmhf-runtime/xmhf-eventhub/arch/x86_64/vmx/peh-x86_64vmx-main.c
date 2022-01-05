@@ -430,8 +430,12 @@ static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
 		xmhf_smpguest_arch_x86_64_eventhandler_hwpgtblviolation(vcpu, gpa, errorcode);
 	}else{ //no, pass it to hypapp
 		xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
+		printf("\nCPU(0x%02x): ept,     0x%08x", vcpu->id,
+				vcpu->vmcs.control_exception_bitmap);
 		xmhf_app_handleintercept_hwpgtblviolation(vcpu, r, gpa, gva,
 				(errorcode & 7));
+		printf("\nCPU(0x%02x): endept,  0x%08x", vcpu->id,
+				vcpu->vmcs.control_exception_bitmap);
 		xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 	}
 }
@@ -452,8 +456,12 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
   //call our app handler, TODO: it should be possible for an app to
   //NOT want a callback by setting up some parameters during appmain
 	xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
+	printf("\nCPU(0x%02x): io,      0x%08x", vcpu->id,
+			vcpu->vmcs.control_exception_bitmap);
 	app_ret_status=xmhf_app_handleintercept_portaccess(vcpu, r, portnum, access_type,
           access_size);
+	printf("\nCPU(0x%02x): endio,   0x%08x", vcpu->id,
+			vcpu->vmcs.control_exception_bitmap);
     xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 
   if(app_ret_status == APP_IOINTERCEPT_CHAIN){
@@ -619,10 +627,14 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
 				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
+				printf("\nCPU(0x%02x): call,    0x%08x", vcpu->id,
+						vcpu->vmcs.control_exception_bitmap);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
+				printf("\nCPU(0x%02x): endcall, 0x%08x", vcpu->id,
+						vcpu->vmcs.control_exception_bitmap);
 				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
@@ -674,7 +686,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					break;
 
 				default:
-					printf("\nVMEXIT-EXCEPTION:");
+					printf("\nCPU(0x%02x): VMEXIT-EXCEPTION:", vcpu->id);
 					printf("\ncontrol_exception_bitmap=0x%08lx",
 						(unsigned long)vcpu->vmcs.control_exception_bitmap);
 					printf("\ninterruption information=0x%08lx",

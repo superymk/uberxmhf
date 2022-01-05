@@ -87,13 +87,6 @@ int main(int argc, char *argv[]) {
 	assert(sscanf(argv[1], "%u", &a) == 1);
 	assert(sscanf(argv[2], "%u", &b) == 1);
 	b2 = b;
-	printf("Without PAL:\n");
-	printf(" %u = *%p\n", b2, &b2);
-	fflush(stdout);
-	ret = my_pal(a, &b2);
-	printf(" %u = my_pal(%u, %p)\n", ret, a, &b2);
-	printf(" %u = *%p\n\n", b2, &b2);
-	fflush(stdout);
 	call_pal(a, b);
 	return 0;
 }

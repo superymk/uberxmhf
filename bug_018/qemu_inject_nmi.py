@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Inject NMI to QEMU automatically
 
-import sys, time, socket
+import sys, time, socket, json
 
 CMD_INIT = b'{ "execute": "qmp_capabilities" }\r\n'
 CMD_NMI = b'{ "execute": "inject-nmi" }\r\n'
@@ -26,7 +26,16 @@ def initialize(port):
 
 def send_nmi(s):
 	s.send(CMD_NMI)
-	assert recvline(s) == RETURN_VAL
+	while True:
+		resp = recvline(s)
+		if resp == RETURN_VAL:
+			break
+		if 'event' in json.loads(resp):
+			# Async message
+			continue
+		else:
+			print('Received unexpected message:', repr(resp))
+			import pdb; pdb.set_trace()
 
 def main():
 	port = int(sys.argv[1])

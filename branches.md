@@ -163,6 +163,7 @@
 `b04ca351a..`
 * Fix e820 not able to detect last entry error (`bug_019`)
 * Update runtime paging and EPT to support more than 4GB memory (`bug_020`)
+* Prevent injecting NMI to PAL by fixing race condition (`bug_021`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -175,16 +176,16 @@
 |    |   |Operating         |            +------------------+------------------+
 |XMHF|DRT|System            |Application | HP               | QEMU             |
 +====+===+==================+============+==================+==================+
-| x86| N | Ubuntu 12.04 x86 |pal_demo x86| likely unstable                     |
-|    |   +------------------+------------+------------------+------------------|
-|    |   | Debian 11 x86    |pal_demo x86| likely unstable  | app not stable   |
-+----+   +------------------+------------+------------------+------------------|
-| x64|   | Ubuntu 12.04 x86 |pal_demo x86| likely unstable                     |
-|    |   +------------------+------------+-------------------------------------+
-|    |   | Debian 11 x86    |pal_demo x86| app not stable                      |
-|    |   +------------------+------------+                                     |
-|    |   | Debian 11 x64    |pal_demo x86|                                     |
-|    |   |                  +------------+-------------------------------------+
+| x86| N | Ubuntu 12.04 x86 |pal_demo x86| likely unstable  | good             |
+|    |   +------------------+------------+                  |                  |
+|    |   | Debian 11 x86    |pal_demo x86|                  |                  |
++----+   +------------------+------------+                  |                  |
+| x64|   | Ubuntu 12.04 x86 |pal_demo x86|                  |                  |
+|    |   +------------------+------------+                  |                  |
+|    |   | Debian 11 x86    |pal_demo x86|                  |                  |
+|    |   +------------------+------------+                  |                  |
+|    |   | Debian 11 x64    |pal_demo x86|                  |                  |
+|    |   |                  +------------+------------------+------------------+
 |    |   |                  |pal_demo x64| not supported                       |
 +----+---+------------------+------------+-------------------------------------+
 ```

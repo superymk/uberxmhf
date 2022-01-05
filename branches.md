@@ -151,11 +151,18 @@
 * Increase runtime stack size from 32K to 64K (`bug_017`)
 * (Now can stably run x86 TrustVisor `pal_demo` in QEMU x64 XMHF x64 Debian 11)
 
-`36fc963ae..`
+`36fc963ae..b04ca351a`
 * Lock pages to RAM in `pal_demo`
 * Fix race condition in quiesce code (`bug_018`)
-* Make access to `vcpu->quiesced` atomic in NMI handler (`bug_018`)
-* Prevent accessing memory below RSP in xcph
+* <del>Make access to `vcpu->quiesced` atomic in NMI handler</del> (`bug_018`)
+* Prevent accessing memory below RSP in xcph (`bug_018`)
+* Prevent overwriting other fields when reading 32-bit VMCS fields (`bug_018`)
+* Implement virtual NMI, unblock NMI when needed (`bug_018`)
+* Add gcc `-mno-red-zone` to prevent vmread fail (`bug_018`)
+
+`b04ca351a..`
+* Fix e820 not able to detect last entry error (`bug_019`)
+* Update runtime paging and EPT to support more than 4GB memory (`bug_020`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -168,16 +175,16 @@
 |    |   |Operating         |            +------------------+------------------+
 |XMHF|DRT|System            |Application | HP               | QEMU             |
 +====+===+==================+============+==================+==================+
-| x86| N | Ubuntu 12.04 x86 |pal_demo x86| good                                |
+| x86| N | Ubuntu 12.04 x86 |pal_demo x86| likely unstable                     |
+|    |   +------------------+------------+------------------+------------------|
+|    |   | Debian 11 x86    |pal_demo x86| likely unstable  | app not stable   |
++----+   +------------------+------------+------------------+------------------|
+| x64|   | Ubuntu 12.04 x86 |pal_demo x86| likely unstable                     |
+|    |   +------------------+------------+-------------------------------------+
+|    |   | Debian 11 x86    |pal_demo x86| app not stable                      |
 |    |   +------------------+------------+                                     |
-|    |   | Debian 11 x86    |pal_demo x86|                                     |
-+----+   +------------------+------------+                                     |
-| x64|   | Ubuntu 12.04 x86 |pal_demo x86|                                     |
-|    |   +------------------+------------+------------------+------------------+
-|    |   | Debian 11 x86    |pal_demo x86| app not stable   | good             |
-|    |   +------------------+------------+ (bug_018)        |                  |
-|    |   | Debian 11 x64    |pal_demo x86|                  |                  |
-|    |   |                  +------------+------------------+------------------+
+|    |   | Debian 11 x64    |pal_demo x86|                                     |
+|    |   |                  +------------+-------------------------------------+
 |    |   |                  |pal_demo x64| not supported                       |
 +----+---+------------------+------------+-------------------------------------+
 ```

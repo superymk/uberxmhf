@@ -986,13 +986,304 @@ Next steps:
 * Randomly add MFENCEs
 * Write an infinite loop to read VMCS, and inject NMI manually using QEMU
 
-Fixing actual bug:
-TODO: always dump full VMCS at end of VMWRITE, and compare with 20220102120442 or 20220103120431 or 20220103155652
-TODO: Using test 2, `ec37adbc9` looks good, but `787a0f8d1` looks bad. Try to bisect? (`for i in {0..100..2}; do ./test $i $i; done & for i in {1..100..2}; do ./test $i $i; done`)
+Modified code to `e20011121`
+
+`20220104095611`: double fault in CPU 3
+`grep -oE '\{[^\{\}]+\}' 20220104095611 | grep s` shows
+```
+{3,s,0x1020ed27} (right after VMWRITE)
+{3,s,0x102069fb} (after first instruction of xmhf_parteventhub_arch_x86_64vmx_entry)
+{3,s,0x1020ed5e} (right after VMREAD)
+```
+
+`20220104100947`: VMRESUME fails on CPU 2, can see the problem is again at
+`0x1020ed5e` (right after VMREAD). Also there are 2 VMWRITE intercepts before
+it. The next step is to print RAX and RBX, to see the arguments for VMREAD and
+VMWRITE.
+
+Modified code to `06034005a`
+
+`20220104103003`: VMRESUME fail on CPU 2. Events are:
+```
+{2,s,0x1020e797,0x00000010257918,0000000000000000}
+{2,s,0x1020e797,0x00000010257918,0000000000000000}
+{2,s,0x1020ed6e,0x00000000002007,0000000000000000}
+```
+
+Can see that the return value for encoding `0x2007` is correct (should be 0) at
+this point, but afterwards it becomes incorrect:
+```
+CPU(0x02): vcpu->vmcs.control_VM_exit_MSR_store_address_full=0x1900f000{3,I,32}
+CPU(0x02): vcpu->vmcs.control_VM_exit_MSR_store_address_high=0x1900f000{3,i,32}
+CPU(0x02): vcpu->vmcs.control_VM_exit_MSR_load_address_full=0x18fff000{0,I,32}
+```
+
+Modified code to `3b9dbe4c7`
+
+`20220104104650`: triple fault in CPU 3.
+`0x1020ed7e` is still immediately after the VMREAD instruction. Can see that
+due to this instruction, `guest_IDTR_base` becomes `0xfffffe00000b2000`, but
+should be `0xfffffe0000000000`. Also, rbx is correct before exception handler
+returns:
+```
+CPU(0x00): got quiesce signal...{3,s,0x1020ed7e,0x00000000006818,0xfffffe0000000000}{2,s,0x1020ed7e,0x00000000002
+811,0000000000000000}{1,i,0}{1,p}
+CPU(0x00): all CPUs quiesced successfully.TV[0]:appmain.c:do_TV_HC_TEST:202:                 CPU(0x00): test hype
+rcall, ecx=0x0000001a
+
+CPU(0x00): ending quiesce.{2,S,0x1020ed7e,0x00000000002811,0000000000000000}
+CPU(0x00): releasing quiesce lock.{2,i,32}{0,I,18}{2,I,32}{3,S,0x1020ed7e,0x00000000006818,0xfffffe0000000000}{0,
+i,32}{2,i,32}{0,I,32}{2,I,32}{3,i,32}{0,i,32}{2,i,32}{0,I,32}{2,I,32}{3,I,32}{0,i,32}{2,i,32}{0,I,32}{2,I,32}{1,P
+}{3,i,2}{1,I,0}
+CPU(0x03): Unhandled intercept in long mode: 0x00000002{1,i,32}
+        CPU(0x03): EFLAGS=0x00010286{1,I,32}{2,i,32}
+        SS:RSP =0x0018:0xffffc90000120fa8{0,i,32}
+        CS:RIP =0x0010:0xffffffff81c0006f{0,I,32}
+        IDTR base:limit=0xfffffe00000b2000:0x0fff
+        GDTR base:limit=0xfffffe00000b2000:0x007f
+```
+
+So it is most likely that `XtRtmIdtStub*` has a bug, or a hardware problem.
+However, after reading `XtRtmIdtStub*` code, I don't see a problem.
+
+Another question is how the incorrect value is read. Is rbx somewhere before?
+By stepping through `xmhf_baseplatform_arch_x86_64vmx_getVMCS()` using GDB,
+looks like in `xmhf_baseplatform_arch_x86_64vmx_read_field()`, `u64 value;` is
+defined without initialized value. This variable is on the stack, and its value
+is the value of previous reading. If `__vmx_vmwrite()` fails to assign to this
+variable, this behavior can be observed.
+
+The above guess is proven to be correct. Code is `3af22cc36`, run result in
+`20220104114644`. Can see that CPU 0 and CPU 1 run into this problem.
+`0x1020ed7e` is right after VMREAD instruction.
+
+This can also be reproduced by sending NMI from guest using `./test 1000008`.
+For example `20220104120913`. After changing code to `47ec0e592`, result in
+`20220104121208`, can see that the problem is not related to quiesce code.
+
+Test script using while loop
+```
+while true; do ./test 1000009; done
+```
+
+Tried to add a `nop` after `vmread`, still see error. Add 100 nop, still see
+error.
+
+Then tried around. `18c1fbb55` and `942ca94e4` are good. Also by comparing
+`47ec0e592..18c1fbb55` can see that adding `HALT_ON_ERRORCOND(status != 3);`
+to `__vmx_vmread()` seems to change the problem. Indeed, it did. The generated
+code is (commit `20c71b31c`):
+```
+0000000010209902 <__vmx_vmread>:
+static inline u32 __vmx_vmread(unsigned long encoding, unsigned long *value){
+    10209902:   55                      push   %rbp
+    10209903:   48 89 e5                mov    %rsp,%rbp
+    10209906:   48 89 5d f8             mov    %rbx,-0x8(%rbp)
+    1020990a:   48 89 7d e0             mov    %rdi,-0x20(%rbp)
+    1020990e:   48 89 75 d8             mov    %rsi,-0x28(%rbp)
+        __asm__ __volatile__("vmread %%rax, %%rbx \r\n"
+    10209912:   48 8b 45 e0             mov    -0x20(%rbp),%rax
+    10209916:   0f 78 c3                vmread %rax,%rbx
+    10209919:   76 09                   jbe    10209924 <__vmx_vmread+0x22>
+    1020991b:   48 c7 c2 01 00 00 00    mov    $0x1,%rdx
+    10209922:   eb 07                   jmp    1020992b <__vmx_vmread+0x29>
+    10209924:   48 c7 c2 00 00 00 00    mov    $0x0,%rdx
+    1020992b:   48 89 55 f0             mov    %rdx,-0x10(%rbp)
+    1020992f:   48 89 d9                mov    %rbx,%rcx
+    10209932:   48 8b 45 d8             mov    -0x28(%rbp),%rax
+    10209936:   48 89 08                mov    %rcx,(%rax)
+        return status;
+    10209939:   48 8b 45 f0             mov    -0x10(%rbp),%rax
+}
+    1020993d:   48 8b 5d f8             mov    -0x8(%rbp),%rbx
+    10209941:   5d                      pop    %rbp
+    10209942:   c3                      ret    
+```
+
+Note that this code accesses address below RSP. This can be confirmed using GDB
+```
+(gdb) p $rip
+$1 = (void (*)()) 0x1020ed87 <__vmx_vmread+16>
+(gdb) x/20i __vmx_vmread
+   0x1020ed77 <__vmx_vmread>:	push   %rbp
+   0x1020ed78 <__vmx_vmread+1>:	mov    %rsp,%rbp
+   0x1020ed7b <__vmx_vmread+4>:	mov    %rbx,-0x8(%rbp)
+   0x1020ed7f <__vmx_vmread+8>:	mov    %rdi,-0x20(%rbp)
+   0x1020ed83 <__vmx_vmread+12>:	mov    %rsi,-0x28(%rbp)
+=> 0x1020ed87 <__vmx_vmread+16>:	mov    -0x20(%rbp),%rax
+   0x1020ed8b <__vmx_vmread+20>:	vmread %rax,%rbx
+   0x1020ed8e <__vmx_vmread+23>:	jbe    0x1020ed99 <__vmx_vmread+34>
+   0x1020ed90 <__vmx_vmread+25>:	mov    $0x1,%rdx
+   0x1020ed97 <__vmx_vmread+32>:	jmp    0x1020eda0 <__vmx_vmread+41>
+   0x1020ed99 <__vmx_vmread+34>:	mov    $0x0,%rdx
+   0x1020eda0 <__vmx_vmread+41>:	mov    %rdx,-0x10(%rbp)
+   0x1020eda4 <__vmx_vmread+45>:	mov    %rbx,%rcx
+   0x1020eda7 <__vmx_vmread+48>:	mov    -0x28(%rbp),%rax
+   0x1020edab <__vmx_vmread+52>:	mov    %rcx,(%rax)
+   0x1020edae <__vmx_vmread+55>:	mov    -0x10(%rbp),%rax
+   0x1020edb2 <__vmx_vmread+59>:	mov    -0x8(%rbp),%rbx
+   0x1020edb6 <__vmx_vmread+63>:	pop    %rbp
+   0x1020edb7 <__vmx_vmread+64>:	ret    
+   0x1020edb8 <xmhf_baseplatform_arch_x86_64vmx_putVMCS>:	push   %rbp
+(gdb) p $rbp - 0x20
+$2 = (void *) 0x19963e68 <g_cpustacks+65128>
+(gdb) p $rsp
+$3 = (void *) 0x19963e88 <g_cpustacks+65160>
+(gdb) 
+```
+
+However, if add `HALT_ON_ERRORCOND(status != 3);` back, version is `18c1fbb55`,
+code becomes
+```
+0000000010209902 <__vmx_vmread>:
+static inline u32 __vmx_vmread(unsigned long encoding, unsigned long *value){
+    10209902:   55                      push   %rbp
+    10209903:   48 89 e5                mov    %rsp,%rbp
+    10209906:   48 89 5d f8             mov    %rbx,-0x8(%rbp)
+    1020990a:   48 83 ec 30             sub    $0x30,%rsp
+    1020990e:   48 89 7d d8             mov    %rdi,-0x28(%rbp)
+    10209912:   48 89 75 d0             mov    %rsi,-0x30(%rbp)
+        __asm__ __volatile__("vmread %%rax, %%rbx \r\n"
+    10209916:   48 8b 45 d8             mov    -0x28(%rbp),%rax
+    1020991a:   0f 78 c3                vmread %rax,%rbx
+    1020991d:   76 09                   jbe    10209928 <__vmx_vmread+0x26>
+    1020991f:   48 c7 c2 01 00 00 00    mov    $0x1,%rdx
+    10209926:   eb 07                   jmp    1020992f <__vmx_vmread+0x2d>
+    10209928:   48 c7 c2 00 00 00 00    mov    $0x0,%rdx
+    1020992f:   48 89 55 e8             mov    %rdx,-0x18(%rbp)
+    10209933:   48 89 d9                mov    %rbx,%rcx
+    10209936:   48 8b 45 d0             mov    -0x30(%rbp),%rax
+    1020993a:   48 89 08                mov    %rcx,(%rax)
+        HALT_ON_ERRORCOND(status != 3);
+    1020993d:   48 8b 45 e8             mov    -0x18(%rbp),%rax
+    10209941:   48 83 f8 03             cmp    $0x3,%rax
+    10209945:   75 21                   jne    10209968 <__vmx_vmread+0x66>
+    10209947:   b9 e0 9d 25 10          mov    $0x10259de0,%ecx
+    1020994c:   ba 7b 02 00 00          mov    $0x27b,%edx
+    10209951:   be 33 9e 25 10          mov    $0x10259e33,%esi
+    10209956:   bf 40 9e 25 10          mov    $0x10259e40,%edi
+    1020995b:   b8 00 00 00 00          mov    $0x0,%eax
+    10209960:   e8 2f 6e 02 00          call   10230794 <printf>
+    10209965:   f4                      hlt    
+    10209966:   eb fd                   jmp    10209965 <__vmx_vmread+0x63>
+        return status;
+    10209968:   48 8b 45 e8             mov    -0x18(%rbp),%rax
+}
+    1020996c:   48 8b 5d f8             mov    -0x8(%rbp),%rbx
+    10209970:   c9                      leave  
+    10209971:   c3                      ret    
+```
+
+Note the `sub    $0x30,%rsp` instruction.
+
+Looks like the problem is related to the calling convention. As adviced by
+<https://stackoverflow.com/a/28694274>, should use `-mno-red-zone` to prevent
+this problem. Osdev also has an article:
+<https://wiki.osdev.org/Libgcc_without_red_zone>
+
+The fix should be adding `-mno-red-zone` to `CFLAGS`. Looks like after adding
+this to `20c71b31c`, the generated code becomes good.
+
+### Checking whether behaviors solved
+
+See `### Checking behaviors` above, but now use `b04ca351a`
+
+* Test 1: `pal_demo` + (SSH / NMI)
+* Test 2: `pal_demo` * 2
+* Test 3: `pal_demo` * 2 + (SSH / NMI)
+* Test 4: NMI at c (speed of light)
+* Test 5: `test` * 2
+
+* x86 Debian
+	* QEMU: (assume test 4 pass)
+* x64 Debian
+	* QEMU: (assume test 4 pass)
+* x86 XMHF, x86 Debian
+	* HP: ?
+	* QEMU: test 1 fail (Failure A below), test 2 pass, test 4 pass, test 5 pass
+* x64 XMHF, x86 Debian
+	* HP: ?
+	* QEMU: ?
+* x64 XMHF, x64 Debian
+	* HP: test 2 fail (Failure C), test 5 pass
+	* QEMU: test 1 fail (Failure A below), test 2 pass, test 4 fail (Failure B),
+	  test 5 pass
+
+```
+Test 1:
+for i in {1..100}; do ./main $i $i; done
+p qemu_inject_nmi.py 4444 0.1
+
+Test 2:
+for i in {1..100..2}; do ./main $i $i; done & for i in {0..100..2}; do ./main $i $i; done
+
+Test 4:
+p qemu_inject_nmi.py 4444 0.1
+
+Test 5:
+for i in {1..1000..2}; do ./test $i; done & for i in {0..1000..2}; do ./test $i; done
+```
+
+Failure A: while running PAL, an exception in guest happens.
+```
+VMEXIT-EXCEPTION:
+control_exception_bitmap=0xffffffff
+interruption information=0x80000b0e
+errorcode=0x00000000
+```
+
+Failure B: Linux does not respond because of IRETQ infinite loop. At this
+state, executing `iretq` will set RIP and RSP to exactly the current value,
+so CPU 0 never returns to do normal work.
+```
+(gdb) x/i $rip
+=> 0xffffffff81a01480 <asm_exc_nmi+240>:	iretq  
+(gdb) x/6gx $rsp
+0xfffffe000000dfd8:	0xffffffff81a01480	0x0000000000000010
+0xfffffe000000dfe8:	0x0000000000000082	0xfffffe000000dfd8
+0xfffffe000000dff8:	0x0000000000000018	Cannot access memory at address 0xfffffe000000e000
+(gdb) 
+```
+
+Failure C: HP cannot receive new SSH connection, dmesg shows a CPU hang for 22s.
+May actually be VMEXIT-EXCEPTION, if look through serial log (need to declutter
+PAL output)
+
+### Other ideas not tried
+
+* Maybe EPT or XMHF's page table is not large enough?
+	* Not for now, since physical addresses are always < 4GB
+* Consider disabling other CPUs
+	* May be useful
+* Guess the reason for `vcpu->quiesced`, is it possible to be VM intercept then
+  exception?
+	* The actual answer is "yes". But this can only happen for CPU requesting
+	  quiesce
+
+### Conclusion
+
+There are a few problems found in this bug:
+* NMI blocking is handled incorrectly. This would cause deadlock
+* GCC generated code accesses memory below RSP. This causes vmread get strange
+  values
+
+Other problems found:
+* Exception handler accesses memory below RSP
+* Reading VMCS in x86 will overwrite other fields
+
+Other problems still existing:
+* Failure A & C: when running PAL, when NMI for guest happens, get
+  VMEXIT-EXCEPTION?
+* Failure B: test 4 fails, related to NMI
+
+### Attachments
+
+Test results: `results.7z`
+Git branch `xmhf64-nmi`: contains code used to debug this bug
 
 ## Fix
 
-`0b37c866d..`
+`0b37c866d..b04ca351a`
 * Fix race condition in `xmhf_smpguest_arch_x86_64vmx_endquiesce()`
 * Make access to `vcpu->quiesced` atomic in NMI handler (actually unnecessay,
   reverted later)
@@ -1000,23 +1291,5 @@ TODO: Using test 2, `ec37adbc9` looks good, but `787a0f8d1` looks bad. Try to bi
 * Prevent overwriting other fields when reading 32-bit VMCS fields
   (likely unrelated)
 * Implement virtual NMI, unblock NMI when needed
-
-# tmp notes
-
-```
-for i in {1..1000..2}; do ./test $i; done & for i in {0..1000..2}; do ./test $i; done
-```
-
-TODO: print vmcs fields related to NMI. Likely Linux's state is corrupted (is it possible that XMHF injected 2 NMIs that violates NMI blocking)
-
-TODO: maybe EPT or XMHF's page table is not large enough?
-TODO: is "virtual NMIs" enabled? Is it needed?
-TODO: may need to move `emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);` line in smpg, or add documentation
-
-TODO: guess the reason for `vcpu->quiesced`, is it possible to be VM intercept then exception?
-TODO: remove deadlock
-
-TODO: consider disabling other CPUs
-
-TODO: collect results of multiple runs
+* Add gcc `-mno-red-zone` to prevent vmread fail
 

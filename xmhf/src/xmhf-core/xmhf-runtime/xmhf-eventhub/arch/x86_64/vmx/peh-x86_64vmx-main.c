@@ -431,12 +431,8 @@ static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
 		xmhf_smpguest_arch_x86_64_eventhandler_hwpgtblviolation(vcpu, (u32)gpa, errorcode);
 	}else{ //no, pass it to hypapp
 		xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
-		printf("\nCPU(0x%02x): ept,     0x%08x", vcpu->id,
-				vcpu->vmcs.control_exception_bitmap);
 		xmhf_app_handleintercept_hwpgtblviolation(vcpu, r, gpa, gva,
 				(errorcode & 7));
-		printf("\nCPU(0x%02x): endept,  0x%08x", vcpu->id,
-				vcpu->vmcs.control_exception_bitmap);
 		xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 	}
 }
@@ -457,12 +453,8 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
   //call our app handler, TODO: it should be possible for an app to
   //NOT want a callback by setting up some parameters during appmain
 	xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
-	printf("\nCPU(0x%02x): io,      0x%08x", vcpu->id,
-			vcpu->vmcs.control_exception_bitmap);
 	app_ret_status=xmhf_app_handleintercept_portaccess(vcpu, r, portnum, access_type,
           access_size);
-	printf("\nCPU(0x%02x): endio,   0x%08x", vcpu->id,
-			vcpu->vmcs.control_exception_bitmap);
     xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 
   if(app_ret_status == APP_IOINTERCEPT_CHAIN){
@@ -593,7 +585,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }
 
-static u32 lxy_flag;
+
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -608,10 +600,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			(u64)vcpu->vmcs.info_exit_qualification);
 		xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
 		HALT();
-	}
-
-	if (lxy_flag) {
-		printf("{%d,i,%d}", vcpu->id, vcpu->vmcs.info_vmexit_reason);
 	}
 
 	//handle intercepts
@@ -631,16 +619,11 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				lxy_flag = 1;
 				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
-				printf("\nCPU(0x%02x): call,    0x%08x", vcpu->id,
-						vcpu->vmcs.control_exception_bitmap);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
-				printf("\nCPU(0x%02x): endcall, 0x%08x", vcpu->id,
-						vcpu->vmcs.control_exception_bitmap);
 				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
@@ -692,7 +675,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					break;
 
 				default:
-					printf("\nCPU(0x%02x): VMEXIT-EXCEPTION:", vcpu->id);
+					printf("\nVMEXIT-EXCEPTION:");
 					printf("\ncontrol_exception_bitmap=0x%08lx",
 						(unsigned long)vcpu->vmcs.control_exception_bitmap);
 					printf("\ninterruption information=0x%08lx",
@@ -881,10 +864,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
 	assert( (vcpu->vmcs.control_EPT_pointer == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) )
 #endif
-
-	if (lxy_flag) {
-		printf("{%d,I,%d}", vcpu->id, vcpu->vmcs.info_vmexit_reason);
-	}
 
 	return 1;
 }

@@ -593,7 +593,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }
 
-
+static u32 lxy_flag;
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -608,6 +608,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			(u64)vcpu->vmcs.info_exit_qualification);
 		xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
 		HALT();
+	}
+
+	if (lxy_flag) {
+		printf("{%d,i,%d}", vcpu->id, vcpu->vmcs.info_vmexit_reason);
 	}
 
 	//handle intercepts
@@ -627,6 +631,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
+				lxy_flag = 1;
 				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
 				printf("\nCPU(0x%02x): call,    0x%08x", vcpu->id,
 						vcpu->vmcs.control_exception_bitmap);
@@ -876,6 +881,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
 	assert( (vcpu->vmcs.control_EPT_pointer == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) )
 #endif
+
+	if (lxy_flag) {
+		printf("{%d,I,%d}", vcpu->id, vcpu->vmcs.info_vmexit_reason);
+	}
 
 	return 1;
 }

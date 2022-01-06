@@ -610,7 +610,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	if (lxy_flag && vcpu->vmcs.info_vmexit_reason != VMX_VMEXIT_EXCEPTION) {
+	if (lxy_flag) {
 		printf("{%d,i,%d}", vcpu->id, vcpu->vmcs.info_vmexit_reason);
 	}
 

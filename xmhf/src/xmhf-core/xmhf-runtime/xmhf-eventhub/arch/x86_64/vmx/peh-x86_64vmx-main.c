@@ -585,7 +585,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }
 
-
+u32 lxy_counter = 0;
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -695,7 +695,11 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
 		case VMX_VMEXIT_NMI_WINDOW: {
 			/* Clear NMI windowing */
-			vcpu->vmcs.control_VMX_cpu_based &= ~(1U << 22);
+			if (lxy_counter) {
+				lxy_counter -= 1;
+			} else {
+				vcpu->vmcs.control_VMX_cpu_based &= ~(1U << 22);
+			}
 			/* Check whether the CPU can handle NMI */
 			if (vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI) {
 				/*
@@ -709,7 +713,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
 					INTR_TYPE_NMI |
 					INTR_INFO_VALID_MASK;
-				printf("\nCPU(0x%02x): inject NMI, 0x%016x, 0x%016x", vcpu->id,
+				printf("\nCPU(0x%02x): inject NMI, 0x%016lx, 0x%016lx", vcpu->id,
 						vcpu->vmcs.guest_RIP, vcpu->vmcs.guest_RSP);
 			}
 		}

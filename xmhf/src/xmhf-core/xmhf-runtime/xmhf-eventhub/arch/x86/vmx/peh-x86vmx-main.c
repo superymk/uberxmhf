@@ -414,14 +414,15 @@ no_assign_read_result:
 
 //---intercept handler (EPT voilation)----------------------------------
 static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
-	u32 errorcode, gpa, gva;
+	u32 errorcode, gva;
+	u64 gpa;
 	errorcode = (u32)vcpu->vmcs.info_exit_qualification;
-	gpa = (u32) vcpu->vmcs.guest_paddr_full;
-	gva = (u32) vcpu->vmcs.info_guest_linear_address;
+	gpa = vcpu->vmcs.guest_paddr;
+	gva = (u32)vcpu->vmcs.info_guest_linear_address;
 
 	//check if EPT violation is due to LAPIC interception
 	if(vcpu->isbsp && (gpa >= g_vmx_lapic_base) && (gpa < (g_vmx_lapic_base + PAGE_SIZE_4K)) ){
-		xmhf_smpguest_arch_x86_eventhandler_hwpgtblviolation(vcpu, gpa, errorcode);
+		xmhf_smpguest_arch_x86_eventhandler_hwpgtblviolation(vcpu, (u32)gpa, errorcode);
 	}else{ //no, pass it to hypapp
 		xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 		xmhf_app_handleintercept_hwpgtblviolation(vcpu, r, gpa, gva,
@@ -664,11 +665,21 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 		case VMX_VMEXIT_NMI_WINDOW: {
 			/* Clear NMI windowing */
 			vcpu->vmcs.control_VMX_cpu_based &= ~(1U << 22);
-			/* Inject NMI to guest */
-			vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-			vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
-				INTR_TYPE_NMI |
-				INTR_INFO_VALID_MASK;
+			/* Check whether the CPU can handle NMI */
+			if (vcpu->vmcs.control_exception_bitmap & CPU_EXCEPTION_NMI) {
+				/*
+				 * TODO: hypapp has chosen to intercept NMI so callback.
+				 * Currently not implemented, so drop the NMI exception.
+				 */
+				printf("\nCPU(0x%02x): drop NMI", vcpu->id);
+			} else {
+				/* Inject NMI to guest */
+				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+				vcpu->vmcs.control_VM_entry_interruption_information = NMI_VECTOR |
+					INTR_TYPE_NMI |
+					INTR_INFO_VALID_MASK;
+				printf("\nCPU(0x%02x): inject NMI", vcpu->id);
+			}
 		}
 		break;
 
@@ -793,7 +804,7 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 	//ensure that whenever a partition is resumed on a vcpu, we have extended paging
 	//enabled and that the base points to the extended page tables we have initialized
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
-	assert( (vcpu->vmcs.control_EPT_pointer_high == 0) && (vcpu->vmcs.control_EPT_pointer_full == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) );
+	assert( vcpu->vmcs.control_EPT_pointer == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E) );
 #endif
 
 	return 1;

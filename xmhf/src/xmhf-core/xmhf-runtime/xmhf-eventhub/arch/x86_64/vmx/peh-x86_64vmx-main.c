@@ -420,14 +420,15 @@ no_assign_read_result:
 
 //---intercept handler (EPT voilation)----------------------------------
 static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
-	u32 errorcode, gpa, gva;
+	u32 errorcode;
+	u64 gpa, gva;
 	errorcode = (u32)vcpu->vmcs.info_exit_qualification;
-	gpa = (u32) vcpu->vmcs.guest_paddr_full;
-	gva = (u32) vcpu->vmcs.info_guest_linear_address;
+	gpa = vcpu->vmcs.guest_paddr;
+	gva = vcpu->vmcs.info_guest_linear_address;
 
 	//check if EPT violation is due to LAPIC interception
 	if(vcpu->isbsp && (gpa >= g_vmx_lapic_base) && (gpa < (g_vmx_lapic_base + PAGE_SIZE_4K)) ){
-		xmhf_smpguest_arch_x86_64_eventhandler_hwpgtblviolation(vcpu, gpa, errorcode);
+		xmhf_smpguest_arch_x86_64_eventhandler_hwpgtblviolation(vcpu, (u32)gpa, errorcode);
 	}else{ //no, pass it to hypapp
 		xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
 		printf("\nCPU(0x%02x): ept,     0x%08x", vcpu->id,
@@ -873,7 +874,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	//ensure that whenever a partition is resumed on a vcpu, we have extended paging
 	//enabled and that the base points to the extended page tables we have initialized
 	assert( (vcpu->vmcs.control_VMX_seccpu_based & 0x2) );
-	assert( (vcpu->vmcs.control_EPT_pointer_high == 0) && (vcpu->vmcs.control_EPT_pointer_full == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) );
+	assert( (vcpu->vmcs.control_EPT_pointer == (hva2spa((void*)vcpu->vmx_vaddr_ept_pml4_table) | 0x1E)) )
 #endif
 
 	return 1;

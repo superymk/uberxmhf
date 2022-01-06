@@ -71,16 +71,18 @@ void xmhf_baseplatform_arch_x86_64vmx_read_field(u32 encoding, void *addr,
                                                  u32 size) {
     u64 value;
     HALT_ON_ERRORCOND(__vmx_vmread(encoding, &value));
-    /* For now, read 64-bit fields as 2 32-bit fields (same as in x86) */
+    /* Read 64-bit fields using 1 VMREAD instruction (different from x86) */
     switch ((encoding >> 13) & 0x3) {
     case 0: /* 16-bit */
-        /* fallthrough */
-    case 1: /* 64-bit */
         /* fallthrough */
     case 2: /* 32-bit */
         HALT_ON_ERRORCOND(size == 4);
         *(u32 *)addr = (u32)value;
         break;
+    case 1: /* 64-bit */
+        /* Disallow high access */
+        HALT_ON_ERRORCOND((encoding & 0x1) == 0x0);
+        /* fallthrough */
     case 3: /* natural width */
         HALT_ON_ERRORCOND(size == 8);
         *(u64 *)addr = value;
@@ -241,28 +243,18 @@ void xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(VCPU *vcpu){
     DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_CR3_target2);
     DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_CR3_target3);
 #endif /* !__DEBUG_QEMU__ */
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_IO_BitmapA_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_IO_BitmapA_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_IO_BitmapB_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_IO_BitmapB_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_MSR_Bitmaps_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_MSR_Bitmaps_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_exit_MSR_store_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_exit_MSR_store_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_exit_MSR_load_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_exit_MSR_load_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_entry_MSR_load_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_VM_entry_MSR_load_address_high);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_IO_BitmapA_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_IO_BitmapB_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_MSR_Bitmaps_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_VM_exit_MSR_store_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_VM_exit_MSR_load_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_VM_entry_MSR_load_address);
 #ifndef __DEBUG_QEMU__
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_Executive_VMCS_pointer_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_Executive_VMCS_pointer_high);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_Executive_VMCS_pointer);
 #endif /* !__DEBUG_QEMU__ */
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_TSC_offset_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_TSC_offset_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_virtual_APIC_page_address_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_virtual_APIC_page_address_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_EPT_pointer_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.control_EPT_pointer_high);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_TSC_offset);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_virtual_APIC_page_address);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.control_EPT_pointer);
     DUMP_VCPU_PRINT_INT64(vcpu->vmcs.host_CR0);
     DUMP_VCPU_PRINT_INT64(vcpu->vmcs.host_CR3);
     DUMP_VCPU_PRINT_INT64(vcpu->vmcs.host_CR4);
@@ -335,20 +327,13 @@ void xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(VCPU *vcpu){
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_GS_selector);
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_LDTR_selector);
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_TR_selector);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_VMCS_link_pointer_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_VMCS_link_pointer_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_IA32_DEBUGCTL_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_IA32_DEBUGCTL_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_paddr_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_paddr_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE0_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE0_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE1_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE1_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE2_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE2_high);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE3_full);
-    DUMP_VCPU_PRINT_INT32(vcpu->vmcs.guest_PDPTE3_high);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_VMCS_link_pointer);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_IA32_DEBUGCTL);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_paddr);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_PDPTE0);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_PDPTE1);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_PDPTE2);
+    DUMP_VCPU_PRINT_INT64(vcpu->vmcs.guest_PDPTE3);
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.info_vminstr_error);
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.info_vmexit_reason);
     DUMP_VCPU_PRINT_INT32(vcpu->vmcs.info_vmexit_interrupt_information);

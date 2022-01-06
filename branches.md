@@ -164,6 +164,8 @@
 * Fix e820 not able to detect last entry error (`bug_019`)
 * Update runtime paging and EPT to support more than 4GB memory (`bug_020`)
 * Prevent injecting NMI to PAL by fixing race condition (`bug_021`)
+* Fix gpa truncated bug in `_vmx_handle_intercept_eptviolation` (`bug_022`)
+* Optimize VMCS-related code for dealing with 64 bit fields (`bug_023`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -193,4 +195,5 @@
 ## Limits
 * QEMU cannot reboot (`bug_007` fixes part of this problem)
 * Grub graphical mode does not work in HP (`bug_016`)
+* Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
 

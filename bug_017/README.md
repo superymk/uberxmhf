@@ -249,6 +249,7 @@ For now, should be able to ignore all of `CR3[0:12]`.
 
 ### GDB snippet for performing page walk
 
+(This snippet assumes PML4 = 0)
 ```gdb
 set $a = vcpu->vmcs.guest_RSP
 set $c = vcpu->vmcs.guest_CR3

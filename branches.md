@@ -160,12 +160,16 @@
 * Implement virtual NMI, unblock NMI when needed (`bug_018`)
 * Add gcc `-mno-red-zone` to prevent vmread fail (`bug_018`)
 
-`b04ca351a..`
+`b04ca351a..592fbd12c`
 * Fix e820 not able to detect last entry error (`bug_019`)
 * Update runtime paging and EPT to support more than 4GB memory (`bug_020`)
 * Prevent injecting NMI to PAL by fixing race condition (`bug_021`)
 * Fix gpa truncated bug in `_vmx_handle_intercept_eptviolation` (`bug_022`)
 * Optimize VMCS-related code for dealing with 64 bit fields (`bug_023`)
+* Fix deadlock in `xmhf_smpguest_arch_x86{,_64}vmx_quiesce()` (`bug_024`)
+* (Now running x86 PALs at all configurations are stable)
+
+`592fbd12c..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -178,16 +182,16 @@
 |    |   |Operating         |            +------------------+------------------+
 |XMHF|DRT|System            |Application | HP               | QEMU             |
 +====+===+==================+============+==================+==================+
-| x86| N | Ubuntu 12.04 x86 |pal_demo x86| likely unstable  | good             |
-|    |   +------------------+------------+                  |                  |
-|    |   | Debian 11 x86    |pal_demo x86|                  |                  |
-+----+   +------------------+------------+                  |                  |
-| x64|   | Ubuntu 12.04 x86 |pal_demo x86|                  |                  |
-|    |   +------------------+------------+                  |                  |
-|    |   | Debian 11 x86    |pal_demo x86|                  |                  |
-|    |   +------------------+------------+                  |                  |
-|    |   | Debian 11 x64    |pal_demo x86|                  |                  |
-|    |   |                  +------------+------------------+------------------+
+| x86| N | Ubuntu 12.04 x86 |pal_demo x86| good                                |
+|    |   +------------------+------------+                                     |
+|    |   | Debian 11 x86    |pal_demo x86|                                     |
++----+   +------------------+------------+                                     |
+| x64|   | Ubuntu 12.04 x86 |pal_demo x86|                                     |
+|    |   +------------------+------------+                                     |
+|    |   | Debian 11 x86    |pal_demo x86|                                     |
+|    |   +------------------+------------+                                     |
+|    |   | Debian 11 x64    |pal_demo x86|                                     |
+|    |   |                  +------------+-------------------------------------+
 |    |   |                  |pal_demo x64| not supported                       |
 +----+---+------------------+------------+-------------------------------------+
 ```

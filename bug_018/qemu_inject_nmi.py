@@ -40,10 +40,18 @@ def send_nmi(s):
 def main():
 	port = int(sys.argv[1])
 	interval = float(sys.argv[2])
+	if len(sys.argv) > 3:
+		count = int(sys.argv[3])
+	else:
+		count = -1
 	s = initialize(port)
+	i = 0
 	while True:
+		if i == count:
+			break
 		send_nmi(s)
 		time.sleep(interval)
+		i += 1
 
 if __name__ == '__main__':
 	main()

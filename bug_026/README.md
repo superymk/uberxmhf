@@ -54,8 +54,26 @@ $48 = 0x33
 
 Can see that the guest is running IA-32e mode.
 
+Actually, should use `vcpu->vmcs.guest_CS_access_rights` bit 13 to test this.
+
+Terminology: reference <https://en.wikipedia.org/wiki/X86-64#Operating_modes>
+* Long mode (`VCPU_glm()`)
+	* 64-bit mode (`VCPU_g64()`)
+	* Compatibility mode
+* Legacy mode
+	* Protected mode
+	* ...
+
+Then update `scode.c` to follow x64 calling convention (first 6 arguments are
+RDI, RSI, RDX, RCX, R8, R9). Also need to change size of return address.
+
 ## Fix
 
-`592fbd12c..`
+`592fbd12c..2317b0cda`
+* Update `pal_demo` for 64-bits
 * Change `trustvisor.h` to be able to hold 64-bit pointers
+* Update TrustVisor's APIs to accept 64-bit pointers
+* Detect whether guest application running in 64-bit mode
+* Implement `scode_marshall64()` to marshall arguments for 64-bit mode
+* Update `pal_demo` to test argument passing
 

@@ -26,9 +26,6 @@ jobs:
                       pbuilder texinfo ruby build-essential autoconf libtool \
                       crossbuild-essential-i386 \
                       -y
-    - name: lscpu
-      run: |
-        lscpu
     - name: Build
       run: |
         ./.github/build.sh \

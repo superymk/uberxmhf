@@ -104,8 +104,9 @@ typedef struct {
 typedef struct whitelist_entry{
   u64       gcr3; 
   u32       id;
-  uintptr_t grsp;		/* guest reguar stack */
-  uintptr_t gssp;		/* guest sensitive code stack */
+  u32       g64;        /* whether running in 64-bit mode */
+  uintptr_t grsp;       /* guest reguar stack */
+  uintptr_t gssp;       /* guest sensitive code stack */
   uintptr_t gss_size;   /* guest sensitive code stack page number */
   uintptr_t entry_v; /* entry point virtual address */
   uintptr_t entry_p; /* entry point physical address */
@@ -113,7 +114,7 @@ typedef struct whitelist_entry{
 
   uintptr_t gpmp;     /* guest parameter page address */
   uintptr_t gpm_size; /* guest parameter page number */
-  u32       gpm_num;  /* guest parameter number */
+  u64       gpm_num;  /* guest parameter number */
 
   u32 saved_exception_intercepts;
 
@@ -158,14 +159,14 @@ int copy_from_current_guest(VCPU * vcpu, void *dst, gva_t gvaddr, size_t len);
 int copy_to_current_guest(VCPU * vcpu, gva_t gvaddr, void *src, size_t len);
 
 /* PAL operations (HPT) */
-u32 hpt_scode_switch_scode(VCPU * vcpu);
+u32 hpt_scode_switch_scode(VCPU * vcpu, struct regs *r);
 u32 hpt_scode_switch_regular(VCPU * vcpu);
-u32 hpt_scode_npf(VCPU * vcpu, uintptr_t gpaddr, u64 errorcode);
+u32 hpt_scode_npf(VCPU * vcpu, uintptr_t gpaddr, u64 errorcode, struct regs *r);
 u32 scode_share(VCPU * vcpu, u32 scode_entry, u32 addr, u32 len);
 u32 scode_share_ranges(VCPU * vcpu, u32 scode_entry, u32 gva_base[], u32 gva_len[], u32 count);
 
-u32 scode_register(VCPU * vcpu, u32 scode_info, u32 scode_pm, u32 gventry);
-u32 scode_unregister(VCPU * vcpu, u32 gvaddr);
+u64 scode_register(VCPU * vcpu, u64 scode_info, u64 scode_pm, u64 gventry);
+u64 scode_unregister(VCPU * vcpu, u64 gvaddr);
 void init_scode(VCPU * vcpu);
 
 void scode_lend_section( hptw_ctx_t *reg_npm_ctx,

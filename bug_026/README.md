@@ -67,9 +67,22 @@ Terminology: reference <https://en.wikipedia.org/wiki/X86-64#Operating_modes>
 Then update `scode.c` to follow x64 calling convention (first 6 arguments are
 RDI, RSI, RDX, RCX, R8, R9). Also need to change size of return address.
 
+### Bug in pal correctness
+
+After writing test in `pal_demo`, commit `d37c25de2`, see test error sometimes:
+```
+$ ./test_args64 4 10 1000000
+..Error: expected return 14577267184729405851, actual 7963451193028369114
+........
+Test failed
+$
+```
+
+Actually this is a bug in the PAL. Solved in `0457f41d7`
+
 ## Fix
 
-`592fbd12c..2317b0cda`
+`592fbd12c..0457f41d7`
 * Update `pal_demo` for 64-bits
 * Change `trustvisor.h` to be able to hold 64-bit pointers
 * Update TrustVisor's APIs to accept 64-bit pointers

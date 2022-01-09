@@ -169,7 +169,16 @@
 * Fix deadlock in `xmhf_smpguest_arch_x86{,_64}vmx_quiesce()` (`bug_024`)
 * (Now running x86 PALs at all configurations are stable)
 
-`592fbd12c..`
+`592fbd12c..0457f41d7`
+* Update `pal_demo` for 64-bits
+* Change `trustvisor.h` to be able to hold 64-bit pointers
+* Update TrustVisor's APIs to accept 64-bit pointers
+* Detect whether guest application running in 64-bit mode
+* Implement `scode_marshall64()` to marshall arguments for 64-bit mode
+* Update `pal_demo` to test argument passing
+* (Now can run x64 PALs)
+
+`0457f41d7..`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -200,4 +209,5 @@
 * QEMU cannot reboot (`bug_007` fixes part of this problem)
 * Grub graphical mode does not work in HP (`bug_016`)
 * Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
+* Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
 

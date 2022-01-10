@@ -424,10 +424,14 @@ static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
 	if(vcpu->isbsp && (gpa >= g_vmx_lapic_base) && (gpa < (g_vmx_lapic_base + PAGE_SIZE_4K)) ){
 		xmhf_smpguest_arch_x86_eventhandler_hwpgtblviolation(vcpu, (u32)gpa, errorcode);
 	}else{ //no, pass it to hypapp
+		printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
+		asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
+if (0) {
 		xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 		xmhf_app_handleintercept_hwpgtblviolation(vcpu, r, gpa, gva,
 				(errorcode & 7));
 		xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
+}
 	}
 }
 
@@ -446,10 +450,14 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
 
   //call our app handler, TODO: it should be possible for an app to
   //NOT want a callback by setting up some parameters during appmain
+	printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
+	asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
+if (0) {
 	xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 	app_ret_status=xmhf_app_handleintercept_portaccess(vcpu, r, portnum, access_type,
           access_size);
     xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
+}
 
   if(app_ret_status == APP_IOINTERCEPT_CHAIN){
    	if(access_type == IO_TYPE_OUT){
@@ -607,12 +615,22 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
+				printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
+				// asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
+				/* Inject #UD to guest */
+				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
+				vcpu->vmcs.control_VM_entry_interruption_information = 6 /* UD */ |
+					INTR_TYPE_HW_EXCEPTION |
+					INTR_INFO_VALID_MASK;
+				printf("\nCPU(0x%02x): inject UD", vcpu->id);
+if (0) {
 				xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
 				xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
+}
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
 		}

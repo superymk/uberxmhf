@@ -489,10 +489,8 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 
 	cr0_value = *((u32 *)_vmx_decode_reg(gpr, vcpu, r));
 
-	printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
-		(u32)vcpu->vmcs.guest_CR0, cr0_value);
-	printf("\n[cr0-%02x] INFO  , shadow =0x%08x, mask    =0x%08x", vcpu->id,
-		(u32)vcpu->vmcs.control_CR0_mask, (u32)vcpu->vmcs.control_CR0_shadow);
+	//printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
+	//	(u32)vcpu->vmcs.guest_CR0, cr0_value);
 
 	/*
 	 * Make the guest think that move to CR0 succeeds (by changing shadow).
@@ -508,9 +506,6 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 
 	vcpu->vmcs.control_CR0_shadow = cr0_value;
 	vcpu->vmcs.guest_CR0 = (cr0_value | vcpu->vmcs.control_CR0_mask) & ~(CR0_CD | CR0_NW);
-
-	printf("\n[cr0-%02x] END   , current=0x%08x, mask    =0x%08x", vcpu->id,
-		(u32)vcpu->vmcs.guest_CR0, (u32)vcpu->vmcs.control_CR0_shadow);
 
 	//flush mappings
 	xmhf_memprot_arch_x86vmx_flushmappings(vcpu);

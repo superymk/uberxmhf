@@ -82,7 +82,7 @@ Actually this is a bug in the PAL. Solved in `0457f41d7`
 
 ## Fix
 
-`592fbd12c..0457f41d7`
+`592fbd12c..f835a5710`
 * Update `pal_demo` for 64-bits
 * Change `trustvisor.h` to be able to hold 64-bit pointers
 * Update TrustVisor's APIs to accept 64-bit pointers

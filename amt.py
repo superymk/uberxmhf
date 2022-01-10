@@ -16,7 +16,10 @@ if __name__ == '__main__':
 		while True:
 			p = Popen([args.amt_sh], stdin=-1, stdout=-1)
 			while True:
-				c = p.stdout.read(1).decode()
+				try:
+					c = p.stdout.read(1).decode()
+				except UnicodeDecodeError:
+					continue
 				if not c:
 					break
 				elif c == '\0':

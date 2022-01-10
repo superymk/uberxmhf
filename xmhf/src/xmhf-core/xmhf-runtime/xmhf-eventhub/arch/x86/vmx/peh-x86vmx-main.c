@@ -79,8 +79,8 @@ static u32 * _vmx_decode_reg(u32 gpr, VCPU *vcpu, struct regs *r){
 
 //---intercept handler (CPUID)--------------------------------------------------
 static void _vmx_handle_intercept_cpuid(VCPU *vcpu, struct regs *r){
-	//printf("\nCPU(0x%02x): CPUID", vcpu->id);
 	u32 old_eax = r->eax;
+	printf("\nCPU(0x%02x): CPUID %#08lx %#08lx", vcpu->id, r->eax, r->ecx);
 	asm volatile ("cpuid\r\n"
           :"=a"(r->eax), "=b"(r->ebx), "=c"(r->ecx), "=d"(r->edx)
           :"a"(r->eax), "c" (r->ecx));
@@ -615,14 +615,16 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
+				printf("\nCPU(0x%02x): quiesce %d skipped, %#08lx", vcpu->id, __LINE__, vcpu->vmcs.guest_RIP);
 				// asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
+if (0) {
 				/* Inject #UD to guest */
 				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
 				vcpu->vmcs.control_VM_entry_interruption_information = 6 /* UD */ |
 					INTR_TYPE_HW_EXCEPTION |
 					INTR_INFO_VALID_MASK;
 				printf("\nCPU(0x%02x): inject UD", vcpu->id);
+}
 if (0) {
 				xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){

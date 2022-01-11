@@ -25,3 +25,22 @@ qemu-system-x86_64 -m 1G \
 Boot into Linux, and run `sudo grub-update`, should detect Windows at
 `/dev/sdb1`. Then in GRUB can boot Windows.
 
+A problem is that GRUB will try to search disk / partition with a (likely)
+UUID. If we change `/dev/sdb` into another Windows installation, will see
+a warning. The solution is to remove the search.
+
+Can write a custom GRUB menu entry at `/etc/grub.d/40_windows`, then disable
+`/etc/grub.d/30_os-prober`
+```
+#!/bin/sh
+exec tail -n +3 $0
+menuentry 'Windows' --class windows --class os $menuentry_id_option 'windows' {
+	insmod part_msdos
+	insmod ntfs
+	set root='hd1,msdos1'
+	parttool ${root} hidden-
+	drivemap -s (hd0) ${root}
+	chainloader +1
+}
+```
+

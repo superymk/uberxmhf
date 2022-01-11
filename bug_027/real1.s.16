@@ -1,0 +1,91 @@
+
+a.out：     文件格式 elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <.text>:
+	...
+   1f000:	e9 31 03             	jmp    0x1f334
+   1f003:	00 02                	add    %al,(%bp,%si)
+   1f005:	00 00                	add    %al,(%bx,%si)
+   1f007:	00 00                	add    %al,(%bx,%si)
+   1f009:	a0 d0 ff             	mov    0xffd0,%al
+   1f00c:	00 50 3c             	add    %dl,0x3c(%bx,%si)
+   1f00f:	02 a4 b4 a4          	add    -0x5b4c(%si),%ah
+   1f013:	f7 00 00 00          	testw  $0x0,(%bx,%si)
+	...
+   1f0a3:	00 30                	add    %dh,(%bx,%si)
+   1f0a5:	00 00                	add    %al,(%bx,%si)
+   1f0a7:	00 20                	add    %ah,(%bx,%si)
+   1f0a9:	00 00                	add    %al,(%bx,%si)
+   1f0ab:	00 20                	add    %ah,(%bx,%si)
+	...
+   1f0c9:	00 00                	add    %al,(%bx,%si)
+   1f0cb:	00 08                	add    %cl,(%bx,%si)
+   1f0cd:	1c 6a                	sbb    $0x6a,%al
+   1f0cf:	80 08 00             	orb    $0x0,(%bx,%si)
+   1f0d2:	00 00                	add    %al,(%bx,%si)
+   1f0d4:	82 00 00             	addb   $0x0,(%bx,%si)
+   1f0d7:	00 f8                	add    %bh,%al
+   1f0d9:	bf a5 f7             	mov    $0xf7a5,%di
+   1f0dc:	10 00                	adc    %al,(%bx,%si)
+	...
+   1f2de:	00 00                	add    %al,(%bx,%si)
+   1f2e0:	3b 00                	cmp    (%bx,%si),%ax
+   1f2e2:	00 80 00 00          	add    %al,0x0(%bx,%si)
+   1f2e6:	00 00                	add    %al,(%bx,%si)
+   1f2e8:	20 00                	and    %al,(%bx,%si)
+   1f2ea:	e0 19                	loopne 0x1f305
+   1f2ec:	20 00                	and    %al,(%bx,%si)
+	...
+   1f30a:	ff 03                	incw   (%bp,%di)
+   1f30c:	90                   	nop
+   1f30d:	41                   	inc    %cx
+   1f30e:	8c f7                	mov    %?,%di
+   1f310:	00 00                	add    %al,(%bx,%si)
+   1f312:	ff 07                	incw   (%bx)
+   1f314:	90                   	nop
+   1f315:	45                   	inc    %bp
+   1f316:	8c f7                	mov    %?,%di
+   1f318:	28 00                	sub    %al,(%bx,%si)
+	...
+   1f332:	00 00                	add    %al,(%bx,%si)
+   1f334:	fa                   	cli    
+   1f335:	66 2e 0f 01 16 0a 03 	lgdtl  %cs:0x30a
+   1f33c:	66 2e 0f 01 1e 12 03 	lidtl  %cs:0x312
+   1f343:	66 2e a1 0c 00       	mov    %cs:0xc,%eax
+   1f348:	90                   	nop
+   1f349:	90                   	nop
+   1f34a:	90                   	nop
+   1f34b:	90                   	nop
+   1f34c:	90                   	nop
+   1f34d:	90                   	nop
+   1f34e:	90                   	nop
+   1f34f:	90                   	nop
+   1f350:	90                   	nop
+   1f351:	90                   	nop
+   1f352:	90                   	nop
+   1f353:	90                   	nop
+   1f354:	0f 22 d8             	mov    %eax,%cr3
+   1f357:	66 2e a1 ec 02       	mov    %cs:0x2ec,%eax
+   1f35c:	66 0b c0             	or     %eax,%eax
+   1f35f:	74 03                	je     0x1f364
+   1f361:	0f 22 e0             	mov    %eax,%cr4
+   1f364:	66 2e f7 06 04 00 02 	testl  $0x2,%cs:0x4
+   1f36b:	00 00 00 
+   1f36e:	74 16                	je     0x1f386
+   1f370:	66 b9 80 00 00 c0    	mov    $0xc0000080,%ecx
+   1f376:	0f 32                	rdmsr  
+   1f378:	66 0d 00 08 00 00    	or     $0x800,%eax
+   1f37e:	66 b9 80 00 00 c0    	mov    $0xc0000080,%ecx
+   1f384:	0f 30                	wrmsr  
+   1f386:	66 2e 8b 2e 10 00    	mov    %cs:0x10,%ebp
+   1f38c:	66 2e 8b 0e ac 00    	mov    %cs:0xac,%ecx
+   1f392:	66 2e 8b 1e e8 02    	mov    %cs:0x2e8,%ebx
+   1f398:	66 2e a1 e0 02       	mov    %cs:0x2e0,%eax
+   1f39d:	66 2e 8b 3e 08 00    	mov    %cs:0x8,%edi
+   1f3a3:	0f 22 c0             	mov    %eax,%cr0
+   1f3a6:	66 ea a0 76 6f 80 08 	ljmpl  $0x8,$0x806f76a0
+   1f3ad:	00 
+	...

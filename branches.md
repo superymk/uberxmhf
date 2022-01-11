@@ -170,15 +170,16 @@
 * (Now running x86 PALs at all configurations are stable)
 
 `592fbd12c..f835a5710`
-* Update `pal_demo` for 64-bits
-* Change `trustvisor.h` to be able to hold 64-bit pointers
-* Update TrustVisor's APIs to accept 64-bit pointers
-* Detect whether guest application running in 64-bit mode
-* Implement `scode_marshall64()` to marshall arguments for 64-bit mode
-* Update `pal_demo` to test argument passing
+* Update `pal_demo` for 64-bits (`bug_026`)
+* Change `trustvisor.h` to be able to hold 64-bit pointers (`bug_026`)
+* Update TrustVisor's APIs to accept 64-bit pointers (`bug_026`)
+* Detect whether guest application running in 64-bit mode (`bug_026`)
+* Implement `scode_marshall64()` to marshall arguments for 64-bit (`bug_026`)
+* Update `pal_demo` to test argument passing (`bug_026`)
 * (Now can run x64 PALs, all configurations (Debian and Ubuntu) look good)
 
-`f835a5710..`
+`3b199dbe0..`
+* Clear VMXE from CR4 shadow, update CR4 intercept handler (`bug_027`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

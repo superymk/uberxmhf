@@ -79,8 +79,8 @@ static u32 * _vmx_decode_reg(u32 gpr, VCPU *vcpu, struct regs *r){
 
 //---intercept handler (CPUID)--------------------------------------------------
 static void _vmx_handle_intercept_cpuid(VCPU *vcpu, struct regs *r){
+	//printf("\nCPU(0x%02x): CPUID", vcpu->id);
 	u32 old_eax = r->eax;
-	printf("\nCPU(0x%02x): CPUID %#08lx %#08lx", vcpu->id, r->eax, r->ecx);
 	asm volatile ("cpuid\r\n"
           :"=a"(r->eax), "=b"(r->ebx), "=c"(r->ecx), "=d"(r->edx)
           :"a"(r->eax), "c" (r->ecx));
@@ -424,14 +424,10 @@ static void _vmx_handle_intercept_eptviolation(VCPU *vcpu, struct regs *r){
 	if(vcpu->isbsp && (gpa >= g_vmx_lapic_base) && (gpa < (g_vmx_lapic_base + PAGE_SIZE_4K)) ){
 		xmhf_smpguest_arch_x86_eventhandler_hwpgtblviolation(vcpu, (u32)gpa, errorcode);
 	}else{ //no, pass it to hypapp
-		printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
-		asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
-if (0) {
 		xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 		xmhf_app_handleintercept_hwpgtblviolation(vcpu, r, gpa, gva,
 				(errorcode & 7));
 		xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
-}
 	}
 }
 
@@ -450,14 +446,10 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
 
   //call our app handler, TODO: it should be possible for an app to
   //NOT want a callback by setting up some parameters during appmain
-	printf("\nCPU(0x%02x): quiesce %d skipped", vcpu->id, __LINE__);
-	asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
-if (0) {
 	xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 	app_ret_status=xmhf_app_handleintercept_portaccess(vcpu, r, portnum, access_type,
           access_size);
     xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
-}
 
   if(app_ret_status == APP_IOINTERCEPT_CHAIN){
    	if(access_type == IO_TYPE_OUT){
@@ -531,7 +523,7 @@ static void vmx_handle_intercept_cr4access_ug(VCPU *vcpu, struct regs *r, u32 gp
 
 	printf("\nMOV TO CR4 (flush TLB?), current=0x%08x, proposed=0x%08x",
 			(u32)vcpu->vmcs.guest_CR4, cr4_proposed_value);
-// asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
+
 	/*
 	 * CR4 mask is the IA32_VMX_CR4_FIXED0 MSR. Modify CR4 shadow to let the
 	 * guest think MOV CR4 succeeds.
@@ -615,19 +607,9 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				// printf("\nCPU(0x%02x): quiesce %d skipped, %#08lx", vcpu->id, __LINE__, vcpu->vmcs.guest_RIP);
 				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
 				HALT_ON_ERRORCOND(r->eax == 1);
 				r->eax = 0;
-				// asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
-if (0) {
-				/* Inject #UD to guest */
-				vcpu->vmcs.control_VM_entry_exception_errorcode = 0;
-				vcpu->vmcs.control_VM_entry_interruption_information = 6 /* UD */ |
-					INTR_TYPE_HW_EXCEPTION |
-					INTR_INFO_VALID_MASK;
-				printf("\nCPU(0x%02x): inject UD", vcpu->id);
-}
 if (0) {
 				xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){

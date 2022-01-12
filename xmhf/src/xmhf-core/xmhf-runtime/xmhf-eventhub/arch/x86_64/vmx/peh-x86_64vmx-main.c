@@ -535,7 +535,18 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 
 		pae = (cr0_value & CR0_PG) && (!lme) && (vcpu->vmcs.guest_CR4 & CR4_PAE);
 		/* TODO: Need to walk EPT and retrieve values for guest_PDPTE* */
-		HALT_ON_ERRORCOND(!pae);
+		//HALT_ON_ERRORCOND(!pae);
+		/*
+		 * XXX: SECURITY: should walk EPT, otherwise a malicious guest OS can
+		 * use this to access memory it do not have access to.
+		 */
+		if (pae) {
+			u64 *pdptes = (u64 *)(uintptr_t)(vcpu->vmcs.guest_CR3 & ~0x1FUL);
+			vcpu->vmcs.guest_PDPTE0 = pdptes[0];
+			vcpu->vmcs.guest_PDPTE1 = pdptes[1];
+			vcpu->vmcs.guest_PDPTE2 = pdptes[2];
+			vcpu->vmcs.guest_PDPTE3 = pdptes[3];
+		}
 	}
 
 	//flush mappings

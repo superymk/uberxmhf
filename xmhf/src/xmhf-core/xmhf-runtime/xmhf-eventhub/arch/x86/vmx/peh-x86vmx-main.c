@@ -524,9 +524,6 @@ static void vmx_handle_intercept_cr4access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	printf("\nMOV TO CR4 (flush TLB?), current=0x%08x, proposed=0x%08x",
 			(u32)vcpu->vmcs.guest_CR4, cr4_proposed_value);
 
-	printf("\n                         mask   =0x%08x, shadow  =0x%08x",
-			(u32)vcpu->vmcs.control_CR4_mask, (u32)vcpu->vmcs.control_CR4_shadow);
-
 	/*
 	 * CR4 mask is the IA32_VMX_CR4_FIXED0 MSR. Modify CR4 shadow to let the
 	 * guest think MOV CR4 succeeds.
@@ -585,24 +582,6 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 			(u32)vcpu->vmcs.info_vmexit_reason, (u64)vcpu->vmcs.info_exit_qualification);
 		xmhf_baseplatform_arch_x86vmx_dumpVMCS(vcpu);
 		HALT();
-	}
-
-	if (vcpu->id == 0) {
-		if (vcpu->vmcs.guest_RIP == 0x6a29be) {
-			asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
-		}
-#if 0
-		if (vcpu->vmcs.guest_CR4 != 0x2020 ||
-			vcpu->vmcs.control_CR4_mask != 0x2000 ||
-			vcpu->vmcs.control_CR4_shadow != 0) {
-			printf("\nCPU(0x%02x): 0x%08lx CR4 = 0x%08lx 0x%08lx 0x%08lx",
-					vcpu->id,
-					vcpu->vmcs.guest_RIP,
-					vcpu->vmcs.guest_CR4,
-					vcpu->vmcs.control_CR4_mask,
-					vcpu->vmcs.control_CR4_shadow);
-		}
-#endif
 	}
 
 	/*

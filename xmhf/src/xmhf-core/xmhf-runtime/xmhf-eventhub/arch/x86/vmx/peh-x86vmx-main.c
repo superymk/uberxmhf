@@ -483,21 +483,14 @@ static void _vmx_handle_intercept_ioportaccess(VCPU *vcpu, struct regs *r){
 
 //---CR0 access handler-------------------------------------------------
 static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gpr, u32 tofrom){
-	u64 cr0_value, cr0_mask;
+	u64 cr0_value;
 
 	HALT_ON_ERRORCOND(tofrom == VMX_CRX_ACCESS_TO);
 
 	cr0_value = *((u32 *)_vmx_decode_reg(gpr, vcpu, r));
-	cr0_mask = vcpu->vmx_msrs[INDEX_IA32_VMX_CR0_FIXED0_MSR];
-	cr0_mask &= ~(CR0_PE);
-	cr0_mask &= ~(CR0_PG);
-	cr0_mask |= CR0_CD;
-	cr0_mask |= CR0_NW;
 
-	if (vcpu->vmcs.guest_RIP >= 0x10000) {
-		printf("\n[cr0-%02x] MOV TO 0x%08x, current=0x%08x, proposed=0x%08x", vcpu->id,
-			(u32)vcpu->vmcs.guest_RIP, (u32)vcpu->vmcs.guest_CR0, cr0_value);
-	}
+	//printf("\n[cr0-%02x] MOV TO, current=0x%08x, proposed=0x%08x", vcpu->id,
+	//	(u32)vcpu->vmcs.guest_CR0, cr0_value);
 
 	/*
 	 * Make the guest think that move to CR0 succeeds (by changing shadow).
@@ -512,14 +505,7 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	 */
 
 	vcpu->vmcs.control_CR0_shadow = cr0_value;
-	vcpu->vmcs.guest_CR0 = (cr0_value | cr0_mask) & ~(CR0_CD | CR0_NW);
-
-	if ((vcpu->vmcs.guest_CR0 & CR0_PG) && (vcpu->vmcs.guest_CR4 & CR4_PAE)) {
-		vcpu->vmcs.guest_PDPTE0 = ((u64*)(uintptr_t)vcpu->vmcs.guest_CR3)[0];
-		vcpu->vmcs.guest_PDPTE1 = ((u64*)(uintptr_t)vcpu->vmcs.guest_CR3)[1];
-		vcpu->vmcs.guest_PDPTE2 = ((u64*)(uintptr_t)vcpu->vmcs.guest_CR3)[2];
-		vcpu->vmcs.guest_PDPTE3 = ((u64*)(uintptr_t)vcpu->vmcs.guest_CR3)[3];
-	}
+	vcpu->vmcs.guest_CR0 = (cr0_value | vcpu->vmcs.control_CR0_mask) & ~(CR0_CD | CR0_NW);
 
 	//flush mappings
 	xmhf_memprot_arch_x86vmx_flushmappings(vcpu);

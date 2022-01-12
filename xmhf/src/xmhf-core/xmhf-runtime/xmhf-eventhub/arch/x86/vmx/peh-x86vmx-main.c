@@ -603,7 +603,6 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 
 	if (vcpu->id == 0) {
 		if (vcpu->vmcs.guest_RIP == 0x6a29be) {
-			printf("\nnop");
 			asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
 		}
 #if 0

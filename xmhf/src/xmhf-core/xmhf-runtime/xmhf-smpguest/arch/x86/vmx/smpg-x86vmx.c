@@ -119,9 +119,6 @@ static u32 processSIPI(VCPU *vcpu, u32 icr_low_value, u32 icr_high_value){
   u32 dest_lapic_id;
   VCPU *dest_vcpu = (VCPU *)0;
   
-  printf("\nnop");
-  asm volatile("1: nop; jmp 1b; nop; nop; nop; nop; nop; nop; nop; nop");
-
   HALT_ON_ERRORCOND( (icr_low_value & 0x000C0000) == 0x0 );
   
   dest_lapic_id= icr_high_value >> 24;

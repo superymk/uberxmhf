@@ -180,6 +180,7 @@
 
 `3b199dbe0..`
 * Clear VMXE from CR4 shadow, update CR4 intercept handler (`bug_027`)
+* For PAE paging, update `guest_PDPTE*` after changing `guest_CR3` (`bug_028`)
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
@@ -211,4 +212,5 @@
 * Grub graphical mode does not work in HP (`bug_016`)
 * Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
 * Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
+* x86 XMHF does not support x86 PAE and x64 guests (see `bug_028`)
 

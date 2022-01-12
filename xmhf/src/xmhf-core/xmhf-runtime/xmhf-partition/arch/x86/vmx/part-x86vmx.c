@@ -467,6 +467,7 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	// Make sure to change vmx_handle_intercept_cr4access_ug() if changing
 	// control_CR4_mask.
 	vcpu->vmcs.control_CR4_mask = vcpu->vmx_msrs[INDEX_IA32_VMX_CR4_FIXED0_MSR];  
+	vcpu->vmcs.control_CR4_mask = 0xffffffffffffffffUL;	// !!!
 	vcpu->vmcs.control_CR4_shadow = 0;
 
 	//flush guest TLB to start with

@@ -477,7 +477,6 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	vcpu->vmcs.control_CR0_mask &= ~(CR0_PG);
 	vcpu->vmcs.control_CR0_mask |= CR0_CD;
 	vcpu->vmcs.control_CR0_mask |= CR0_NW;
-	vcpu->vmcs.control_CR0_mask = 0xffffffffffffffffUL;	// !!!
 	if (vcpu->isbsp) {
 		vcpu->vmcs.control_CR0_shadow = vcpu->vmcs.guest_CR0;
 	} else {

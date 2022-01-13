@@ -84,7 +84,7 @@
 * Rename functions from `*x86*` to `*x86_64*`, using `replace_x86.py` for help
 * Add GitHub actions to check whether the project compiles automatically
 
-## `xmhf64-vm`
+### `xmhf64-vm`
 `88ffba9e3..2c7662626`
 * Solved old problem: VMWRITE in QEMU fails because not implemented by KVM
 	* Remember that QEMU uses KVM nested virtualization (Turtles Project)
@@ -112,7 +112,7 @@
 	* Clear IA32_EFER.LME manually to fix triple fault (first fault is GP)
 	* Now x86 and x64 progresses to the same location in QEMU
 
-## `xmhf64`
+### `xmhf64`
 `eca643c3c..e74a28b83`
 * Allow `INVPCID` in guest (`bug_002`)
 	* Intel v3 23.6.2 Processor-Based VM-Execution Controls
@@ -181,6 +181,15 @@
 `3b199dbe0..`
 * Clear VMXE from CR4 shadow, update CR4 intercept handler (`bug_027`)
 * For PAE paging, update `guest_PDPTE*` after changing `guest_CR3` (`bug_028`)
+* Support booting XMHF with only one CPU (`bug_032`)
+* Make virtual APs' state follow Intel's specification (`bug_033`)
+* Update CR0 intercept handler to halt when PAE changes to set (`bug_033`)
+
+### `xmhf64-dev`: development workarounds
+* `59b3fd053`: Quiet TrustVisor output
+* `83eb8f36d`: Simulate handler for `KVM_HC_VAPIC_POLL_IRQ` (run Windows XP SP3)
+* `ee1e4c976`: Temporary fix for PAE in CR0 handler (run Windows XP SP3)
+	* Another workaround is to revert `9c0f9491a`
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`

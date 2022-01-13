@@ -44,5 +44,7 @@ wow32.dll
 expsrv.dll
 ```
 
-TODO: set up windbg
-TODO: is the problem caused by drivers?
+### WinDbg
+
+Set up WinDbg. See `windows.md`
+

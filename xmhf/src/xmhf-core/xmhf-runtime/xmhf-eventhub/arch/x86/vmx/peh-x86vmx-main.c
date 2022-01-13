@@ -506,7 +506,11 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	 * set, and other bits to be set.
 	 */
 
-	fixed_1_fields = vcpu->vmcs.control_CR0_mask;
+	fixed_1_fields = vcpu->vmx_msrs[INDEX_IA32_VMX_CR0_FIXED0_MSR];
+	fixed_1_fields &= ~(CR0_PE);
+	fixed_1_fields &= ~(CR0_PG);
+	fixed_1_fields |= CR0_CD;
+	fixed_1_fields |= CR0_NW;
 	vcpu->vmcs.control_CR0_shadow = cr0_value;
 	vcpu->vmcs.guest_CR0 = (cr0_value | fixed_1_fields) & ~(CR0_CD | CR0_NW);
 

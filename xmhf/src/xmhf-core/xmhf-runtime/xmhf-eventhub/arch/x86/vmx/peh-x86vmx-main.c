@@ -613,9 +613,11 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 		/* CPUID */
 		printf(" 0x%08lx", r->eax);
 	}
-	if (vcpu->vmcs.info_vmexit_reason == 18012) {
-		/* CPUID */
-		printf(" 0x%08lx", r->eax);
+	if (vcpu->vmcs.info_vmexit_reason == 18) {
+		/* VMCALL, assume int15h */
+		u16 *rsp = (u16*)(hva_t)(vcpu->vmcs.guest_SS_base + vcpu->vmcs.guest_RSP);
+		printf(" 0x%08lx 0x%04x:0x%08x eflags=0x%08x", r->eax,
+				(u32)rsp[1], (u32)rsp[0], (u32)rsp[2]);
 	}
 
 	/*

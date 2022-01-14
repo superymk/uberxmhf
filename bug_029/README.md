@@ -48,3 +48,60 @@ expsrv.dll
 
 Set up WinDbg. See `windows.md`
 
+Can break at VMCALL instruction using `bp 0x800cb189`, then use `g` to continue
+
+Use `k` to print stack, but see "frame ip not in any known module. following
+frames may be wrong" error. Stack is something like:
+```
+0x800cb189
+KdExitDebugger+0x23
+KdpReport+0x7a
+KdpTrap+0x108
+KiDispatchException+0x129
+CommonDIspatchException+0x4d
+...
+```
+
+Can also break at `0x806e6422` (caller to function containing VMCALL), and
+stack is:
+```
+hal!KfLowerIrql+0x12
+nt!KiFreezeTargetExecution+0xe7
+nt!KiIpiServiceRoutine+0x9c
+hal!HalpIpiHandler+0xb8
+nt!KeEnableInterrupts+0xd
+nt!UpdateSystemTime+0x16a
+intelppm!AcpiC1Idle+0x12
+nt!KiIdleLoop+0x10
+```
+
+The top most address points to `call 0x800cb0c0`
+
+`0x806e6428 = KeGetCurrentIrql()`, first instruction is `call 0x800cb0c0`
+
+Ref: <https://www.geek-share.com/detail/2674040068.html>
+
+Looks like Windows is dealing with something related to IRQ. We are now sure
+that caller is `KfLowerIrql()`. However, there are no symbols for `0x800cb0c0`,
+so cannot continue debugging.
+
+### VAPIC reading
+
+Ref: <https://stackoverflow.com/questions/47950831/understanding-the-virtual-apic-page-for-x2apic>
+
+Looks like vapic is called "APIC VIRTUALIZATION" in Intel's manual, see chapter
+28.
+
+For example, in
+<https://lore.kernel.org/linux-hyperv/DM5PR21MB0137FCE28A16166207E08C7CD79E0@DM5PR21MB0137.namprd21.prod.outlook.com/>,
+someone mentioned that Hyper-V will set CPUID to indicate vapic is available.
+
+### Ideas not tries
+
+* Re-install Windows, disable CPUID 0x40000000, disable network, see what
+  happens
+
+## Result
+
+Not fixed because of low priority (Windows XP is EOL). Focus on Windows 10.
+

@@ -222,4 +222,7 @@
 * Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
 * Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
 * x86 XMHF does not support x86 PAE and x64 guests (see `bug_028`)
+* x86 Windows XP SP3 needs 2 workarounds to run
+	* `83eb8f36d`: Unexpected use of VMCALL (`bug_029`)
+	* `ee1e4c976`: Unexpected interceptions (`bug_030`, `bug_033`)
 

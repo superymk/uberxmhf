@@ -143,11 +143,36 @@ $11 = 0x8000003b
 ```
 
 The answer is yes. However, to write the correct handler need to walk HPT. So
-for now just HALT. See commit `ef05d91c8`
+for now just HALT. See commit `ef05d91c8` for implementation. See commit
+`ee1e4c976` for an insecure fix.
+
+### Clear misunderstanding
+
+I think I misunderstood this command in XMHF setup (GRUB menuentry).
+```
+	module --nounzip (hd0)+1	# should point to where grub is installed
+```
+
+I thought that `+1` it means loading the 2nd sector of hd0, but after reading
+<https://www.gnu.org/software/grub/manual/grub/html_node/Block-list-syntax.html>
+I think it means loading 1 sector starting from 1st sector.
+
+In above I collected the state at `0:0x8000`, which is when code starts running
+on the 2nd sector. However, I should use `0x7c00`.
+
+Use `hb *0x7c00` and `b *0x7c00` to break, again use GDB to dump state.
+
+Can see that CR0 = 0x10, `CR2 = CR3 = CR4 = {C..G}S = SS = 0`,
+EAX = 0xaa55, EBX = ECX = ESI = EDI = EBP = 0, EDX = 0x80, ESP = 0x6f00,
+EFLAGS = 0x202, cannot see GDT and LDT in GDB.
+
+As a result, changed BSP's initial CR0 from 0x20 (from VMX fixed MSR) to 0x10
+(1. according to Intel manual and SeaBIOS source code; 2. by experiment on
+QEMU). Commit `a711db2d0`.
 
 ## Fix
 
-`793137a11..9c0f9491a`
+`793137a11..a711db2d0`
 * Make virtual APs' state follow Intel's specification
 * Update CR0 intercept handler to halt when PAE changes to set
 

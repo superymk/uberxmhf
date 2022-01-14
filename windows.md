@@ -44,6 +44,8 @@ menuentry 'Windows' --class windows --class os $menuentry_id_option 'windows' {
 }
 ```
 
+In `/etc/defaults/grub`, Can change to `GRUB_DEFAULT=Windows`
+
 ### WinDbg
 
 Using tutorial from <https://www.cnblogs.com/csnd/p/11800535.html>
@@ -54,6 +56,10 @@ Install `dbg_x86.msi`
 Install `WindowsXP*symbols-full-ENU.exe` (to `C:\WINDOWS\Symbols`)
 
 May need to copy `C:\WINDOWS\Symbols\*\*.pdb` to `C:\WINDOWS\Symbols\`
+
+Or following the blog's way, use symbol server and manually copy files to
+cache directory. Maybe can calculate cache directory in Linux (e.g.
+<https://stackoverflow.com/questions/1419347/>)
 
 In WinDbg, select `File -> Kernel debug`, debug local kernel (for convenience)
 
@@ -97,10 +103,11 @@ Refs:
 * <https://resources.infosecinstitute.com/topic/kernel-debugging-qemu-windbg/>
 * <http://mangoprojects.info/virtualization/virtual-serial-connection-between-two-qemu-vm/>
 * <https://stackoverflow.com/questions/30049300/windbg-first-connect-then-stuck-on-debuggee-not-connected-message-during-kern>
+* <https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/getting-started-with-windbg--kernel-mode->
 
 First start debugger, and WinDbg, then start debugee.
 
 Will see some information on WinDbg, and "Debugee not connected"
 
-If hit "Debug -> Break", can stop the debugee
+If hit "Debug -> Break", can stop the debugee and enter `kd` commands
 

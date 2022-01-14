@@ -18,7 +18,7 @@ CPU hangs. Should remove `(g_midtable_numentries > 1)`.
 Also, in `xmhf_smpguest_arch_x86vmx_initialize()` (called by BSP), should not
 unmap LAPIC if only one CPU.
 
-## Fixing
+## Fix
 
 `8b67cfbf3..793137a11`
 * Support booting XMHF with only one CPU

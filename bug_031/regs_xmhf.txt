@@ -1,0 +1,26 @@
+eax            0x0                 0
+ecx            0x0                 0
+edx            0x80                128
+ebx            0x0                 0
+esp            0x0                 0x0
+ebp            0x0                 0x0
+esi            0x0                 0
+edi            0x0                 0
+eip            0x7c00              0x7c00
+eflags         0x202               [ IOPL=0 IF ]
+cs             0x0                 0
+ss             0x0                 0
+ds             0x0                 0
+es             0x0                 0
+fs             0x0                 0
+gs             0x0                 0
+fs_base        0x0                 0
+gs_base        0x0                 0
+k_gs_base      0x0                 0
+cr0            0x30                [ NE ET ]
+cr2            0x0                 0
+cr3            0x0                 [ PDBR=0 PCID=0 ]
+cr4            0x2000              [ VMXE ]
+cr8            0x0                 0
+efer           0x0                 [ ]
+mxcsr          0x1f80              [ IM DM ZM OM UM PM ]

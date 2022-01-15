@@ -1,0 +1,381 @@
+(gdb) si
+0x0000fe71 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xffe71:	je     0x6876d1d3
+(gdb) 
+0x0000fe75 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xffe75:	pushw  $0xe990
+(gdb) 
+0x0000fe7b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xffe7b:	jmp    0x8ac0d33a
+(gdb) 
+0x0000d338 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd338:	cli    
+(gdb) 
+0x0000d339 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd339:	cld    
+(gdb) 
+0x0000d33a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd33a:	push   %ds
+(gdb) 
+0x0000d33b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd33b:	push   %ax
+(gdb) 
+0x0000d33d in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd33d:	mov    $0xda00,%ax
+(gdb) 
+0x0000d343 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd343:	mov    %eax,%ds
+(gdb) 
+0x0000d345 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd345:	mov    0x8366f010,%ax
+(gdb) 
+0x0000d349 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd349:	sub    $0x30,%ax
+(gdb) 
+0x0000d34d in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd34d:	popw   0x1c(%bx,%si)
+(gdb) 
+0x0000d352 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd352:	pop    (%bx,%si)
+(gdb) 
+0x0000d355 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd355:	mov    %di,0x4(%bx,%si)
+(gdb) 
+0x0000d35a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd35a:	mov    %si,0x8(%bx,%si)
+(gdb) 
+0x0000d35f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd35f:	mov    %bp,0xc(%bx,%si)
+(gdb) 
+0x0000d364 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd364:	mov    %bx,0x10(%bx,%si)
+(gdb) 
+0x0000d369 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd369:	mov    %dx,0x14(%bx,%si)
+(gdb) 
+0x0000d36e in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd36e:	mov    %cx,0x18(%bx,%si)
+(gdb) 
+0x0000d373 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd373:	mov    %es,0x2(%bx,%si)
+(gdb) 
+0x0000d377 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd377:	pop    %cx
+(gdb) 
+0x0000d379 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd379:	mov    %sp,0x28(%bx,%si)
+(gdb) 
+0x0000d37e in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd37e:	mov    %ss,0x2c(%bx,%si)
+(gdb) 
+0x0000d382 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd382:	popw   0x20(%bx,%si)
+(gdb) 
+0x0000d387 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd387:	pop    0x24(%bx,%si)
+(gdb) 
+0x0000d38b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd38b:	mov    %ds,%edx
+(gdb) 
+0x0000d38d in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd38d:	mov    %edx,%ss
+(gdb) 
+0x0000d392 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfd392:	call   *%cx
+(gdb) 
+0x0000e990 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe990:	push   %si
+(gdb) 
+0x0000e992 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe992:	push   %bx
+(gdb) 
+0x0000e994 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe994:	push   %si
+(gdb) 
+0x0000e996 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe996:	mov    %ax,%bx
+(gdb) 
+0x0000e999 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe999:	mov    0x1d(%bx,%si),%al
+(gdb) 
+0x0000e99d in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe99d:	cmp    $0x4,%al
+(gdb) 
+0x0000e99f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe99f:	je     0x4786eaf2
+(gdb) 
+0x0000e9a3 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe9a3:	ja     0xfe9ec
+(gdb) 
+0x0000e9ec in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe9ec:	cmp    $0x7,%al
+(gdb) 
+0x0000e9ee in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe9ee:	je     0xf86ebe6
+(gdb) 
+0x0000e9f2 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfe9f2:	ja     0xfea03
+(gdb) 
+0x0000ea03 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea03:	cmp    $0xbb,%al
+(gdb) 
+0x0000ea05 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea05:	jne    0xd29bec0c
+(gdb) 
+0x0000ea09 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea09:	mov    %ss,%edx
+(gdb) 
+0x0000ea0b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea0b:	movzww %dx,%dx
+(gdb) 
+0x0000ea0f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea0f:	shl    $0x4,%dx
+(gdb) 
+0x0000ea13 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea13:	add    %bx,%dx
+(gdb) 
+0x0000ea16 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea16:	xor    %cx,%cx
+(gdb) 
+0x0000ea19 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea19:	mov    $0xfdca,%ax
+(gdb) 
+0x0000ea1f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea1f:	pop    %bx
+(gdb) 
+0x0000ea21 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea21:	pop    %bx
+(gdb) 
+0x0000ea23 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea23:	pop    %si
+(gdb) 
+0x0000ea25 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xfea25:	jmp    0x88777cc2
+(gdb) 
+0x00007cc0 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cc0:	push   %bp
+(gdb) 
+0x00007cc2 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cc2:	push   %di
+(gdb) 
+0x00007cc4 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cc4:	push   %si
+(gdb) 
+0x00007cc6 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cc6:	push   %bx
+(gdb) 
+0x00007cc8 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cc8:	mov    %ax,%di
+(gdb) 
+0x00007ccb in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7ccb:	mov    %dx,%bx
+(gdb) 
+0x00007cce in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cce:	mov    %cs:0x85666114,%ax
+(gdb) 
+0x00007cd3 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cd3:	test   %ax,%ax
+(gdb) 
+0x00007cd6 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cd6:	je     0xf7d2a
+(gdb) 
+0x00007cd8 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cd8:	mov    $0x2,%ax
+(gdb) 
+0x00007cde in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cde:	callw  0x6b06
+(gdb) 
+0x00006b08 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b08:	push   %si
+(gdb) 
+0x00006b0a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b0a:	push   %bx
+(gdb) 
+0x00006b0c in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b0c:	sub    $0x8,%sp
+(gdb) 
+0x00006b10 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b10:	mov    %ax,%bx
+(gdb) 
+0x00006b13 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b13:	cmp    $0x2,%al
+(gdb) 
+0x00006b15 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b15:	je     0xf6b6a
+(gdb) 
+0x00006b6a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b6a:	mov    %ss,%eax
+(gdb) 
+0x00006b6c in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b6c:	mov    $0xda00,%cx
+(gdb) 
+0x00006b72 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b72:	mov    %ecx,%es
+(gdb) 
+0x00006b74 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b74:	mov    %eax,%es:0x70e4f820
+(gdb) 
+0x00006b78 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b78:	in     $0x70,%al
+(gdb) 
+0x00006b7a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b7a:	mov    %al,%dl
+(gdb) 
+0x00006b7c in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b7c:	test   %al,%al
+(gdb) 
+0x00006b7e in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b7e:	js     0xf6b88
+(gdb) 
+0x00006b88 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b88:	mov    %ecx,%es
+(gdb) 
+0x00006b8a in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b8a:	mov    %dl,%es:(%esi)
+(gdb) 
+0x00006b8f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b8f:	mov    %bl,%es:(%esi)
+(gdb) 
+0x00006b94 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b94:	xor    %ax,%ax
+(gdb) 
+0x00006b97 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b97:	add    $0x8,%sp
+(gdb) 
+0x00006b9b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b9b:	pop    %bx
+(gdb) 
+0x00006b9d in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b9d:	pop    %si
+(gdb) 
+0x00006b9f in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf6b9f:	retw   
+(gdb) 
+0x00007ce4 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7ce4:	mov    %bx,%si
+(gdb) 
+0x00007ce7 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7ce7:	mov    %sp,%bp
+(gdb) 
+0x00007cea in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cea:	mov    %ss,%ax
+(gdb) 
+0x00007ced in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7ced:	shl    $0x4,%ax
+(gdb) 
+0x00007cf1 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cf1:	add    %ax,%sp
+(gdb) 
+0x00007cf4 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cf4:	mov    $0xb5,%ax
+(gdb) 
+0x00007cfa in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7cfa:	mov    $0x1234,%cx
+(gdb) 
+0x00007d00 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d00:	mov    $0x7d0b,%bx
+(gdb) 
+0x00007d06 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d06:	out    %al,$0xb2
+(gdb) 
+0x00007d08 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d08:	pause  
+(gdb) 
+0x000f7d0b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d8b:	add    $0x24,%al
+(gdb) 

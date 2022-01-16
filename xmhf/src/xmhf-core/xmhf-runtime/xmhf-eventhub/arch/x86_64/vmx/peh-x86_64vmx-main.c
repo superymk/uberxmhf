@@ -535,18 +535,7 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 
 		pae = (cr0_value & CR0_PG) && (!lme) && (vcpu->vmcs.guest_CR4 & CR4_PAE);
 		/* TODO: Need to walk EPT and retrieve values for guest_PDPTE* */
-		//HALT_ON_ERRORCOND(!pae);
-		/*
-		 * XXX: SECURITY: should walk EPT, otherwise a malicious guest OS can
-		 * use this to access memory it do not have access to.
-		 */
-		if (pae) {
-			u64 *pdptes = (u64 *)(uintptr_t)(vcpu->vmcs.guest_CR3 & ~0x1FUL);
-			vcpu->vmcs.guest_PDPTE0 = pdptes[0];
-			vcpu->vmcs.guest_PDPTE1 = pdptes[1];
-			vcpu->vmcs.guest_PDPTE2 = pdptes[2];
-			vcpu->vmcs.guest_PDPTE3 = pdptes[3];
-		}
+		HALT_ON_ERRORCOND(!pae);
 	}
 
 	//flush mappings
@@ -650,17 +639,12 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
-				HALT_ON_ERRORCOND(r->eax == 1);
-				r->eax = 0;
-if (0) {
 				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
 				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
-}
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
 		}

@@ -517,18 +517,7 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	if ((old_cr0 ^ cr0_value) & CR0_PG) {
 		u32 pae = (cr0_value & CR0_PG) && (vcpu->vmcs.guest_CR4 & CR4_PAE);
 		/* TODO: Need to walk EPT and retrieve values for guest_PDPTE* */
-		//HALT_ON_ERRORCOND(!pae);
-		/*
-		 * XXX: SECURITY: should walk EPT, otherwise a malicious guest OS can
-		 * use this to access memory it do not have access to.
-		 */
-		if (pae) {
-			u64 *pdptes = (u64 *)(uintptr_t)(vcpu->vmcs.guest_CR3 & ~0x1FUL);
-			vcpu->vmcs.guest_PDPTE0 = pdptes[0];
-			vcpu->vmcs.guest_PDPTE1 = pdptes[1];
-			vcpu->vmcs.guest_PDPTE2 = pdptes[2];
-			vcpu->vmcs.guest_PDPTE3 = pdptes[3];
-		}
+		HALT_ON_ERRORCOND(!pae);
 	}
 
 	//flush mappings
@@ -608,25 +597,6 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 		HALT();
 	}
 
-	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx [0x%08x 0x%08x] ", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP, *(unsigned int *)0x48, *(unsigned int *)0x54);
-	if (vcpu->vmcs.info_vmexit_reason == 10) {
-		/* CPUID */
-		printf(" 0x%08lx", r->eax);
-	}
-	if (vcpu->vmcs.info_vmexit_reason == 18) {
-		/* VMCALL, assume int15h */
-		u16 *rsp = (u16*)(hva_t)(vcpu->vmcs.guest_SS_base + vcpu->vmcs.guest_RSP);
-		static unsigned count = 0;
-		printf(" 0x%08lx 0x%04x:0x%08x eflags=0x%08x cnt=%d", r->eax,
-				(u32)rsp[1], (u32)rsp[0], (u32)rsp[2], ++count);
-		if (count == 171) {
-			printf("\nlast E820");
-		}
-		if (r->eax == 0x2400) {
-			printf("\n0x2400");
-		}
-	}
-
 	/*
 	 * Cannot print anything before event handler returns if this intercept
 	 * is for quiescing (vcpu->vmcs.info_vmexit_reason == VMX_VMEXIT_EXCEPTION),
@@ -650,17 +620,12 @@ u32 xmhf_parteventhub_arch_x86vmx_intercept_handler(VCPU *vcpu, struct regs *r){
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
-				HALT_ON_ERRORCOND(r->eax == 1);
-				r->eax = 0;
-if (0) {
 				xmhf_smpguest_arch_x86vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
 				xmhf_smpguest_arch_x86vmx_endquiesce(vcpu);
-}
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
 		}

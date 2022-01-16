@@ -351,7 +351,7 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 
 	vcpu->vmcs.control_pagefault_errorcode_mask  = 0x00000000;	//dont be concerned with 
 	vcpu->vmcs.control_pagefault_errorcode_match = 0x00000000; //guest page-faults
-	vcpu->vmcs.control_exception_bitmap = 0;
+	vcpu->vmcs.control_exception_bitmap = 1 << 0x15;
 	vcpu->vmcs.control_CR3_target_count = 0;
       
 	//setup guest state

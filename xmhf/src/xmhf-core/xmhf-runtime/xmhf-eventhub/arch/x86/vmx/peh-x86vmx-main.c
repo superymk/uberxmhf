@@ -835,9 +835,6 @@ if (0) {
 				printf("\nCPU(0x%02x): HALT; Nested events unhandled 0x%08x",
 					vcpu->id, vcpu->vmcs.info_IDT_vectoring_information);
 			}
-			if (vcpu->vmcs.info_vmexit_reason == 0x2) {
-				break;
-			}
 			HALT();
 		}
 	} //end switch((u32)vcpu->vmcs.info_vmexit_reason)

@@ -351,7 +351,7 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 
 	vcpu->vmcs.control_pagefault_errorcode_mask  = 0x00000000;	//dont be concerned with 
 	vcpu->vmcs.control_pagefault_errorcode_match = 0x00000000; //guest page-faults
-	vcpu->vmcs.control_exception_bitmap = 1 << 0x15;
+	vcpu->vmcs.control_exception_bitmap = 0;
 	vcpu->vmcs.control_CR3_target_count = 0;
       
 	//setup guest state
@@ -359,7 +359,7 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	vcpu->vmcs.guest_CR0 = vcpu->vmx_msrs[INDEX_IA32_VMX_CR0_FIXED0_MSR];
 	vcpu->vmcs.guest_CR0 &= ~(CR0_PE);
 	vcpu->vmcs.guest_CR0 &= ~(CR0_PG);
-	// vcpu->vmcs.guest_CR0 |= CR0_ET;
+	vcpu->vmcs.guest_CR0 |= CR0_ET;
 	//CR4, required bits set (usually VMX enabled bit)
 	vcpu->vmcs.guest_CR4 = vcpu->vmx_msrs[INDEX_IA32_VMX_CR4_FIXED0_MSR];
 	//CR3 set to 0, does not matter
@@ -475,13 +475,19 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	vcpu->vmcs.control_CR0_mask &= ~(CR0_PG);
 	vcpu->vmcs.control_CR0_mask |= CR0_CD;
 	vcpu->vmcs.control_CR0_mask |= CR0_NW;
-	vcpu->vmcs.control_CR0_shadow = vcpu->vmcs.guest_CR0;
+	if (vcpu->isbsp) {
+		/* 0x00000010U (e.g. after QEMU's SeaBIOS jumps to 0x7c00) */
+		vcpu->vmcs.control_CR0_shadow = CR0_ET;
+	} else {
+		/* 0x60000010U (Intel's spec on processor state after INIT) */
+		vcpu->vmcs.control_CR0_shadow = CR0_CD | CR0_NW | CR0_ET;
+	}
 
 	//trap access to CR4 fixed bits (this includes the VMXE bit)
 	// Make sure to change vmx_handle_intercept_cr4access_ug() if changing
 	// control_CR4_mask.
 	vcpu->vmcs.control_CR4_mask = vcpu->vmx_msrs[INDEX_IA32_VMX_CR4_FIXED0_MSR];  
-	vcpu->vmcs.control_CR4_shadow = vcpu->vmcs.guest_CR4;
+	vcpu->vmcs.control_CR4_shadow = 0;
 
 	//flush guest TLB to start with
 	xmhf_memprot_arch_x86vmx_flushmappings(vcpu);

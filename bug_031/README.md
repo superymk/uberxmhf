@@ -275,7 +275,7 @@ c
 ```
 
 (See `real1.s.16`), `0x7cd9` is `int    $0x1a`. QEMU is using SeaBIOS. In
-SeaBIOS source code, `handle_1a()` handles `int 0x1a`. Windows' request is
+SeaBIOS source code, `handle_1a()` handles `int $0x1a`. Windows' request is
 AX = 0xbb00, looks like it should be `handle_1aXX()` (unsupported).
 
 The IDT of the virtual machine is strange. It is not 8-byte aligned, and the
@@ -607,7 +607,8 @@ what's happening.
 Likely related bug reports
 * <https://access.redhat.com/solutions/5749121>
 	* Mentions "big real mode", and SMM is running in big real mode.
-* <https://lists.proxmox.com/pipermail/pve-devel/2021-August/049690.html>
+* <https://forum.proxmox.com/threads/qemu-kvm-internal-error-smm-removal-bit-rot.94211/>
+	* <https://lists.proxmox.com/pipermail/pve-devel/2021-August/049690.html>
 	* Mentions SMM
 
 To continue debugging, is it possible to disable SMM?
@@ -626,15 +627,194 @@ Current guess of the situation:
 	  undefined behavior.
 
 Next steps
+* Read about how VMX handles SMI
 * Play with CR0 and CR4 (unlikely)
 * Try to remove `_vmx_int15_initializehook` and see what happens
+* Try to ignore triple fault and continue anyway, see whether get VMENTRY error
 * Try bochs
 * Give up and debug on HP only
 
+### SMM and SMI
+
+Intel volume 3 chapter 30 describes SMM. After reading, looks like using the
+default SMM treatment should be OK.
+
+SMM code should be at `0x30000 - 0x40000` (`SMBASE`), but from the gdb memory
+dump (`20220114172{3,6}{a,b}.img`), this area is 0.
+
+In SeaBIOS source code `smm.c`, a comment says "relocate SMBASE to 0xa0000"
+
+In QEMU's `info mtree`, `00000000000a0000-00000000000bffff` is shown to be both
+for VGA and for SMRAM. In GDB's memory dump, looks like the result is VGA.
+
+We guess that the SMM handler address is either 0x38000 or 0xa8000. So break
+at these addresses. Using "Compare behavior", B (no XMHF):
+```
+(gdb) x/i $eip
+=> 0x7d08:	popa   
+(gdb) p/x $cs
+$4 = 0xf000
+(gdb) x/i 0xf7d08
+   0xf7d08:	pause  
+(gdb) info b
+Num     Type           Disp Enb Address    What
+8       hw breakpoint  keep y   0x000a8000 
+9       hw breakpoint  keep y   0x00038000 
+(gdb) hb *0xf7d0b
+Hardware assisted breakpoint 10 at 0xf7d0b
+(gdb) hb *0x7d0b
+Hardware assisted breakpoint 11 at 0x7d0b
+(gdb) c
+Continuing.
+
+Thread 1 received signal SIGTRAP, Trace/breakpoint trap.
+1: x/i $cs * 16 + $eip
+<error: No registers.>
+../../gdb/thread.c:72: internal-error: thread_info* inferior_thread(): Assertion `current_thread_ != nullptr' failed.
+A problem internal to GDB has been detected,
+further debugging may prove unreliable.
+
+This is a bug, please report it.  For instructions, see:
+<https://www.gnu.org/software/gdb/bugs/>.
+
+已放弃 (核心已转储)
+```
+
+At the same time QEMU encounters the `ret < cpu->num_ases && ret >= 0`
+assertion error.
+
+After more debugging can see that `0x000a8000` is the entry point. So we are
+now sure that a lot of things may happen during SMI. However we cannot debug
+it easily in QEMU.
+
+### GRUB's implementation of changing IVT
+
+In GRUB source code (branch `master`, commit
+`246d69b7ea619fc1e77dcc5960e37aea45a9808c`),
+`grub-core/mmap/i386/pc/mmap_helper.S` and `grub-core/mmap/i386/pc/mmap.c` show
+how GRUB changes IVT. The old IVT handlers are stored in
+`grub_machine_mmaphook_int15offset` and `grub_machine_mmaphook_int15segment`.
+Reverting GRUB's changes to the e820 table is simply assigning these values
+back to the IVT.
+
+Tried to remove `_vmx_int15_initializehook()`, git is `775fece78`, still see
+triple fault.
+
+Tried to revert CR0 and CR4 to settings before `bug_033`. Git are `cb83290ea`
+and `51c586520`. However still see triple fault. For `51c586520` when triple
+fault, VMCS fields are:
+```
+(gdb) p/x vcpu->vmcs.control_CR4_mask
+$1 = 0x2000
+(gdb) p/x vcpu->vmcs.guest_CR4
+$2 = 0x2000
+(gdb) p/x vcpu->vmcs.control_CR4_shadow 
+$3 = 0x2000
+(gdb) p/x vcpu->vmcs.control_CR0_shadow 
+$4 = 0x20
+(gdb) p/x vcpu->vmcs.control_CR0_mask 
+$5 = 0x60000020
+(gdb) p/x vcpu->vmcs.guest_CR0
+$6 = 0x20
+(gdb) 
+```
+
+Now we try to change the CR0 and CR4 in "Compare behavior", B (no XMHF) using
+GDB and see what happens.
+
+```
+Thread 1 hit Breakpoint 6, 0x00007d06 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d06:	out    %al,$0xb2
+(gdb) p/x $cr4
+$4 = 0x0
+(gdb) p/x $cr0
+$5 = 0x10
+(gdb) p/x $cr0 = 0x30
+$6 = 0x30
+(gdb) p/x $cr4 = 0x2000
+$7 = 0x2000
+(gdb) si
+0x00007d08 in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d08:	pause  
+(gdb) p/x $cr0
+$8 = 0x30
+(gdb) p/x $cr4
+$9 = 0x2000
+(gdb) hb *0xf7d0b
+Hardware assisted breakpoint 8 at 0xf7d0b
+(gdb) hb *0x7d0b
+Hardware assisted breakpoint 9 at 0x7d0b
+(gdb) c
+Continuing.
+
+Thread 1 hit Breakpoint 8, 0x000f7d0b in ?? ()
+1: x/i $cs * 16 + $eip
+   0xf7d8b:	add    $0x24,%al
+(gdb) p/x $cr0
+$10 = 0x11
+(gdb) p/x $cr4
+$11 = 0x0
+(gdb) 
+```
+
+Can see from above that if change CR0 and CR4 to the same as
+"Compare behavior", A, nothing error happens, and CR0 and CR4 get reset,
+protected mode is enabled, etc.
+
+### Source of code
+
+I now wonder where the code for `0xf7d0b` comes from. If we break at the first
+instruction of NTFS (after GRUB), we can see that the instructions are there.
+If we break at the first instruction of GRUB (after BIOS), the instructions
+are still there.
+
+When we trace the instructions after Windows calls `int $0x1a`, looks like the
+BIOS executes non-trivial handling code and then errors at `0xf7d08`. See
+`202201152035gdb`.
+
+Also, when searching "int 1ah bb00" on Google, can see that Windows' BIOS call
+is likely related to TPM. e.g.
+* <https://zh.osdn.net/projects/openpts/wiki/PlatformBiosInt1AhInfo>
+* <https://github.com/egormkn/mbr-boot-manager/blob/master/windows.asm>
+
+So `0xbb00` likely means "TCG Status Check". This makes sense, because TPM
+handling likely uses SMM.
+
+The questions now are:
+* What is the source for `out    %al,$0xb2`? It should be SeaBIOS, but cannot
+  find it easily.
+* Where are TPM documentations that define int15 EAX=0xbb00?
+* Can we reproduce this bug without Windows?
+* Can we disable TPM in Windows?
+
+Now the good news is that we have a workaround: re-compile a BIOS image and
+hardcode int15 EAX=0xbb00 to report that TPM does not exist.
+
+### Standard for int 1ah
+
+The standard can be found in
+"TCG PC Client Specific Implementation Specification for Conventional BIOS":
+* <https://trustedcomputinggroup.org/resource/pc-client-work-group-specific-implementation-specification-for-conventional-bios/>
+* <https://www.trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf>
+
+In chapter 13, it says that AH = 0xbb in general. In "13.7 TCG_StatusCheck",
+it says `TCG_PC_TPM_NOT_PRESENT` can be used to return that TPM is not
+discoverable. This return code are defined in "14. Error and Return Codes".
+
+Also according to chapter 13, we should be able to use CF = 1 to make Windows
+think that TPM BIOS functions are not implemented.
+
+Now maybe we can think of how to capture BIOS calls in XMHF without modifying
+memory.
+
 # tmp notes
 
-TODO: play with CR0 and CR4
-TODO: try to remove `_vmx_int15_initializehook` and see what happens
-TODO: bochs
-TODO: is it possible to update kernel / KVM?
+TODO: can we use VMX interrupt handlers to intercept BIOS calls?
+TODO: find source for `out    %al,$0xb2` in SeaBIOS
+TODO: find int15 EAX=0xbb00 in TPM documentation
+TODO: disable TPM in Windows
+TODO: try to ignore triple fault and continue anyway, VMENTRY error?
+TODO: Run QEMU images with bochs (do not install from scratch: too slow)
 

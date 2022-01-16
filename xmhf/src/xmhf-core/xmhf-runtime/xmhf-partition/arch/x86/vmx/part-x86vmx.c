@@ -579,8 +579,8 @@ void xmhf_partition_arch_x86vmx_initializemonitor(VCPU *vcpu){
 	//INT 15h E820 hook enablement for VMX unrestricted guest mode
 	//note: this only happens for the BSP
 	if(vcpu->isbsp){
-		printf("\nCPU(0x%02x, BSP): initializing INT 15 hook for UG mode...", vcpu->id, _vmx_int15_initializehook);
-		//_vmx_int15_initializehook(vcpu);
+		printf("\nCPU(0x%02x, BSP): initializing INT 15 hook for UG mode...", vcpu->id);
+		_vmx_int15_initializehook(vcpu);
 	}
 
 }

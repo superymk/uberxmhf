@@ -632,6 +632,15 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
+	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx ", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+	if (vcpu->vmcs.info_vmexit_reason == 10) {
+		/* CPUID */
+		printf(" 0x%08lx", r->eax);
+	}
+	if (vcpu->vmcs.info_vmexit_reason == 18) {
+		printf(" VMCALL");
+	}
+
 	/*
 	 * Cannot print anything before event handler returns if this intercept
 	 * is for quiescing (vcpu->vmcs.info_vmexit_reason == VMX_VMEXIT_EXCEPTION),

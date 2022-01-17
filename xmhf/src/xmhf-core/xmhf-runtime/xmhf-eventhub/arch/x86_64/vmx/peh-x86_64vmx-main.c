@@ -642,9 +642,8 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
 				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
-		if (rsp[1] > 0xfff) {
-			printf(" ?");
-		}
+		printf(" EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",
+				r->eax, r->ebx, r->ecx, r->edx);
 	}
 
 	/*

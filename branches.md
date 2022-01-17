@@ -178,24 +178,29 @@
 * Update `pal_demo` to test argument passing (`bug_026`)
 * (Now can run x64 PALs, all configurations (Debian and Ubuntu) look good)
 
-`3b199dbe0..`
+`3b199dbe0..43b3d6552`
 * Clear VMXE from CR4 shadow, update CR4 intercept handler (`bug_027`)
 * For PAE paging, update `guest_PDPTE*` after changing `guest_CR3` (`bug_028`)
 * Support booting XMHF with only one CPU (`bug_032`)
 * Make virtual APs' state follow Intel's specification (`bug_033`)
 * Update CR0 intercept handler to halt when PAE changes to set (`bug_033`)
+* Found a problem in QEMU, need to disable SMM in SeaBIOS (`bug_031`)
+* Support `CR{0,4}` intercept with R8-R15 (`bug_034`)
+* (Now can boot Windows 10 in QEMU)
 
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
 * `83eb8f36d`: Simulate handler for `KVM_HC_VAPIC_POLL_IRQ` (run Windows XP SP3)
 * `ee1e4c976`: Temporary fix for PAE in CR0 handler (run Windows XP SP3)
 	* Another workaround is to revert `9c0f9491a`
+* `bug_031`: Use `-bios bug_031/bios.bin` for Windows 10 on QEMU
 
 ### TODO
 * Review unaligned structs caused by `__attribute__((packed))`
 * Decide a coding format.
 
 ## Support Status
+Linux
 ```rst
 +----+---+------------------+------------+-------------------------------------+
 |    |   |                  |            | Status                              |
@@ -214,6 +219,27 @@
 |    |   |                  +------------+                                     |
 |    |   |                  |pal_demo x64|                                     |
 +----+---+------------------+------------+-------------------------------------+
+```
+
+Windows
+```rst
++----+---+------------------+------------+-------------------------------------+
+|    |   |                  |            | Status                              |
+|    |   |Operating         |            +------------------+------------------+
+|XMHF|DRT|System            |Application | HP               | QEMU             |
++====+===+==================+============+==================+==================+
+| x86| N | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
+|    |   +------------------+------------+                  +------------------+
+|    |   | Win10 x86        | N/A        |                  | Good             |
++----+   +------------------+------------+                  +------------------+
+| x64|   | WinXP x86 SP3    | N/A        |                  | Need workaround  |
+|    |   +------------------+------------+                  +------------------+
+|    |   | WinXP x64        | N/A        |                  | Good             |
+|    |   +------------------+------------+                  |                  |
+|    |   | Win10 x86        | N/A        |                  |                  |
+|    |   +------------------+------------+------------------+                  |
+|    |   | Win10 x64        | N/A        | Boot stucks      |                  |
++----+---+------------------+------------+------------------+------------------+
 ```
 
 ## Limits

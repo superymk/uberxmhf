@@ -1,0 +1,78 @@
+Disassembly of section .text.__call32:
+
+00007cdf <__call32>:
+{
+    7cdf:	66 55                	push   %ebp
+    7ce1:	66 57                	push   %edi
+    7ce3:	66 56                	push   %esi
+    7ce5:	66 53                	push   %ebx
+    7ce7:	66 89 c7             	mov    %eax,%edi
+    7cea:	66 89 d3             	mov    %edx,%ebx
+    if (CONFIG_CALL32_SMM && GET_GLOBAL(HaveSmmCall32))
+    7ced:	2e 66 a1 74 61       	mov    %cs:0x6174,%eax
+    7cf2:	66 85 c0             	test   %eax,%eax
+    7cf5:	74 52                	je     7d49 <__call32+0x6a>
+    call32_prep(C16_SMM);
+    7cf7:	66 b8 02 00 00 00    	mov    $0x2,%eax
+    7cfd:	66 e8 65 ee ff ff    	calll  6b68 <call32_prep>
+    asm volatile(
+    7d03:	66 89 de             	mov    %ebx,%esi
+    7d06:	66 89 e5             	mov    %esp,%ebp
+    7d09:	66 8c d0             	mov    %ss,%eax
+    7d0c:	66 c1 e0 04          	shl    $0x4,%eax
+    7d10:	66 01 c4             	add    %eax,%esp
+    7d13:	66 b8 b5 00 00 00    	mov    $0xb5,%eax
+    7d19:	66 b9 34 12 00 00    	mov    $0x1234,%ecx
+    7d1f:	66 bb 2a 7d 0f 00    	mov    $0xf7d2a,%ebx
+    7d25:	e6 b2                	out    %al,$0xb2
+    7d27:	f3 90                	pause  
+    7d29:	f4                   	hlt    
+    7d2a:	89 f0                	mov    %si,%ax
+    7d2c:	ff d7                	call   *%di
+    7d2e:	89 c6                	mov    %ax,%si
+    7d30:	b8 b5 00             	mov    $0xb5,%ax
+    7d33:	00 00                	add    %al,(%bx,%si)
+    7d35:	b9 78 56             	mov    $0x5678,%cx
+    7d38:	00 00                	add    %al,(%bx,%si)
+    7d3a:	bb 44 7d             	mov    $0x7d44,%bx
+    7d3d:	00 00                	add    %al,(%bx,%si)
+    7d3f:	e6 b2                	out    %al,$0xb2
+    7d41:	f3 90                	pause  
+    7d43:	f4                   	hlt    
+    7d44:	66 89 ec             	mov    %ebp,%esp
+    call32_post();
+    7d47:	eb 47                	jmp    7d90 <__call32+0xb1>
+    7d49:	66 89 ce             	mov    %ecx,%esi
+    int ret = call32_prep(C16_BIG);
+    7d4c:	66 b8 01 00 00 00    	mov    $0x1,%eax
+    7d52:	66 e8 10 ee ff ff    	calll  6b68 <call32_prep>
+    if (ret)
+    7d58:	66 85 c0             	test   %eax,%eax
+    7d5b:	75 39                	jne    7d96 <__call32+0xb7>
+    asm volatile(
+    7d5d:	66 89 d8             	mov    %ebx,%eax
+    7d60:	66 8c d3             	mov    %ss,%ebx
+    7d63:	66 89 e5             	mov    %esp,%ebp
+    7d66:	66 c1 e3 04          	shl    $0x4,%ebx
+    7d6a:	66 01 dc             	add    %ebx,%esp
+    7d6d:	66 c1 eb 04          	shr    $0x4,%ebx
+    7d71:	66 ba 7a 7d 0f 00    	mov    $0xf7d7a,%edx
+    7d77:	e9 c9 51             	jmp    cf43 <transition32_nmi_off>
+    7d7a:	ff d7                	call   *%di
+    7d7c:	ba 86 7d             	mov    $0x7d86,%dx
+    7d7f:	00 00                	add    %al,(%bx,%si)
+    7d81:	e9 08 52             	jmp    cf8c <transition16+0x13>
+    7d84:	00 00                	add    %al,(%bx,%si)
+    7d86:	8e db                	mov    %bx,%ds
+    7d88:	8e d3                	mov    %bx,%ss
+    7d8a:	66 89 ec             	mov    %ebp,%esp
+    7d8d:	66 89 c6             	mov    %eax,%esi
+    call32_post();
+    7d90:	66 e8 f2 f3 ff ff    	calll  7188 <call32_post>
+}
+    7d96:	66 89 f0             	mov    %esi,%eax
+    7d99:	66 5b                	pop    %ebx
+    7d9b:	66 5e                	pop    %esi
+    7d9d:	66 5f                	pop    %edi
+    7d9f:	66 5d                	pop    %ebp
+    7da1:	66 c3                	retl   

@@ -46,6 +46,8 @@ menuentry 'Windows' --class windows --class os $menuentry_id_option 'windows' {
 
 In `/etc/defaults/grub`, Can change to `GRUB_DEFAULT=Windows`
 
+## Debugging Windows
+
 ### WinDbg
 
 Using tutorial from <https://www.cnblogs.com/csnd/p/11800535.html>
@@ -110,4 +112,33 @@ First start debugger, and WinDbg, then start debugee.
 Will see some information on WinDbg, and "Debugee not connected"
 
 If hit "Debug -> Break", can stop the debugee and enter `kd` commands
+
+## Windows 10
+
+In Windows 10, Resource Manager, the Memory section can show whether XMHF is
+running. Under "Physical Memory" there are "Available, Cached, Total,
+Installed". Installed will always be actual physical memory. For example, when
+QEMU has `-m 2G`, Installed will be 2048 MB. When XMHF is not running, Total is
+2047 MB. When x86 XMHF is running, Total is 1893 MB. For x84 XMHF it is 1827
+MB.
+
+### Shutdown
+
+Ref:
+<https://superuser.com/questions/968672/shortcut-to-shutdown-or-restart-windows-10-or-11-in-less-than-three-keystrokes>
+* Use QEMU's power button
+* In desktop (shown using `Windows + D`), `Alt + F4`, then `Enter`
+* `Windows + X`, `U`, `U`
+
+### Remote desktop
+
+Can enable remote desktop in settings. Can use Remmina to connect (for some
+reason rdesktop does not work). Use the RDP protocol to prevent checking
+certificates.
+
+### Running Linux programs in Windows
+
+* WSL: <https://docs.microsoft.com/en-us/windows/wsl/install>
+* Cygwin?: <https://www.cygwin.com/>
+	* May have trouble because Cygwin does not use Linux's calling convention
 

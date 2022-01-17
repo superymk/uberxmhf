@@ -809,12 +809,141 @@ think that TPM BIOS functions are not implemented.
 Now maybe we can think of how to capture BIOS calls in XMHF without modifying
 memory.
 
-# tmp notes
+### Reproducing without Windows
 
-TODO: can we use VMX interrupt handlers to intercept BIOS calls?
-TODO: find source for `out    %al,$0xb2` in SeaBIOS
-TODO: find int15 EAX=0xbb00 in TPM documentation
-TODO: disable TPM in Windows
-TODO: try to ignore triple fault and continue anyway, VMENTRY error?
-TODO: Run QEMU images with bochs (do not install from scratch: too slow)
+This bug can be reproduced without Windows. Simply call int15 EAX=0xbb00.
+The intended return result is that AX = 0x23 (`TCG_PC_TPM_NOT_PRESENT`). When
+without XMHF, can set a break point at `0xf7d06` and keep stepping. Will then
+see QEMU's `ret < cpu->num_ases && ret >= 0` assertion error. See `repr4b.gdb`.
+
+Using the same technique, we can reproduce the triple fault when XMHF is used.
+See `repr4a.gdb`.
+
+### Continuing anyway in VMX
+
+If we ignore triple fault, (git `8547a21db`), VM execution will continue (no
+VMENTRY error). However, there will then be intercepts at guest
+`CS:EIP = 0x0050:0x00000453` forever. Also, when breaking at
+`xmhf_parteventhub_arch_x86vmx_intercept_handler()`, cannot access XMHF
+variables like VCPU. I think maybe this is code in SMM. For now we should try
+to disable TPM or write a fake int15 EAX=0xbb00 handler.
+
+### Disable TPM in Windows
+
+In `tpm.msc`, Windows just says that it cannot find TPM. Looks like there is no
+way to prevent Windows from accessing BIOS function to discover TPM.
+
+Ref:
+<https://docs.microsoft.com/en-us/windows/security/information-protection/tpm/initialize-and-configure-ownership-of-the-tpm>
+
+### Changing BIOS interrupt handler
+
+Currently, XMHF changes int15 handler by editing IVT and using VMCALL.
+
+Maybe we want to capture interrupts. It is likely managed in
+"Pin-Based VM-Execution Controls". However, it only allows setting
+"External-interrupt exiting". In Intel volume 3 "6.3 SOURCES OF INTERRUPTS",
+it looks like `int $0x15` is software generated interrupt, not external
+interrupt.
+
+There is also something called Exception Bitmap. We can try whether setting
+a bit here will intercept software interrupts. Git is `a3c731270`, looks like
+this will not intercept software interrupt.
+
+So we should still edit IVT and use VMCALL.
+
+### Source for `out    %al,$0xb2` in SeaBIOS
+
+* <https://www.seabios.org/Build_overview>
+* <https://www.seabios.org/Debugging>
+
+```
+cd /tmp
+git clone https://github.com/qemu/seabios/
+# commit 6a62e0cb0dfe9cd28b70547dbea5caf76847c3a9
+cd seabios
+make
+```
+
+Using my self-compiled SeaBIOS, QEMU command is
+`-bios /tmp/seabios/out/bios.bin`. The exception PC now becomes
+`CS:EIP =0x0008:0x000f7d2a`. Can view symbols in `out/rom16.o`
+
+```
+cd out
+objdump -m i8086 -dS rom16.o
+```
+
+`7d2a` is in `__call32()`. For details of objdump see `seabios5.txt`. This
+function is defined in `src/stacks.c`.
+```c
+   237  // Call a 32bit SeaBIOS function from a 16bit SeaBIOS function.
+   238  u32 VISIBLE16
+   239  __call32(void *func, u32 eax, u32 errret)
+   240  {
+   241      ASSERT16();
+   242      if (CONFIG_CALL32_SMM && GET_GLOBAL(HaveSmmCall32))
+   243          return call32_smm(func, eax);
+   244      // Jump direclty to 32bit mode - this clobbers the 16bit segment
+   245      // selector registers.
+   ...  ...
+```
+
+Looks like `CONFIG_CALL32_SMM` is defined, and the actual code is in
+`call32_smm()`. `call32_smm()` is inlined.
+```c
+   147  // Call a SeaBIOS C function in 32bit mode using smm trampoline
+   148  static u32
+   149  call32_smm(void *func, u32 eax)
+   150  {
+   ...      ...
+   155      asm volatile(
+   ...          ...
+   162          // Transition to 32bit mode, call func, return to 16bit
+   163          "  movl $" __stringify(CALL32SMM_CMDID) ", %%eax\n"
+   164          "  movl $" __stringify(CALL32SMM_ENTERID) ", %%ecx\n"
+   165          "  movl $(" __stringify(BUILD_BIOS_ADDR) " + 1f), %%ebx\n"
+   166          "  outb %%al, $" __stringify(PORT_SMI_CMD) "\n"
+   167          "  rep; nop\n"
+   168          "  hlt\n"
+```
+
+Line 167 is the same as `pause`. `PORT_SMI_CMD` is `0x00b2`. `CALL32SMM_CMDID`
+is `0xb5`. The SMM handler is in `src/fw/smm.c` (search for `CALL32SMM_CMDID`).
+
+So currently we have some possible workarounds:
+1. Disable `CONFIG_CALL32_SMM` when compiling SeaBIOS
+2. Use XMHF to change BIOS int 1ah bb00 call
+3. <del>Disable the BIOS int 1ah bb00 in Windows</del> (likely not possible)
+
+For now, we think 1 is the best way.
+
+### Recompile SeaBIOS
+
+Run `make menuconfig`, in `Hardware support`, deselect
+`System Management Mode (SMM)`. Configuration file is `src/Kconfig` (cannot set
+`CALL32_SMM` in graphical mode, but can set `USE_SMM`, which is prerequisite
+for `USE_SMM`).
+
+Then run `make`. Compile result is attached as `bios.bin`.
+
+After disabling SMM, x86 Windows 10 on x86 XMHF, x86 QEMU can see the Windows
+logo and the loading symbol with 5 dots spinning. Then can login. Can shutdown
+successfully.
+
+### Untested ideas
+
+* Fake int1a
+	* If XMHF does not have a bug, no need to fix int1a for now.
+* Run QEMU images with bochs (do not install from scratch: too slow)
+	* Bochs is too slow, so did not test it
+
+## Result
+
+Likely not a bug in XMHF. I think the problem is that KVM does not handle
+nested SMM correctly. Windows 10 calls TPM functions, and SeaBIOS uses SMM to
+enter 32-bit mode. This causes the problem.
+
+The temporary fix for running on QEMU is to use self-compiled SeaBIOS. If this
+bug is reproduced on HP, may need to use fake BIOS handler.
 

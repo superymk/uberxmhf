@@ -189,7 +189,8 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 			{
 				//u16 guest_cs, guest_ip, guest_flags;
 				u16 guest_cs __attribute__((unused)), guest_ip __attribute__((unused)), guest_flags;
-				u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (hva_t)vcpu->vmcs.guest_RSP );
+				/* Need to clear upper bits of SP */
+				u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
 
 
 				//if V86 mode translate the virtual address to physical address
@@ -638,7 +639,12 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		printf(" 0x%08lx", r->eax);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
-		printf(" VMCALL");
+		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
+		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
+				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
+		if (rsp[1] > 0xfff) {
+			printf(" ?");
+		}
 	}
 
 	/*

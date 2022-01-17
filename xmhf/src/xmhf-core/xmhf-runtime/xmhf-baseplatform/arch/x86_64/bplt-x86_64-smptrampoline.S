@@ -102,6 +102,7 @@ CODE
     .long 0xdeadbeef
     .long 0xdeadbeef
     .long 0xdeadbeef
+    .long 0xdeadbeef
     .align 16
   ap_bootstrap_bypassdata:
       movw $0x1000, %ax
@@ -123,7 +124,14 @@ CODE
       movl $0xbeefdead, %esi
       movl $0xbeefdead, %edi
       int $0x1a
-      movl $0x10000, %ebp
+      jb 2f
+      movl $_tpm_experiment-_ap_bootstrap_start+4*6, %ebp
+      movl $0, %cs:(%ebp)
+      jmp 3f
+    2:
+      movl $_tpm_experiment-_ap_bootstrap_start+4*6, %ebp
+      movl $1, %cs:(%ebp)
+    3:
       movl $_tpm_experiment-_ap_bootstrap_start+4*0, %ebp
       movl %eax, %cs:(%ebp)
       movl $_tpm_experiment-_ap_bootstrap_start+4*1, %ebp

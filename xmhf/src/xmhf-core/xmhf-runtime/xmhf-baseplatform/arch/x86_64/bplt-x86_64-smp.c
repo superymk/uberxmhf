@@ -216,6 +216,7 @@ void xmhf_baseplatform_arch_x86_64_smpinitialize_commonstart(VCPU *vcpu){
         printf("\np[4] = 0x%08lx", p[4]);
         printf("\np[5] = 0x%08lx", p[5]);
         printf("\np[6] = 0x%08lx", p[6]);
+        printf("\np[7] = 0x%08lx", p[7]);
         while (1);
     }
 

@@ -273,7 +273,26 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_CS_selector = cs;
 }
 
+static void _vmx_int_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD_AC){
+	u16 cs, ip;
+	u8 *bdamemory = (u8 *)(0x400 + OLD_AC);
+	(void)r;
 
+	//if in V86 mode translate the virtual address to physical address
+	if( (vcpu->vmcs.guest_CR0 & CR0_PE) && (vcpu->vmcs.guest_CR0 & CR0_PG) &&
+			(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM) ){
+		HALT_ON_ERRORCOND(0);
+	}
+
+	//get IP and CS of the original INT 15h handler
+	ip = *((u16 *)((hva_t)bdamemory + 4));
+	cs = *((u16 *)((hva_t)bdamemory + 6));
+
+	//update VMCS with the CS and IP and let go
+	vcpu->vmcs.guest_RIP = ip;
+	vcpu->vmcs.guest_CS_base = cs * 16;
+	vcpu->vmcs.guest_CS_selector = cs;
+}
 
 
 //------------------------------------------------------------------------------
@@ -633,10 +652,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx ", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 	if (vcpu->vmcs.info_vmexit_reason == 10) {
 		/* CPUID */
-		printf(" 0x%08lx", r->eax);
+		printf(" CPUID 0x%08lx", r->eax);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
 		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
@@ -658,6 +677,13 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		//xmhf-core and hypapp intercepts
 		//--------------------------------------------------------------
 
+#define CAPTURE_BIOS(OLD_AC, OLD_54) \
+	else if (vcpu->vmcs.guest_CS_base == 0x400 && \
+			vcpu->vmcs.guest_RIP == OLD_AC) { \
+		printf(" INT=0x%02x", (unsigned)OLD_54 / 4); \
+		_vmx_int_handleintercept(vcpu, r, OLD_AC); \
+	}
+
 		case VMX_VMEXIT_VMCALL:{
 			//if INT 15h E820 hypercall, then let the xmhf-core handle it
 			if(vcpu->vmcs.guest_CS_base == (VMX_UG_E820HOOK_CS << 4) &&
@@ -668,7 +694,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					( (vcpu->vmcs.guest_CR0 & CR0_PE) && (vcpu->vmcs.guest_CR0 & CR0_PG) &&
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
-			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
+			}
+			CAPTURE_BIOS(0xa4, 0x68)
+			else{	//if not E820 hook, give hypapp a chance to handle the hypercall
 				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
 				HALT_ON_ERRORCOND(r->eax == 1);
 				r->eax = 0;

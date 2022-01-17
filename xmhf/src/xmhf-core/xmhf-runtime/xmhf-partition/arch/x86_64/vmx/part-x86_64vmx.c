@@ -247,6 +247,24 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[0]=0x00AC;
 		ivt_int15[1]=0x0040;					
 	}
+
+	/* For debugging, capture all BIOS interrupts */
+#define CAPTURE_BIOS(OLD_AC, OLD_54) \
+	{\
+		u8 *bdamemory = (u8 *)0x400 + OLD_AC;\
+		u16 *ivt_int15 = (u16 *)(OLD_54);\
+		memset(bdamemory, 0x0, 8);		\
+		bdamemory[0]= 0x0f;\
+		bdamemory[1]= 0x01;\
+		bdamemory[2]= 0xc1;\
+		bdamemory[3]= 0xcf;\
+		*((u16 *)(&bdamemory[4])) = ivt_int15[0];\
+		*((u16 *)(&bdamemory[6])) = ivt_int15[1];\
+		ivt_int15[0]=OLD_AC;\
+		ivt_int15[1]=0x0040;\
+	}
+
+	CAPTURE_BIOS(0xa4, 0x68)
 }
 
 /* Return nonzero if this CPU supports INVPCID according to CPUID */

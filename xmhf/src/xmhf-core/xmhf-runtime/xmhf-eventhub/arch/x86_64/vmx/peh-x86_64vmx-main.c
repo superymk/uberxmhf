@@ -695,7 +695,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}
-			CAPTURE_BIOS(0xa4, 0x68)
+			CAPTURE_BIOS(0xcc, 0x68)
 			else{	//if not E820 hook, give hypapp a chance to handle the hypercall
 				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
 				HALT_ON_ERRORCOND(r->eax == 1);

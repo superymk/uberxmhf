@@ -264,7 +264,7 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[1]=0x0040;\
 	}
 
-	CAPTURE_BIOS(0xa4, 0x68)
+	CAPTURE_BIOS(0xcc, 0x68)
 }
 
 /* Return nonzero if this CPU supports INVPCID according to CPUID */

@@ -207,6 +207,18 @@ void xmhf_baseplatform_arch_x86_64_smpinitialize_commonstart(VCPU *vcpu){
     //increment active CPUs
 	vcpu->isbsp=0;	//this core is a AP
 
+    if (vcpu->id == 1) {
+        u32 *p = (u32 *)0x10060;
+        printf("\np[0] = 0x%08lx", p[0]);
+        printf("\np[1] = 0x%08lx", p[1]);
+        printf("\np[2] = 0x%08lx", p[2]);
+        printf("\np[3] = 0x%08lx", p[3]);
+        printf("\np[4] = 0x%08lx", p[4]);
+        printf("\np[5] = 0x%08lx", p[5]);
+        printf("\np[6] = 0x%08lx", p[6]);
+        while (1);
+    }
+
     spin_lock(&g_lock_cpus_active);
     g_cpus_active++;
     spin_unlock(&g_lock_cpus_active);

@@ -254,6 +254,8 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		u8 *bdamemory = (u8 *)0x400 + OLD_AC;\
 		u16 *ivt_int15 = (u16 *)(OLD_54);\
 		memset(bdamemory, 0x0, 8);		\
+		printf("\noriginal BDA at 0x%08x: 0x%016llx",\
+				(unsigned)(uintptr_t)bdamemory, *(u64 *)bdamemory);\
 		bdamemory[0]= 0x0f;\
 		bdamemory[1]= 0x01;\
 		bdamemory[2]= 0xc1;\
@@ -264,7 +266,17 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[1]=0x0040;\
 	}
 
-	CAPTURE_BIOS(0xa4, 0x68)
+	CAPTURE_BIOS(0xb4, 0x68)
+	CAPTURE_BIOS(0xbc, 0x50)
+	CAPTURE_BIOS(0xc4, 0x58)
+	CAPTURE_BIOS(0xcc, 0x5c)
+	CAPTURE_BIOS(0xd4, 0x60)
+	CAPTURE_BIOS(0xdc, 0x64)
+	CAPTURE_BIOS(0xe4, 0x6c)
+	CAPTURE_BIOS(0xec, 0x70)
+	CAPTURE_BIOS(0xf4, 0x74)
+	CAPTURE_BIOS(0xfc, 0x78)
+	// CAPTURE_BIOS(0xg4, 0x7c)
 }
 
 /* Return nonzero if this CPU supports INVPCID according to CPUID */

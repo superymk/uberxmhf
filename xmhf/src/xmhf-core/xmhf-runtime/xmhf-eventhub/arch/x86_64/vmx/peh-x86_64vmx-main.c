@@ -736,7 +736,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
 		case VMX_VMEXIT_VMCALL:{
 			//if INT 15h E820 hypercall, then let the xmhf-core handle it
-			if(vcpu->vmcs.guest_CS_base == (VMX_UG_E820HOOK_CS << 4) &&
+			if(0 && vcpu->vmcs.guest_CS_base == (VMX_UG_E820HOOK_CS << 4) &&
 				vcpu->vmcs.guest_RIP == VMX_UG_E820HOOK_IP){
 				//we need to be either in real-mode or in protected
 				//mode with paging and EFLAGS.VM bit set (virtual-8086 mode)
@@ -745,7 +745,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}
-			CAPTURE_BIOS1A(0xcc, 0x68)
+			CAPTURE_BIOS1A(0xac, 0x68)
 //			CAPTURE_BIOS(0xbc, 0x50)
 //			CAPTURE_BIOS(0xc4, 0x58)
 //			CAPTURE_BIOS(0xcc, 0x5c)

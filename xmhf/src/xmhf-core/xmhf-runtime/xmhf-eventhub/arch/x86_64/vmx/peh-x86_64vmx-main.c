@@ -315,6 +315,7 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 	vcpu->vmcs.guest_CS_selector = cs;
 }
 
+/*
 static void _vmx_int_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD_AC){
 	u16 cs, ip;
 	u8 *bdamemory = (u8 *)(0x400 + OLD_AC);
@@ -335,7 +336,7 @@ static void _vmx_int_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD_A
 	vcpu->vmcs.guest_CS_base = cs * 16;
 	vcpu->vmcs.guest_CS_selector = cs;
 }
-
+*/
 
 //------------------------------------------------------------------------------
 // guest MSR r/w intercept handling
@@ -744,16 +745,16 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
 			}
-			CAPTURE_BIOS1A(0xb4, 0x68)
-			CAPTURE_BIOS(0xbc, 0x50)
-			CAPTURE_BIOS(0xc4, 0x58)
-			CAPTURE_BIOS(0xcc, 0x5c)
-			CAPTURE_BIOS(0xd4, 0x60)
-			CAPTURE_BIOS(0xdc, 0x64)
-			CAPTURE_BIOS(0xe4, 0x6c)
-			CAPTURE_BIOS(0xec, 0x70)
-			CAPTURE_BIOS(0xf4, 0x74)
-			CAPTURE_BIOS(0xfc, 0x78)
+			CAPTURE_BIOS1A(0xcc, 0x68)
+//			CAPTURE_BIOS(0xbc, 0x50)
+//			CAPTURE_BIOS(0xc4, 0x58)
+//			CAPTURE_BIOS(0xcc, 0x5c)
+//			CAPTURE_BIOS(0xd4, 0x60)
+//			CAPTURE_BIOS(0xdc, 0x64)
+//			CAPTURE_BIOS(0xe4, 0x6c)
+//			CAPTURE_BIOS(0xec, 0x70)
+//			CAPTURE_BIOS(0xf4, 0x74)
+//			CAPTURE_BIOS(0xfc, 0x78)
 			else{	//if not E820 hook, give hypapp a chance to handle the hypercall
 				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
 				HALT_ON_ERRORCOND(r->eax == 1);

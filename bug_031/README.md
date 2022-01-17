@@ -295,26 +295,20 @@ IDT=     00000000 000003ff
 
 Start of incorrect content
 
-<del>
-So looks like IDT changed after the `int $0x1a` instruction. Using the current
-IDT to calculate, the descriptor for `0x1a` is:
-</del>
+<del>So looks like IDT changed after the `int $0x1a` instruction. Using the current
+IDT to calculate, the descriptor for `0x1a` is:</del>
 ```
 (gdb) x/gx (0x1a * 8)
 0xd0:	0xf000ff53f000ff53
 (gdb) 
 ```
-<del>
-This is the same for all IDT values in `0x80 - 0xf8`. A little bit strange.
+<del>This is the same for all IDT values in `0x80 - 0xf8`. A little bit strange.</del>
 
-Using `gdt.py`, this is
-</del>
+<del>Using `gdt.py`, this is</del>
 ```
 Segment Limit 0xff53	Base Address 0xf053f000	Type=0xf S=1 DPL=3 P=1 AVL=0 L=0 DB=0 G=0
 ```
-<del>
-Using Intel's Table 3-2, this should be "32-bit Trap Gate", 
-</del>
+<del>Using Intel's Table 3-2, this should be "32-bit Trap Gate", </del>
 
 End of incorrect content
 

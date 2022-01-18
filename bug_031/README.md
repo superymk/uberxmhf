@@ -781,12 +781,12 @@ handling likely uses SMM.
 The questions now are:
 * What is the source for `out    %al,$0xb2`? It should be SeaBIOS, but cannot
   find it easily.
-* Where are TPM documentations that define int15 EAX=0xbb00?
+* Where are TPM documentations that define int1a EAX=0xbb00?
 * Can we reproduce this bug without Windows?
 * Can we disable TPM in Windows?
 
 Now the good news is that we have a workaround: re-compile a BIOS image and
-hardcode int15 EAX=0xbb00 to report that TPM does not exist.
+hardcode int1a EAX=0xbb00 to report that TPM does not exist.
 
 ### Standard for int 1ah
 
@@ -807,7 +807,7 @@ memory.
 
 ### Reproducing without Windows
 
-This bug can be reproduced without Windows. Simply call int15 EAX=0xbb00.
+This bug can be reproduced without Windows. Simply call int1a EAX=0xbb00.
 The intended return result is that AX = 0x23 (`TCG_PC_TPM_NOT_PRESENT`). When
 without XMHF, can set a break point at `0xf7d06` and keep stepping. Will then
 see QEMU's `ret < cpu->num_ases && ret >= 0` assertion error. See `repr4b.gdb`.
@@ -822,7 +822,7 @@ VMENTRY error). However, there will then be intercepts at guest
 `CS:EIP = 0x0050:0x00000453` forever. Also, when breaking at
 `xmhf_parteventhub_arch_x86vmx_intercept_handler()`, cannot access XMHF
 variables like VCPU. I think maybe this is code in SMM. For now we should try
-to disable TPM or write a fake int15 EAX=0xbb00 handler.
+to disable TPM or write a fake int1a EAX=0xbb00 handler.
 
 ### Disable TPM in Windows
 

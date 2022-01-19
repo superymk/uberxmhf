@@ -95,14 +95,6 @@ CODE
     .long 0x00000008 // CS
     .long _ap_clear_pipe - _ap_bootstrap_start + 0x10000 // entry point
     _mle_join_end:
-    _tpm_experiment:
-    .long 0xdeadbeef
-    .long 0xdeadbeef
-    .long 0xdeadbeef
-    .long 0xdeadbeef
-    .long 0xdeadbeef
-    .long 0xdeadbeef
-    .long 0xdeadbeef
     .align 16
   ap_bootstrap_bypassdata:
       movw $0x1000, %ax
@@ -111,40 +103,6 @@ CODE
       movw $0xFFFF, %sp
       movw $0x4000, %ax
       movw %ax, %ss
-
-      movl $0x1, %eax
-      cpuid
-      shr $24, %ebx
-      cmpl $0x1, %ebx
-      jnz 1f
-      movl $0xbb00, %eax
-      movl $0xbeefdead, %ebx
-      movl $0xbeefdead, %ecx
-      movl $0xbeefdead, %edx
-      movl $0xbeefdead, %esi
-      movl $0xbeefdead, %edi
-      int $0x1a
-      jb 2f
-      movl $_tpm_experiment-_ap_bootstrap_start+4*6, %ebp
-      movl $0, %cs:(%ebp)
-      jmp 3f
-    2:
-      movl $_tpm_experiment-_ap_bootstrap_start+4*6, %ebp
-      movl $1, %cs:(%ebp)
-    3:
-      movl $_tpm_experiment-_ap_bootstrap_start+4*0, %ebp
-      movl %eax, %cs:(%ebp)
-      movl $_tpm_experiment-_ap_bootstrap_start+4*1, %ebp
-      movl %ebx, %cs:(%ebp)
-      movl $_tpm_experiment-_ap_bootstrap_start+4*2, %ebp
-      movl %ecx, %cs:(%ebp)
-      movl $_tpm_experiment-_ap_bootstrap_start+4*3, %ebp
-      movl %edx, %cs:(%ebp)
-      movl $_tpm_experiment-_ap_bootstrap_start+4*4, %ebp
-      movl %esi, %cs:(%ebp)
-      movl $_tpm_experiment-_ap_bootstrap_start+4*5, %ebp
-      movl %edi, %cs:(%ebp)
-    1:
 
       movw $0x0002, %si
 

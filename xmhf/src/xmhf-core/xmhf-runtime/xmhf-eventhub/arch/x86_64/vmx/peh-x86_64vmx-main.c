@@ -929,6 +929,11 @@ if (0) {
 		}
 		break;
 
+		case 37: {
+			// monitor trap flag
+			printf(" monitor trap");
+		}
+		break;
 
 		default:{
 			if (vcpu->vmcs.control_VM_entry_controls & (1U << 9)) {

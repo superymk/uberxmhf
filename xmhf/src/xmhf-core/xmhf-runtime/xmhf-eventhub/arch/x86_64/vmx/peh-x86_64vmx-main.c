@@ -287,6 +287,7 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 	if ((r->eax & 0xff00) == 0xbb00) {
 		if ((r->eax & 0xff) == 0x00) {
 			// TCG_StatusCheck, return 0x23 (TCG_PC_TPM_NOT_PRESENT)
+			/*
 			r->rax = 0;
 			r->eax = 0x23U;
 			r->rbx = 0;
@@ -295,14 +296,15 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 			r->rdx = 0;
 			r->rsi = 0;
 			r->rdi = 0;
-			printf("\nTCG_StatusCheck");
+			*/
+			printf("\nTCG_StatusCheck, no modify");
 		} else {
-			u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
-			gueststackregion[2] |= (u16)EFLAGS_CF;
+//			u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
+//			gueststackregion[2] |= (u16)EFLAGS_CF;
 			printf("\nOther TCG BIOS calls");
 		}
-		vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
-		return;
+//		vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
+//		return;
 	}
 
 	//get IP and CS of the original INT 15h handler

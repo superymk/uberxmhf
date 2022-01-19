@@ -239,11 +239,80 @@ Test in QEMU with TPM 1.2
 
 Still, for Windows 10 and QEMU only tested using BIOS with disabled SMM.
 
+### Second 0xbb00 call
+
+Git `a9fa84c67` serial `20220118201703` shows QEMU behavior when TPM is hided
+by XMHF. The launch is paused manually. There are 4 0xbb00 calls in total.
+
+Git `8bb72d55a` serial `20220118202526` shows QEMU behavior when XMHF does not
+hide TPM. Serial `20220118202741` is HP behavior.
+
+For QEMU, can see that 0xbb02 and 0xbb07 are also called. The sequence is:
+`00, 07, 00, 07, 00, 02, 07, 00, 00, 02, 07`. For HP. After the second `00`
+nothing happens: `00, 07, 00`.
+
+We break at the second `00` call in QEMU and dump environment.
+
+Can use GDB script with `waitamt`:
+```
+hb arch/x86_64/vmx/peh-x86_64vmx-main.c:300
+c
+c
+d
+```
+
+The strange thing is, after hitting break point, cannot access XMHF space
+variables like `vcpu` in CPU 0 (thread 1). If change to another thread, can
+access. `info th` shows (notice "unavailable"):
+```
+(gdb) info th
+  Id   Target Id                    Frame 
+* 1    Thread 1.1 (CPU#0 [running]) _vmx_int1a_handleintercept (vcpu=<unavailable>, r=<unavailable>, OLD_AC=<unavailable>) at arch/x86_64/vmx/peh-x86_64vmx-main.c:300
+  2    Thread 1.2 (CPU#1 [running]) 0x00000000102089f8 in xmhf_smpguest_arch_initialize (vcpu=0x10248f4c <g_vcpubuffers+5932>) at arch/x86_64/smpg-x86_64.c:86
+  3    Thread 1.3 (CPU#2 [running]) 0x00000000102089ff in xmhf_smpguest_arch_initialize (vcpu=0x1024a678 <g_vcpubuffers+11864>) at arch/x86_64/smpg-x86_64.c:86
+  4    Thread 1.4 (CPU#3 [running]) 0x00000000102089f8 in xmhf_smpguest_arch_initialize (vcpu=0x1024bda4 <g_vcpubuffers+17796>) at arch/x86_64/smpg-x86_64.c:86
+(gdb) 
+```
+
+For some reason, this happens exactly when `int 1ah 0xbb??` calls take place?
+We can ignore this for now, just jump back to guest mode and then can access
+memory.
+
+Updated git: `b8616fad7`
+Updated gdb script:
+```
+d
+hb arch/x86_64/vmx/peh-x86_64vmx-main.c:300
+c
+c
+d
+hb *0x1000
+hb *0x1000 + 0x07c0 * 16
+c
+```
+
+Can see at this point that `0x8c00 - 2 = 0x8bfe` is `int $0x1a`. We are now at
+`0x8c00`. Need to dump memory to run objdump for 16-bit mode.
+
+From CS=0x7c00, we guess that code starts from 0x7c00. Also looks like code
+ends at 0x8f10 (starting there, a lot of 0x0). So dump from 0x7c00 to 0x9000,
+file is `dump1.img`. Use
+`objdump --adjust-vma=0x7c00 -b binary -m i8086 -D dump1.img` to disasm.
+Can also remove `--adjust-vma=0x7c00` to show address seen in GDB.
+
+While reverse engineering, looks like real mode memory access is using `%ds`.
+For example `mov    0x28(%edx),%ecx` accesses `$edx + 0x28 + $ds * 16`.
+
+Some annotation can be found in `dump1.s`. But for now it is more helpful to
+implement single step using XMHF.
+
 # tmp notes
 
-TODO: review TPM related BIOS calls on Windows 10 on QEMU with TPM
-TODO: reverse engineer the second 0xbb00 call
 TODO: what is "VMX-Preemption Timer" and "Monitor Trap Flag"? See i3 24.5
+	Need to check whether supported in MSR
+	<https://stackoverflow.com/questions/53771987/monitor-trap-flag-vm-exit-after-current-instruction>
+TODO: reverse engineer the second 0xbb00 call (maybe read Windows Internals)
 TODO: HP stucks at when APs are not awake. Can use APs to send NMI to CPU 0
 TODO: Can consider reading debug commands from serial port
+TODO: Reading about TXT, DRTM, SRTM
 

@@ -219,7 +219,7 @@ static void _vmx_initVT(VCPU *vcpu){
 static void	_vmx_int15_initializehook(VCPU *vcpu){
 	//we should only be called from the BSP
 	HALT_ON_ERRORCOND(vcpu->isbsp);
-	/*
+	
 	{
 		u8 *bdamemory = (u8 *)0x4AC;				//use BDA reserved memory at 0040:00AC
 		
@@ -247,7 +247,7 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[0]=0x00AC;
 		ivt_int15[1]=0x0040;					
 	}
-*/
+
 	/* For debugging, capture all BIOS interrupts */
 #define CAPTURE_BIOS(OLD_AC, OLD_54) \
 	{\
@@ -266,7 +266,7 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[1]=0x0040;\
 	}
 
-	CAPTURE_BIOS(0xac, 0x68)
+	CAPTURE_BIOS(0xcc, 0x68)
 //	CAPTURE_BIOS(0xbc, 0x50)
 //	CAPTURE_BIOS(0xc4, 0x58)
 //	CAPTURE_BIOS(0xcc, 0x5c)

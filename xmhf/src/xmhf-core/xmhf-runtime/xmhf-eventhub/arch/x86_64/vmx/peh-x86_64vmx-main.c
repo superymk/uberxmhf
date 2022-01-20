@@ -704,6 +704,13 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
 		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
+		static int count = 0;
+		if ((r->eax & 0xffffU) == 0xbb00U) {
+			count++;
+			if (count == 2) {
+				vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
+			}
+		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
 				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
 		printf(" EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",

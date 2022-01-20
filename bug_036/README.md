@@ -306,11 +306,74 @@ For example `mov    0x28(%edx),%ecx` accesses `$edx + 0x28 + $ds * 16`.
 Some annotation can be found in `dump1.s`. But for now it is more helpful to
 implement single step using XMHF.
 
+### Using Hypervisor Features to debug Guest OS
+
+Ref:
+<https://stackoverflow.com/questions/53771987/monitor-trap-flag-vm-exit-after-current-instruction>
+
+* "24.5.1 VMX-Preemption Timer": Check “activate VMX-preemption timer”
+  VM-execution control
+* "24.5.2 Monitor Trap Flag": Check “monitor trap flag” VM-execution control
+
+VM-execution control are defined in "23.6"
+* Monitor trap flag is bit 27 of Primary Processor-Based VM-Execution Controls
+* Activate VMX-preemption timer is bit 6 of Pin-Based VM-Execution Controls
+
+After looking up previous logs, looks like the same for QEMU and HP
+```
+rdmsr(IA32_VMX_PINBASED_CTLS_MSR)  = 0x0000007f00000016
+rdmsr(IA32_VMX_PROCBASED_CTLS_MSR) = 0xfff9fffe0401e172
+rdmsr(IA32_VMX_MISC_MSR)           = 0x0000000020000065
+```
+
+We can see that both features should be supported. So let's try them.
+
+After setting "monitor trap flag", will get intercept 37. The intercept handler
+does not need to do anything. Implemented in git `a0e783305`. However the
+execution will be very slow. HP and QEMU can run this.
+
+To use the preemption timer, need to add the "VMX-preemption timer value" VMCS
+field (Encoding = 0x482E). According to "A.6 MISCELLANEOUS DATA" and the value
+of `IA32_VMX_MISC_MSR`, 1 in preemption timer is `(1 << 5) = 32` in timestamp
+counter (TSC). Code in git `70aaa7ff2`. The preemption timer fires frequently
+in QEMU. HP also works well.
+
+During testing preemption timer, see the #MC behavior once in HP:
+serial `20220119205342`. Normal execution on HP: serial `20220119205909`.
+Both these exceptions seem to happen at the same place. Also note that after
+the machine halts, the preemption timer no longer works.
+
+Looks like at this point, the monitor trap is more helpful.
+
+In git `d9c022cc9`, enable monitor trap later. Serial is `20220119211911`.
+We can still see the last non-monitor-trap intercept at `CS:IP=0xf000:0xe211`
+at line 4105. Looks like this call returns to user mode soon at
+`0xf000:0x0000fea7 -> 0x07c0:0x00001000`. Then there's soon the dead loop.
+
+`0xf000:0x0000fea8` looks like BIOS' timer interrupt. We should remove it.
+The block to be removed is in `results/20220119211911_timer{,2,3}`. Use
+the following shell script to remove timer interrupts.
+
+```
+PATTERN="`tr $'\n' '/' < results/20220119211911_timer`"
+PATTERN2="`tr $'\n' '/' < results/20220119211911_timer2`"
+PATTERN3="`tr $'\n' '/' < results/20220119211911_timer3`"
+tail -n +4106 results/20220119211911 | dos2unix | tr $'\n' '/' | \
+	sed "s|$PATTERN||g" | sed "s|$PATTERN2||g" | sed "s|$PATTERN3||g" | \
+	tr '/' $'\n' | grep '0x07c0:0x00001000' -A 10000000
+```
+
+Can see that the infinite loop happens when `0x1085` calls `0xe83`. Then this
+function never returns (e.g. `ea7` cannot be found).
+
+We now have a good instruction flow. Next steps are:
+* Write better program to remove timer code
+* Print registers
+* Compare with QEMU instruction flow
+* Read "Windows Internals"
+
 # tmp notes
 
-TODO: what is "VMX-Preemption Timer" and "Monitor Trap Flag"? See i3 24.5
-	Need to check whether supported in MSR
-	<https://stackoverflow.com/questions/53771987/monitor-trap-flag-vm-exit-after-current-instruction>
 TODO: reverse engineer the second 0xbb00 call (maybe read Windows Internals)
 TODO: HP stucks at when APs are not awake. Can use APs to send NMI to CPU 0
 TODO: Can consider reading debug commands from serial port

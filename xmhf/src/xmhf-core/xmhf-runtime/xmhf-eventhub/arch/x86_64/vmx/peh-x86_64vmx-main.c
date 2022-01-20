@@ -935,6 +935,13 @@ if (0) {
 		}
 		break;
 
+		case 52: {
+			// preemption timer
+			printf(" preemption timer 0x%08x",
+					(u32)vcpu->vmcs.preemption_timer_value);
+		}
+		break;
+
 		default:{
 			if (vcpu->vmcs.control_VM_entry_controls & (1U << 9)) {
 				/* x86-64 mode */

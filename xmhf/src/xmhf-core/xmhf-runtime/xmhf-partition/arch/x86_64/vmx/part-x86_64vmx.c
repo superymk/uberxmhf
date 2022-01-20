@@ -511,7 +511,9 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	//activate secondary processor controls
 	vcpu->vmcs.control_VMX_seccpu_based = vcpu->vmx_msrs[INDEX_IA32_VMX_PROCBASED_CTLS2_MSR];
 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 31); //activate secondary processor controls
-	vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);	// monitor trap flag
+	vcpu->vmcs.control_VMX_pin_based |= (1 << 6);
+	vcpu->vmcs.preemption_timer_value = 0x10000;
+	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);	// monitor trap flag
 
 	//setup unrestricted guest
 	vcpu->vmcs.control_VMX_seccpu_based |= (1 << 7); //enable unrestricted guest

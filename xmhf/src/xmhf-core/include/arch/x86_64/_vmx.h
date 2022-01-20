@@ -517,6 +517,7 @@ struct _vmx_vmcsfields {
   unsigned int  guest_SMBASE;
 #endif /* !__DEBUG_QEMU__ */
   unsigned int  guest_SYSENTER_CS;
+  unsigned int  preemption_timer_value;
   // Natural 16-bit Guest-State fields
   unsigned int  guest_ES_selector;
   unsigned int  guest_CS_selector;

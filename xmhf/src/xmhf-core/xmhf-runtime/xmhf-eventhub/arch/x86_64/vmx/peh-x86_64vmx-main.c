@@ -955,7 +955,6 @@ if (0) {
 					/* vector = 3, software interrupt, valid */
 					HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_interrupt_information == 0x80000603);
 					hit_breakpoint(vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
-					printf(" breakpoint hit");
 					handle_breakpoint_hit(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 					break;
 

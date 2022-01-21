@@ -681,6 +681,122 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 }
 
 
+#define INT3 ((u8)0xcc)
+#define MAX_BP 10
+#define ENABLE_MONITOR_TRAP do { \
+	vcpu->vmcs.control_VMX_cpu_based |= (1 << 27); \
+	} while(0)
+#define DISABLE_MONITOR_TRAP do { \
+	vcpu->vmcs.control_VMX_cpu_based &= ~(1 << 27); \
+	} while(0)
+
+struct bp_info {
+	u8 valid;
+	u8 old;
+	u16 cs;
+	u64 rip;
+} bps[MAX_BP] = {};
+
+static void set_breakpoint(u16 cs, u64 rip) {
+	u64 addr = (u64)cs * 16 + rip;
+	u8 *ptr = (u8 *)addr;
+	int i;
+	if (*ptr == INT3) {
+		/* re-set break point, make sure break point exists and do nothing */
+		for (i = 0; i < MAX_BP; i++) {
+			if (bps[i].valid && bps[i].cs == cs && bps[i].rip == rip) {
+				break;
+			}
+		}
+		HALT_ON_ERRORCOND(i < MAX_BP);
+	} else {
+		for (i = 0; i < MAX_BP; i++) {
+			if (!bps[i].valid) {
+				break;
+			}
+		}
+		HALT_ON_ERRORCOND(i < MAX_BP);	/* overflow of bps */
+		bps[i].valid = 1;
+		bps[i].old = *ptr;
+		bps[i].cs = cs;
+		bps[i].rip = rip;
+		*ptr = INT3;
+	}
+}
+
+static void hit_breakpoint(u16 cs, u64 rip) {
+	u64 addr = (u64)cs * 16 + rip;
+	u8 *ptr = (u8 *)addr;
+	int i;
+	HALT_ON_ERRORCOND(*ptr == INT3);
+	for (i = 0; i < MAX_BP; i++) {
+		if (bps[i].valid && bps[i].cs == cs && bps[i].rip == rip) {
+			break;
+		}
+	}
+	HALT_ON_ERRORCOND(i < MAX_BP);	/* overflow of bps */
+	bps[i].valid = 0;
+	*ptr = bps[i].old;
+}
+
+static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;
+	(void)r;
+	if (cs == 0xf000) {
+		/* Skip timer intercepts */
+		u16 timer_rips[] = {0xfea8, 0xfeaa, 0xfeab, 0xfeac, 0xfead, 0xfeb0,
+							0xfeb2, 0xfeb6, 0xfeb8, 0xfebe, 0xfecb, 0xfecf,
+							0xfed4, 0xfed6, 0xfeda, 0xfedc, 0xfede, 0xfee1,
+							0xfee2, 0xfee7, 0xfee9, 0xfeeb, 0xfeed, 0xfeee,
+							0xfeef, 0xfef0, 0xfef2, 0xff53};
+		for (u32 i = 0; i < sizeof(timer_rips) / sizeof(timer_rips[0]); i++) {
+			if (rip == timer_rips[i]) {
+				return;
+			}
+		}
+		printf("Unknown CS:RIP = 0x%04x:0x%016llx", cs, rip);
+		HALT_ON_ERRORCOND(0);
+	}
+	HALT_ON_ERRORCOND(cs == 0x7c0);
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	switch (rip) {
+	case 0xe83:
+		DISABLE_MONITOR_TRAP;
+		set_breakpoint(0x7c0, 0xe9d);
+		set_breakpoint(0x7c0, 0xea2);
+		break;
+	case 0xea0:
+		DISABLE_MONITOR_TRAP;
+		set_breakpoint(0x7c0, 0xe9d);
+		break;
+	default:
+		/* nop */
+		break;
+	}
+}
+
+static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;
+	(void)r;
+	HALT_ON_ERRORCOND(cs == 0x7c0);
+	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	switch (rip) {
+	case 0x1068:
+		ENABLE_MONITOR_TRAP;
+		break;
+	case 0xe9d:
+		ENABLE_MONITOR_TRAP;
+		break;
+	case 0xea2:
+		ENABLE_MONITOR_TRAP;
+		break;
+	default:
+		HALT_ON_ERRORCOND(0);
+		break;
+	}
+}
 
 //---hvm_intercept_handler------------------------------------------------------
 u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *r){
@@ -699,9 +815,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 
 	if (vcpu->vmcs.info_vmexit_reason == 37) {
 		// monitor trap
-		printf("\nMT%x: 0x%04x:0x%04llx CX=0x%08x DI=0x%08x SI=0x%08x",
-				vcpu->id, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP,
-				r->ecx, r->edi, r->esi);
+		handle_monitor_trap(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+	} else if (vcpu->vmcs.info_vmexit_reason == 0 && ((u32)vcpu->vmcs.info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 3) {
+		/* Do nothing */;
 	} else {
 		printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 	}
@@ -718,7 +834,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				// enable monitor trap
 				// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
 				// Set breakpoint
-				*((u8 *)0x7c00 + 0xea6) = 0xcc;
+				set_breakpoint(0x7c0, 0x1068);
 			}
 		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
@@ -838,8 +954,9 @@ if (0) {
 				case 0x03:	// INT3
 					/* vector = 3, software interrupt, valid */
 					HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_interrupt_information == 0x80000603);
-					printf("\nBreakpoint hit");
-					HALT();
+					hit_breakpoint(vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+					printf(" breakpoint hit");
+					handle_breakpoint_hit(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 					break;
 
 				default:

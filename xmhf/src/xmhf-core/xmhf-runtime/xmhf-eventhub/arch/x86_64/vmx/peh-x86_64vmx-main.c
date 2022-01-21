@@ -697,7 +697,14 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+	if (vcpu->vmcs.info_vmexit_reason == 37) {
+		// monitor trap
+		printf("\nMT%x: 0x%04x:0x%04llx CX=0x%08x DI=0x%08x SI=0x%08x",
+				vcpu->id, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP,
+				r->ecx, r->edi, r->esi);
+	} else {
+		printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+	}
 	if (vcpu->vmcs.info_vmexit_reason == 10) {
 		/* CPUID */
 		printf(" CPUID 0x%08lx", r->eax);
@@ -708,7 +715,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		if ((r->eax & 0xffffU) == 0xbb00U) {
 			count++;
 			if (count == 2) {
-				vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
+				// enable monitor trap
+				// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
+				// Set breakpoint
+				*((u8 *)0x7c00 + 0xea6) = 0xcc;
 			}
 		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
@@ -825,6 +835,13 @@ if (0) {
 					#endif // __XMHF_VERIFICATION__
 					break;
 
+				case 0x03:	// INT3
+					/* vector = 3, software interrupt, valid */
+					HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_interrupt_information == 0x80000603);
+					printf("\nBreakpoint hit");
+					HALT();
+					break;
+
 				default:
 					printf("\nVMEXIT-EXCEPTION:");
 					printf("\ncontrol_exception_bitmap=0x%08lx",
@@ -938,7 +955,7 @@ if (0) {
 
 		case 37: {
 			// monitor trap flag
-			printf(" monitor trap");
+			// printf(" monitor trap");
 		}
 		break;
 

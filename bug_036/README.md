@@ -372,6 +372,112 @@ We now have a good instruction flow. Next steps are:
 * Compare with QEMU instruction flow
 * Read "Windows Internals"
 
+We try to run `d9c022cc9` on QEMU. After enabling the monitor trap looks like
+the CPU enters the infinite loop. The two infinite loops should be similar.
+
+### Source of bootstrap code
+
+By dumping the first NTFS partition from QEMU, can see that `dump1.img` is
+basically the same as first 0x1400 bytes of this NTFS partition. The difference
+are in 0x220 - 0x260 and 0x280 - 0x2a0. Diff command used:
+```diff
+$ diff <(hexdump dump1.img -C) <(sudo hexdump -C /dev/nbd0p1 | head -n 307)
+1,2c1,2
+< 00000000  eb 52 90 4e 54 46 53 20  20 20 20 00 02 08 80 20  |.R.NTFS    .... |
+< 00000010  00 b8 5a 00 00 f8 00 00  3f 00 ff 00 00 08 00 00  |..Z.....?.......|
+---
+> 00000000  eb 52 90 4e 54 46 53 20  20 20 20 00 02 08 00 00  |.R.NTFS    .....|
+> 00000010  00 00 00 00 00 f8 00 00  3f 00 ff 00 00 08 00 00  |........?.......|
+35,38c35,37
+< 00000220  00 00 01 00 00 00 08 2c  00 00 08 30 00 00 08 34  |.......,...0...4|
+< 00000230  00 00 e8 2d 00 00 40 32  00 00 90 36 00 00 08 38  |...-..@2...6...8|
+< 00000240  00 00 00 00 00 00 08 3c  00 00 08 4c 00 00 08 2c  |.......<...L...,|
+< 00000250  00 00 00 10 00 00 02 00  00 00 05 00 4e 00 54 00  |............N.T.|
+---
+> 00000220  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+> *
+> 00000250  00 00 00 00 00 00 e9 c0  00 90 05 00 4e 00 54 00  |............N.T.|
+41,42c40,41
+< 00000280  4e 00 58 00 54 00 00 04  00 00 00 28 00 00 00 10  |N.X.T......(....|
+< 00000290  00 00 01 00 00 00 08 00  00 00 0d 0a 41 6e 20 6f  |............An o|
+---
+> 00000280  4e 00 58 00 54 00 00 00  00 00 00 00 00 00 00 00  |N.X.T...........|
+> 00000290  00 00 00 00 00 00 00 00  00 00 0d 0a 41 6e 20 6f  |............An o|
+308c307
+< 00001400
+---
+> 00002000  46 49 4c 45 30 00 03 00  51 15 10 00 00 00 00 00  |FILE0...Q.......|
+$ 
+```
+
+This region is the same between HP and QEMU's first partition, except
+0x48 - 0x50 (Volume Serial Number, see <https://en.wikipedia.org/wiki/NTFS>).
+
+### Loop instruction
+
+Now we need to understand how QEMU exits the `loop` instruction at `ea0`.
+
+We can use `loop2.gdb` to see registers before executing the `loop`
+instruction. GDB results are in `20220120120459gdb` and `20220120121211gdb`.
+Can see that result across multiple runs are deterministic. The loop
+instruction exits when entered with ECX = 1. This follows Intel's manual.
+
+In this program, RCX starts from 32768 (0x8000). Then `-= 63`, then `-= 64`
+forever until reaching 1. We should print at least ECX at e9d.
+Also, in QEMU, RSI is `[0x3808] + [0x2060] * 512`, RDI increases from 0 to
+0x8000, with increment of 64.
+
+Can also see that the increment of 64 is defined by `$0x2060` and `$0x2020`
+in this function:
+```
+     e83:	60                   	pusha  
+     e84:	8b 36 18 20          	mov    0x2018,%si
+     e88:	26 8a 05             	mov    %es:(%di),%al
+     e8b:	88 04                	mov    %al,(%si)
+     e8d:	47                   	inc    %di
+     e8e:	46                   	inc    %si
+     e8f:	66 ff 06 14 20       	incl   0x2014
+     e94:	81 fe 60 20          	cmp    $0x2060,%si
+     e98:	75 06                	jne    0xea0
+     e9a:	e8 5b 00             	call   0xef8
+     e9d:	be 20 20             	mov    $0x2020,%si
+     ea0:	e2 e6                	loop   0xe88
+     ea2:	89 36 18 20          	mov    %si,0x2018
+     ea6:	61                   	popa   
+     ea7:	c3                   	ret    
+```
+
+So in this function:
+* CS = DS = 0x07c0
+* ES = 0x2000
+* CX = number of bytes remaining
+* DI = number of bytes processed
+* ES:DI = location to hash?
+* SI: number of bytes in current block - 0x2020
+* DS:SI = location to store current block (0x2020 - 0x2060)
+
+However, debugging with monitor trap on is very slow.
+* On QEMU, takes around 6 mins to process 0x1000 bytes
+
+Should think of another way to set breakpoints. Should be able to use INT3
+instruction and exception bitmap, see Intel volume 3
+"24.2 OTHER CAUSES OF VM EXITS"
+
+It looks like there is one possibility:
+* VMX preemption timer does not work because the CPU halts
+* Monitor trap looks like infinite loop because it is very slow
+* Why does the CPU halt? Maybe the hash verification failed.
+* However, I do not see a lot of `hlt` instructions in `dump1.s`
+
+If we are willing to wait, we can see full HP logs with only monitor trap.
+Serial `20220120223019.xz` (compressed 3.0M, original 189M). We can see that
+`e83` is called from `1085` two times. It now becomes necessary to be able to
+set break points, or debugging consumes too much time and memory (for log).
+
+TODO: what is being hashed?
+TODO: test more on preemption timer
+TODO: be able to set break point in VM
+
 # tmp notes
 
 TODO: reverse engineer the second 0xbb00 call (maybe read Windows Internals)

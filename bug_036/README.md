@@ -474,9 +474,51 @@ Serial `20220120223019.xz` (compressed 3.0M, original 189M). We can see that
 `e83` is called from `1085` two times. It now becomes necessary to be able to
 set break points, or debugging consumes too much time and memory (for log).
 
-TODO: what is being hashed?
-TODO: test more on preemption timer
-TODO: be able to set break point in VM
+### INT3 break points
+
+Intel volume 3 "6.3.1 External Interrupts" says INT3 will generate exception 3.
+"23.6.3 Exception Bitmap" and "24.2 OTHER CAUSES OF VM EXITS" says can change
+exception bitmap to intercept this exception. By testing, in QEMU currently
+nothing will cause exception 3.
+
+In git `aebb61037`, some breakpoint function is supported. QEMU serial in
+`20220121134648`. We can see that `e83` is called 13 times. In the first 12
+times, ECX = 0x8000. In the last time, ECX = 5156. After that, `ea8` is called,
+and returns at `ef7`. Then `int    $0x1a` is called in `10c0`. Looks like
+the problem with HP happens during this process. `ea8` contains the `inc`
+instruction at `eb2` (my guess is communication to TPM), which may cause the
+problem in HP.
+
+Two runs on HP are `20220121143120` and `20220121143221`. Can see that the
+problem happens when `e83` is called. The problem is not deterministic. In
+`20220121143120`, looks like the problem happens during hypervisor mode.
+
+In `92c3d966d`, we halt all APs to make sure APs are not causing troubles. We
+also remove printf lock to make sure deadlock does not block error messages.
+Since only the BSP is running, most messages are still readable.
+
+HP run resuls are `20220121145944` and `20220121150028` and `20220121150126`.
+Can see that this time CPU 0 always receives the #MC exception. We believe that
+in previous executions the exception is not printed because of deadlock on
+printf.
+
+Things to consider:
+* Is it an exception or an interrupt?
+* How do we know the source of this exception / interrupt?
+	* Read MSRs (ref: <http://www.ctyme.com/intr/rb-0599.htm>)
+* Can we disable maskable interrupts in hypervisor code?
+* If force return `TCG_PC_TPM_NOT_PRESENT` in `TCG_StatusCheck`, what will be
+  the problem? (see `8d3e47171..891c35c82`)
+* Is it possible that ignoring is the correct choice?
+	* Read BIOS' handler for this interrupt
+* May it be related to `<unavailable>` in QEMU GDB?
+
+Previous ideas
+* What is being hashed?
+	* Now we know the problem is likely related to Hypervisor, so 
+* Test more on preemption timer
+	* We already know that CPU stucks in hypervisor mode, so no need to test
+	  now.
 
 # tmp notes
 

@@ -249,6 +249,8 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 				for (int i = 0x400; i < 0x480; i++) {
 					read_mc_msr(vcpu, i);
 				}
+				// TODO: For debugging, continue running XMHF code to print intercept info
+				break;
             }
             HALT();
         }

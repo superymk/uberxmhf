@@ -743,7 +743,11 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
 	if (cs == 0xf000) {
+		printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+				vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+		return;
 		/* Skip timer intercepts */
+		/*
 		u16 timer_rips[] = {0xfea8, 0xfeaa, 0xfeab, 0xfeac, 0xfead, 0xfeb0,
 							0xfeb2, 0xfeb6, 0xfeb8, 0xfebe, 0xfecb, 0xfecf,
 							0xfed4, 0xfed6, 0xfeda, 0xfedc, 0xfede, 0xfee1,
@@ -756,6 +760,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		printf("Unknown CS:RIP = 0x%04x:0x%016llx", cs, rip);
 		HALT_ON_ERRORCOND(0);
+		*/
 	}
 	HALT_ON_ERRORCOND(cs == 0x7c0);
 	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
@@ -763,13 +768,13 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	switch (rip) {
 	case 0xe83:
 		DISABLE_MONITOR_TRAP;
-		set_breakpoint(0x7c0, 0xe9d);
+		// set_breakpoint(0x7c0, 0xe9d);
 		set_breakpoint(0x7c0, 0xea2);
 		break;
-	case 0xea0:
-		DISABLE_MONITOR_TRAP;
-		set_breakpoint(0x7c0, 0xe9d);
-		break;
+//	case 0xea0:
+//		DISABLE_MONITOR_TRAP;
+//		set_breakpoint(0x7c0, 0xe9d);
+//		break;
 	default:
 		/* nop */
 		break;
@@ -788,10 +793,11 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		for (u32 i = 0; i < 32; i++) {
 			printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
 		}
+		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
-	case 0xe9d:
-		ENABLE_MONITOR_TRAP;
-		break;
+//	case 0xe9d:
+//		ENABLE_MONITOR_TRAP;
+//		break;
 	case 0xea2:
 		ENABLE_MONITOR_TRAP;
 		break;

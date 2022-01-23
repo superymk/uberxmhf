@@ -59,12 +59,10 @@ void emhfc_putchar(int ch, void *arg)
 
 void emhfc_putchar_linelock(void *arg)
 {
-  (void)arg;
-  //spin_lock(arg);
+  spin_lock(arg);
 }
 
 void emhfc_putchar_lineunlock(void *arg)
 {
-  (void)arg;
-  //spin_unlock(arg);
+  spin_unlock(arg);
 }

@@ -52,6 +52,10 @@
 
 #include <xmhf.h>
 
+extern void *emhfc_putchar_linelock_arg;
+extern void emhfc_putchar_linelock(void *arg);
+extern void emhfc_putchar_lineunlock(void *arg);
+
 //---function to obtain the vcpu of the currently executing core----------------
 // XXX: move this into baseplatform as backend
 // note: this always returns a valid VCPU pointer
@@ -189,6 +193,8 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
                 ((uintptr_t *)(r->rsp))[0] = found[2];
                 break;
             }
+
+			emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
             printf("\n[%02x]: unhandled exception %d (0x%x), halting!",
             		vcpu->id, vector, vector);

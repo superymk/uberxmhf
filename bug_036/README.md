@@ -503,6 +503,7 @@ in previous executions the exception is not printed because of deadlock on
 printf.
 
 Things to consider:
+* Is it related to other CPUs? In previous runs CPU 4 will print #GP.
 * Is it an exception or an interrupt?
 * How do we know the source of this exception / interrupt?
 	* Read MSRs (ref: <http://www.ctyme.com/intr/rb-0599.htm>)
@@ -520,10 +521,68 @@ Previous ideas
 	* We already know that CPU stucks in hypervisor mode, so no need to test
 	  now.
 
+### Disable other CPUs
+
+If we do not initialize other CPUs in XMHF, git in `76e18929e`. This is not a
+clean hack, though. HP receives another error: Intercept 3 at
+`0xf000:0x0000fea8`. This is the address of the suspected timer BIOS call.
+Serial `20220122221525` and `20220122221631`.
+
+We check the IVT. Git `eb621f1f1`, serial `20220122223951`. Can see that
+`0xfea8` is indeed timer interrupt `08h`. At this point we should stick to
+enabling other CPUs (probably halt them).
+
+### Mask interrupts in hypervisor code
+
+The possible causes of execution of interrupt/exception handler 18 are:
+* Interrupt (Intel v3 "6.3 SOURCES OF INTERRUPTS")
+	* External (hardware generated) interrupts.
+	* Software-generated interrupts.
+* Exception (Intel v3 "6.4 SOURCES OF EXCEPTIONS")
+
+We now rule out the possibility of interrupt:
+* It cannot be software interrupt, because we are running XMHF code, and we
+  are not issueing software interrupts.
+* It cannot be NMI, because NMI only happens at vector 2.
+* Note that during the exception, RFLAGS = 0x2, so interrupts are disabled.
+
+So we believe this is a legitimate machine check exception. Should read Intel
+v3 "6.4.3 Machine-Check Exceptions"
+
+For example, in `20220122223951`, RIP stops at `0x10214e30`. At exception,
+AX=0x5000, DX=0x5085. This is after the `in` instruction. Is it possible that
+Windows / TPM also uses this port, which causes the trouble?
+
+```
+0000000010214e1f <inb>:
+        static inline unsigned char inb (u32 port){ 
+    10214e1f:   55                      push   %rbp
+    10214e20:   48 89 e5                mov    %rsp,%rbp
+    10214e23:   48 83 ec 18             sub    $0x18,%rsp
+    10214e27:   89 7d ec                mov    %edi,-0x14(%rbp)
+          __asm__ __volatile__ ("inb %w1,%0":"=a" (_v):"Nd" ((u16)port));
+    10214e2a:   8b 45 ec                mov    -0x14(%rbp),%eax
+    10214e2d:   89 c2                   mov    %eax,%edx
+    10214e2f:   ec                      in     (%dx),%al
+    10214e30:   88 45 ff                mov    %al,-0x1(%rbp)
+          return _v;
+    10214e33:   0f b6 45 ff             movzbl -0x1(%rbp),%eax
+        }
+    10214e37:   c9                      leave  
+    10214e38:   c3                      ret    
+```
+
+TODO: write stack traceback program
+TODO: read `6.4.3 Machine-Check Exceptions`, ch15, <http://www.ctyme.com/intr/rb-0599.htm>
+TODO: If force return `TCG_PC_TPM_NOT_PRESENT` in `TCG_StatusCheck`, what will be the problem? (see `8d3e47171..891c35c82`)
+TODO: Is it possible that ignoring is the correct choice? Read BIOS' handler for this interrupt
+TODO: May it be related to `<unavailable>` in QEMU GDB?
+
 # tmp notes
+
+TODO: Reading about TXT, DRTM, SRTM
 
 TODO: reverse engineer the second 0xbb00 call (maybe read Windows Internals)
 TODO: HP stucks at when APs are not awake. Can use APs to send NMI to CPU 0
 TODO: Can consider reading debug commands from serial port
-TODO: Reading about TXT, DRTM, SRTM
 

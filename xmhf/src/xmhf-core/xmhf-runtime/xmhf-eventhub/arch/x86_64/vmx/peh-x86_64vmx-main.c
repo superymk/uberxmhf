@@ -785,6 +785,9 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	switch (rip) {
 	case 0x1068:
 		ENABLE_MONITOR_TRAP;
+		for (u32 i = 0; i < 32; i++) {
+			printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
+		}
 		break;
 	case 0xe9d:
 		ENABLE_MONITOR_TRAP;

@@ -240,7 +240,7 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 				read_mc_msr(vcpu, 0x17a);
 				read_mc_msr(vcpu, 0x17b);
 				read_mc_msr(vcpu, 0x4d0);
-				for (int i = 0x400; i < 0x420; i++) {
+				for (int i = 0x400; i < 0x480; i++) {
 					read_mc_msr(vcpu, i);
 				}
             }

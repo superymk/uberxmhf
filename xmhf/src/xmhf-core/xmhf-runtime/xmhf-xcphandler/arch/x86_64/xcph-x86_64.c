@@ -113,6 +113,23 @@ u8 * xmhf_xcphandler_arch_get_idt_start(void){
 extern uint8_t _begin_xcph_table[];
 extern uint8_t _end_xcph_table[];
 
+void read_mc_msr(VCPU *vcpu, u32 number) {
+	struct regs r;
+	r.rcx = number;
+	if (rdmsr_safe(&r)) {
+		/* Fail */
+		printf("\nCPU(0x%02x): MSR[0x%04x] = 0x ???????? ????????",
+				vcpu->id, number);
+	} else {
+		printf("\nCPU(0x%02x): MSR[0x%04x] = 0x %08x %08x",
+				vcpu->id, number, r.edx, r.eax);
+	}
+//#define IA32_MCG_CAP     0x179
+//#define IA32_MCG_STATUS  0x17a
+//#define IA32_MCG_CTL     0x17b
+//#define IA32_MCG_EXT_CTL 0x4d0
+}
+
 //EMHF exception handler hub
 void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
     VCPU *vcpu;
@@ -216,9 +233,16 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
                 get_cpu_vendor_or_die() == CPU_VENDOR_INTEL) {
                 xmhf_baseplatform_arch_x86_64vmx_getVMCS(vcpu);
                 xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(vcpu);
-            } else {
+            } else if (vector == CPU_EXCEPTION_MC) {
             	xmhf_baseplatform_arch_x86_64vmx_getVMCS(vcpu);
             	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+				read_mc_msr(vcpu, 0x179);
+				read_mc_msr(vcpu, 0x17a);
+				read_mc_msr(vcpu, 0x17b);
+				read_mc_msr(vcpu, 0x4d0);
+				for (int i = 0x400; i < 0x420; i++) {
+					read_mc_msr(vcpu, i);
+				}
             }
             HALT();
         }

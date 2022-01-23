@@ -828,6 +828,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	} else if (vcpu->vmcs.info_vmexit_reason == 0 && ((u32)vcpu->vmcs.info_vmexit_interrupt_information & INTR_INFO_VECTOR_MASK) == 3) {
 		/* Do nothing */;
 	} else {
+		if (vcpu->vmcs.info_vmexit_reason == VMX_VMEXIT_INIT) {
+			wbinvd();
+		}
 		printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 10) {

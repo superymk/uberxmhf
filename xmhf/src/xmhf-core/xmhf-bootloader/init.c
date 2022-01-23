@@ -118,7 +118,6 @@ void dealwithMP(void){
         printf("\nFatal error with SMP detection. Halting!");
         HALT();
     }
-    pcpus_numentries = 1;
 }
 
 

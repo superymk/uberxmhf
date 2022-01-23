@@ -216,6 +216,9 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
                 get_cpu_vendor_or_die() == CPU_VENDOR_INTEL) {
                 xmhf_baseplatform_arch_x86_64vmx_getVMCS(vcpu);
                 xmhf_baseplatform_arch_x86_64vmx_dump_vcpu(vcpu);
+            } else {
+            	xmhf_baseplatform_arch_x86_64vmx_getVMCS(vcpu);
+            	printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
             }
             HALT();
         }

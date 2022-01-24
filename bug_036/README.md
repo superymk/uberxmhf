@@ -572,10 +572,165 @@ Windows / TPM also uses this port, which causes the trouble?
     10214e38:   c3                      ret    
 ```
 
-TODO: write stack traceback program
-TODO: read `6.4.3 Machine-Check Exceptions`, ch15, <http://www.ctyme.com/intr/rb-0599.htm>
-TODO: If force return `TCG_PC_TPM_NOT_PRESENT` in `TCG_StatusCheck`, what will be the problem? (see `8d3e47171..891c35c82`)
-TODO: Is it possible that ignoring is the correct choice? Read BIOS' handler for this interrupt
+### Stack Discipline
+
+When working with current optimization level, looks like each function starts
+with `push   %rbp` and ends with `leave; ret`. So we can reconstruct the stack
+without too many debug info. Use `read_stack.py`. We can also use `nm` to get
+a symbol table easily, and resolve addresses to function + offset.
+
+In `20220122223951`, the stack trace is:
+```
+10214e57 <dbg_x86_64_uart_putc_bare+30>
+10214e97 <dbg_x86_64_uart_putc+29>
+10214de3 <xmhf_debug_arch_putc+24>
+10246fc3 <emhfc_putchar+28>
+1022e5a0 <kvprintf+229>
+1022e1b0 <vprintf+67>
+1022e165 <printf+74>
+10208576 <xmhf_parteventhub_arch_x86_64vmx_intercept_handler+249>
+10206a5b <xmhf_parteventhub_arch_x86_64vmx_entry+40>
+```
+
+It looks like the first printf call in the intercept handler and the first inb
+call on the port. Note that in the exception handler, printf works as normal.
+So it is more likely that this #MC exception can be ignored, at least in
+hypervisor space.
+
+In `4b7e442f8`, we can see that the intercept causing the #MC exception is
+actually intercept 3 at `0xf000:0x0000fea8`. From above RIP is probably a BIOS
+call. Intercept 3 is INIT signal. Is it possible that TPM operation sets a
+timer, and sends INIT when timer expires? Also, what is the default action of
+the #MC exception in BIOS? It is possible to issue an interprocessor interrupt
+of INIT to self.
+
+This means we may need to reverse engineer the BIOS.
+
+### Machine Check Exception
+In git `cf3af8bc5`, serial `20220123122404`, we print #MC related MSRs.
+
+After reading Intel v3 "CHAPTER 15 MACHINE-CHECK ARCHITECTURE", we need to find
+`IA32_MCi_STATUS` with valid bit (MSB) set. Looks like it is `IA32_MC6_STATUS`:
+`CPU(0x00): MSR[0x0419] = 0x be000000 0100014a`
+
+In git `26d10cbe6`, serial `20220123123758`, print more MSRs just in case we
+miss something. However, looks like another CPU also has an exception, and
+output is corrupted. We add printf lock back and only release lock at beginning
+of exception handler. Git `85531f626`, serial `20220123124425`.
+
+This time, #MC happens during `spin_lock()`. Now my guess is that the #MC
+happens because hardware detects that CPU 0 is still running after INIT signal
+is received after some time. When printf does not have lock, `inb` instruction
+is slow. When printf has lock, the spin lock is slow. For CPU with ID=4, it
+receives #GP when it is halting (strange).
+
+The interesting MSRs are:
+```
+CPU(0x00): MSR[0x0179] = 0x 00000000 00000c09	IA32_MCG_CAP
+CPU(0x00): MSR[0x017a] = 0x 00000000 00000004	IA32_MCG_STATUS
+CPU(0x00): MSR[0x0418] = 0x 00000000 000001ff	IA32_MC6_CTL
+CPU(0x00): MSR[0x0419] = 0x be000000 0100014a	IA32_MC6_STATUS
+CPU(0x00): MSR[0x041a] = 0x 00000000 000f8080	IA32_MC6_ADDR
+CPU(0x00): MSR[0x041b] = 0x 00000000 a806202c	IA32_MC6_MISC
+```
+
+Use Intel v3 `15.3.2.2 IA32_MCi_STATUS MSRS`,
+`IA32_MC6_STATUS` shows that MSCOD Model Specific Error Code = 0x0100 = 256,
+MCA Error Code = 0x014a = 330. The `DisplayFamily_DisplayModel` of HP's CPU
+should be `06_25h`.
+
+We then look up 0x014a in "15.9 INTERPRETING THE MCA ERROR CODES". In
+"15.9.2 Compound Error Codes" Table 15-10 it should be Cache Hierarchy Errors.
+```
+000F 0001 RRRR TTLL
+0000 0001 0100 1010
+F = 0
+TT = G (Generic)
+LL = L2 (Level 2)
+RRRR = DWR (data write)
+{TT}CACHE{LL}_{RRRR}_ERR -> GCACHEL2_DWR_ERR
+```
+
+### WBINVD
+
+Git `017ad11f3` removes some breakpoints. We sometimes see two CPUs have
+exceptions, and output is corrupted. See serial `20220123165340`
+
+Git `b54a6de13` adds some wbinvd instructions to flush the cache, hoping to fix
+the MC exception. Serial `20220123170727`, looks like the error changes. The
+exception happens immediately after the WBINVD instruction. MSRs now become:
+```
+CPU(0x00): MSR[0x0418] = 0x 00000000 000001ff
+CPU(0x00): MSR[0x0419] = 0x f2000000 80000106
+CPU(0x00): MSR[0x041a] = 0x 00000000 00037cca
+CPU(0x00): MSR[0x041b] = 0x 00000000 a8000011
+
+000F 0001 RRRR TTLL
+0000 0001 0000 0110
+F = 0
+TT = D (Data)
+LL = L2
+RRRR = ERR (Generic Error)
+```
+
+An interesting thing is that in git `017ad11f3`, CPU 0x04 will always have an
+exception. Sometimes this exception and CPU 0x00's exception corrupt the serial
+output, sometimes the serial output is good. In git `b54a6de13`, only CPU 0x00
+has exception.
+
+I think for now should focus on the INIT signal. Maybe #MC is a by product of
+it. Another way is to try a different hardware (try VGA).
+
+Previous ideas
+* TODO: Is it possible that ignoring is the correct choice? Read BIOS' handler
+  for this interrupt
+	* Looks like the #MC exception is for the hypervisor. Ignoring is helpful
+	  in confirming the (likely) root cause of Intercept 3, but cannot be an
+	  actual fix.
+
+### Other TPM configurations
+
+The 0x1a calls for returning 0x0 (i.e. TPM available) are:
+```
+CS:IP=0x07c0:0x00db AX=0xbb00
+CS:IP=0x07c0:0x010d AX=0xbb07
+CS:IP=0x07c0:0x1000 AX=0xbb00
+```
+
+Git `fca83685a` sets TPM to be not present using XMHF. Serial in
+`20220123172941` and `20220123173037`. Same as previous experiments, looks like
+the CPU goes to protected mode. We now see that the exception is still
+Intercept 3. An interesting thing is that both tries halt at
+`0x0020:0x0048b213`.
+
+The 0x1a calls for returning 0x23 (`TCG_PC_TPM_NOT_PRESENT`) are:
+```
+CS:IP=0x07c0:0x00db AX=0xbb00
+CS:IP=0x07c0:0x1000 AX=0xbb00
+CS:IP=0x2000:0x0a39 AX=0x0000 * 23
+CS:IP=0x2000:0x0a39 AX=0x0200
+CS:IP=0x2000:0x0a39 AX=0x0400
+CS:IP=0x2000:0x0a39 AX=0xbb00
+CS:IP=0x2000:0x0a39 AX=0x0200
+CS:IP=0x2000:0x0a39 AX=0x0400
+CS:IP=0x2000:0x0a39 AX=0x0000 * 3
+```
+
+If we hide TPM in BIOS, serial `20220123185700` (git `da0a5d51f`). The first
+INIT signal happens at another place. Looks like this is different from
+returning 0x0. We can use git `ea8ce7380` to set monitor trap, see serial
+`20220123190706`. We can see that the CPU leaves CS=0x7c quickly.
+
+So in the following 3 combinations, the CPU receives INIT signal.
+* Normal (enable TPM)
+* Hide TPM in XMHF using 0x23
+* Hide TPM in BIOS using 0x8600
+
+So now I think the INIT signal may be delivered based on some timing, instead
+of related to TPM. Now we want to modify Windows' bootloader and make an
+infinite loop.
+
+TODO: Try to add infinite loop
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 
 # tmp notes

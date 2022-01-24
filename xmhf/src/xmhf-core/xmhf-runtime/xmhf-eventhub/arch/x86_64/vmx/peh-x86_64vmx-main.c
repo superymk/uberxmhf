@@ -767,7 +767,6 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	HALT_ON_ERRORCOND(cs == 0x7c0);
 	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
-#if 0
 	switch (rip) {
 	case 0xe83:
 		DISABLE_MONITOR_TRAP;
@@ -782,7 +781,6 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		/* nop */
 		break;
 	}
-#endif
 }
 
 static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -848,11 +846,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			count++;
 			if (count == 2) {
 				// enable monitor trap
-				ENABLE_MONITOR_TRAP;
+				// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
 				// Set breakpoint
-				if (0) {
-					set_breakpoint(0x7c0, 0x1068);
-				}
+				set_breakpoint(0x7c0, 0x1068);
 			}
 		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",

@@ -741,6 +741,19 @@ static void hit_breakpoint(u16 cs, u64 rip) {
 	*ptr = bps[i].old;
 }
 
+// Begin loop3.h
+unsigned char loop3a_bin[] = {
+  0x66, 0x31, 0xc0, 0x66, 0x31, 0xdb, 0x66, 0x31, 0xc9, 0x66, 0x31, 0xd2,
+  0x40, 0x75, 0x09, 0x43, 0x75, 0x06, 0x41, 0x75, 0x03, 0x42, 0x75, 0x00,
+  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xeb, 0xe8
+};
+unsigned int loop3a_bin_len = 36;
+unsigned char loop3b_bin[] = {
+  0x68, 0xc0, 0x07, 0x6a, 0x00, 0xcb
+};
+unsigned int loop3b_bin_len = 6;
+// End loop3.h
+
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
@@ -765,8 +778,10 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		*/
 	}
 	HALT_ON_ERRORCOND(cs == 0x7c0);
-	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+//	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+//			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch (rip) {
 	case 0xe83:
 		DISABLE_MONITOR_TRAP;
@@ -777,6 +792,10 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //		DISABLE_MONITOR_TRAP;
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
+	case 0x13:
+		DISABLE_MONITOR_TRAP;
+		set_breakpoint(0x7c0, 0x12);
+		break;
 	default:
 		/* nop */
 		break;
@@ -787,10 +806,21 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
 	HALT_ON_ERRORCOND(cs == 0x7c0);
-	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
+//	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+//			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
 	switch (rip) {
 	case 0x1068:
+		// Start modifying code
+		memcpy((void *)(0x7c00 + 0x0), loop3a_bin, loop3a_bin_len);
+		memcpy((void *)(0x7c00 + 0x106e), loop3b_bin, loop3b_bin_len);
+		printf("\nModify code!");
+		// ENABLE_MONITOR_TRAP;
+		set_breakpoint(0x7c0, 0x12);
+		break;
+		// End modifying code
+
 		ENABLE_MONITOR_TRAP;
 		for (u32 i = 0; i < 32; i++) {
 			printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
@@ -801,6 +831,9 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //		ENABLE_MONITOR_TRAP;
 //		break;
 	case 0xea2:
+		ENABLE_MONITOR_TRAP;
+		break;
+	case 0x12:
 		ENABLE_MONITOR_TRAP;
 		break;
 	default:

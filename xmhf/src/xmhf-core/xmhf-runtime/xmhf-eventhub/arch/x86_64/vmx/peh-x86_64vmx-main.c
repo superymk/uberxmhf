@@ -741,6 +741,21 @@ static void hit_breakpoint(u16 cs, u64 rip) {
 	*ptr = bps[i].old;
 }
 
+static void xxd(u32 start, u32 end) {
+	HALT_ON_ERRORCOND((start & 0xf) == 0);
+	HALT_ON_ERRORCOND((end & 0xf) == 0);
+	for (u32 i = start; i < end; i += 0x10) {
+		printf("\n%08x: ", i);
+		for (u32 j = 0; j < 0x10; j++) {
+			if (j & 1) {
+				printf("%02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
+			} else {
+				printf(" %02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
+			}
+		}
+	}
+}
+
 // Begin loop3.h
 unsigned char loop3a_bin[] = {
   0x66, 0x31, 0xc0, 0x66, 0x31, 0xdb, 0x66, 0x31, 0xc9, 0x66, 0x31, 0xd2,
@@ -753,6 +768,17 @@ unsigned char loop3b_bin[] = {
 };
 unsigned int loop3b_bin_len = 6;
 // End loop3.h
+
+static void handle_entry(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;
+	(void)r;
+	(void)cs;
+	(void)rip;
+	// enable monitor trap
+	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
+	// Set breakpoint
+	set_breakpoint(0x7c0, 0x1068);
+}
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
@@ -825,11 +851,23 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;
 			printf("\nNOP 0x07c0:0x0ef8 !");
 		}
+		if ("dump IVT") {
+			for (u32 i = 0; i < 32; i++) {
+				printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
+			}
+		}
+		if ("dump BIOS") {
+			printf("\nStart dump BIOS");
+			xxd(0x0f0000, 0x100000);
+			printf("\nEnd dump BIOS");
+		}
+		if ("dump bootmgr") {
+			printf("\nStart dump bootmgr");
+			xxd(0x20000, 0x20000 + 0x65160);
+			printf("\nEnd dump bootmgr");
+		}
 
 		ENABLE_MONITOR_TRAP;
-		for (u32 i = 0; i < 32; i++) {
-			printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
-		}
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
 	default:
@@ -874,10 +912,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		if ((r->eax & 0xffffU) == 0xbb00U) {
 			count++;
 			if (count == 2) {
-				// enable monitor trap
-				// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
-				// Set breakpoint
-				set_breakpoint(0x7c0, 0x1068);
+				handle_entry(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 			}
 		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",

@@ -778,12 +778,12 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		*/
 	}
 	HALT_ON_ERRORCOND(cs == 0x7c0);
-//	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-//			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
-	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
-			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+//	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
+//			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch (rip) {
-	case 0xe83:
+	case 0xe88:
 		DISABLE_MONITOR_TRAP;
 		// set_breakpoint(0x7c0, 0xe9d);
 		set_breakpoint(0x7c0, 0xea2);
@@ -806,10 +806,10 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
 	HALT_ON_ERRORCOND(cs == 0x7c0);
-	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
-			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
-//	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-//			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+//	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
+//			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
+	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
+			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
 	switch (rip) {
 	case 0x1068:
 		if (!"modify code") {

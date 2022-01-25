@@ -254,9 +254,9 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 				for (int i = 0x400; i < 0x480; i++) {
 					read_mc_msr(vcpu, i);
 				}
-				printf("\nCPU(0x%02x): continue anyway", vcpu->id);
+				// printf("\nCPU(0x%02x): continue anyway", vcpu->id);
 				// TODO: For debugging, continue running XMHF code to print intercept info
-				break;
+				// break;
             }
             HALT();
         }

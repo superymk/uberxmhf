@@ -784,6 +784,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch (rip) {
 	case 0xe88:
+		printf(" DS=0x%04x ES=0x%04x", vcpu->vmcs.guest_DS_selector, vcpu->vmcs.guest_ES_selector);
 		DISABLE_MONITOR_TRAP;
 		// set_breakpoint(0x7c0, 0xe9d);
 		set_breakpoint(0x7c0, 0xea2);

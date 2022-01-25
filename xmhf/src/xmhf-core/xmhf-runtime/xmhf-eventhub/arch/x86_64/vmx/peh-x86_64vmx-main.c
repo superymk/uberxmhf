@@ -760,7 +760,7 @@ static void xxd2(u32 start, u32 end) {
 	HALT_ON_ERRORCOND((start & 0xf) == 0);
 	HALT_ON_ERRORCOND((end & 0xf) == 0);
 	for (u32 i = start; i < end; i += 0x10) {
-		if ((i & (0x8000 - 1)) == 0) {
+		if ((i & (0x8000 - 1)) < 0x100) {
 			continue;
 		}
 		printf("\n%08x: ", i);

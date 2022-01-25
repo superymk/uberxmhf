@@ -194,6 +194,11 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
                 break;
             }
 
+			// For AP, do not print anything
+			if (vcpu->id) {
+				HALT();
+			}
+
 			emhfc_putchar_lineunlock(emhfc_putchar_linelock_arg);
 
             printf("\n[%02x]: unhandled exception %d (0x%x), halting!",

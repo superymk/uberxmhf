@@ -756,6 +756,24 @@ static void xxd(u32 start, u32 end) {
 	}
 }
 
+static void xxd2(u32 start, u32 end) {
+	HALT_ON_ERRORCOND((start & 0xf) == 0);
+	HALT_ON_ERRORCOND((end & 0xf) == 0);
+	for (u32 i = start; i < end; i += 0x10) {
+		if ((i & (0x8000 - 1)) == 0) {
+			continue;
+		}
+		printf("\n%08x: ", i);
+		for (u32 j = 0; j < 0x10; j++) {
+			if (j & 1) {
+				printf("%02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
+			} else {
+				printf(" %02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
+			}
+		}
+	}
+}
+
 // Begin loop3.h
 unsigned char loop3a_bin[] = {
   0x66, 0x31, 0xc0, 0x66, 0x31, 0xdb, 0x66, 0x31, 0xc9, 0x66, 0x31, 0xd2,
@@ -867,6 +885,9 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 				xxd(i + 0x100, i + 0x200);
 			}
 			printf("\nEnd dump bootmgr heads");
+			printf("\nStart dump bootmgr 2");
+			xxd2(0x20000, 0x20000 + 0x65160);
+			printf("\nEnd dump bootmgr 2");
 			printf("\nStart dump bootmgr");
 			xxd(0x20000, 0x20000 + 0x65160);
 			printf("\nEnd dump bootmgr");

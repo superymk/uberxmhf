@@ -856,12 +856,17 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 				printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
 			}
 		}
-		if ("dump BIOS") {
+		if (!"dump BIOS") {
 			printf("\nStart dump BIOS");
 			xxd(0x0f0000, 0x100000);
 			printf("\nEnd dump BIOS");
 		}
 		if ("dump bootmgr") {
+			printf("\nStart dump bootmgr heads");
+			for (u32 i = 0x20000; i < 0x85000; i += 0x8000) {
+				xxd(i, i + 0x100);
+			}
+			printf("\nEnd dump bootmgr heads");
 			printf("\nStart dump bootmgr");
 			xxd(0x20000, 0x20000 + 0x65160);
 			printf("\nEnd dump bootmgr");

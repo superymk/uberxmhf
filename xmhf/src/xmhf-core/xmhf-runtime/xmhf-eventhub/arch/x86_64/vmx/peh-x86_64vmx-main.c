@@ -792,7 +792,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //		DISABLE_MONITOR_TRAP;
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
-	case 0x13:
+	case 0x13:	// For loop3
 		DISABLE_MONITOR_TRAP;
 		set_breakpoint(0x7c0, 0x12);
 		break;
@@ -812,14 +812,18 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
 	switch (rip) {
 	case 0x1068:
-		// Start modifying code
-		memcpy((void *)(0x7c00 + 0x0), loop3a_bin, loop3a_bin_len);
-		memcpy((void *)(0x7c00 + 0x106e), loop3b_bin, loop3b_bin_len);
-		printf("\nModify code!");
-		// ENABLE_MONITOR_TRAP;
-		set_breakpoint(0x7c0, 0x12);
-		break;
-		// End modifying code
+		if (!"modify code") {
+			memcpy((void *)(0x7c00 + 0x0), loop3a_bin, loop3a_bin_len);
+			memcpy((void *)(0x7c00 + 0x106e), loop3b_bin, loop3b_bin_len);
+			printf("\nModify code!");
+			// ENABLE_MONITOR_TRAP;
+			set_breakpoint(0x7c0, 0x12);
+			break;
+		}
+		if ("nop ef8") {
+			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;
+			printf("\nNOP 0x07c0:0x0ef8 !");
+		}
 
 		ENABLE_MONITOR_TRAP;
 		for (u32 i = 0; i < 32; i++) {
@@ -827,17 +831,8 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
-//	case 0xe9d:
-//		ENABLE_MONITOR_TRAP;
-//		break;
-	case 0xea2:
-		ENABLE_MONITOR_TRAP;
-		break;
-	case 0x12:
-		ENABLE_MONITOR_TRAP;
-		break;
 	default:
-		HALT_ON_ERRORCOND(0);
+		ENABLE_MONITOR_TRAP;
 		break;
 	}
 }

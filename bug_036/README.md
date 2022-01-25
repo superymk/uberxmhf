@@ -483,7 +483,8 @@ nothing will cause exception 3.
 
 In git `aebb61037`, some breakpoint function is supported. QEMU serial in
 `20220121134648`. We can see that `e83` is called 13 times. In the first 12
-times, ECX = 0x8000. In the last time, ECX = 5156. After that, `ea8` is called,
+times, ECX = 0x8000. In the last time, ECX = 0x5156. After that, `ea8` is
+called,
 and returns at `ef7`. Then `int    $0x1a` is called in `10c0`. Looks like
 the problem with HP happens during this process. `ea8` contains the `inc`
 instruction at `eb2` (my guess is communication to TPM), which may cause the
@@ -730,7 +731,31 @@ So now I think the INIT signal may be delivered based on some timing, instead
 of related to TPM. Now we want to modify Windows' bootloader and make an
 infinite loop.
 
-TODO: Try to add infinite loop
+### Infinite loop
+
+Git `be5792b50` implements infinite loop. Serial in `20220124205200`. Can see
+that ECX increases as expected, which means that we are running the infinite
+loop. But we do not receive the init signal.
+
+Between the two int1a calls, 0x1085 or 0x1097 calls 0xe83. For each 0x40 bytes
+0xe83 calls 0xef8. In 0xf39 the `call   *(%bx)` calls 0xfa8.
+
+Now we make the call to 0xef8 NOP, and see whether INIT will still be received.
+Git `e73b930a9`, serial `20220124212907`, we can see that INIT is received.
+Now our guess is that the problem may be related to accessing the memory to be
+hashed (i.e. `%es:(%di)`).
+
+Git `12bd43ede`, serial `20220124214647`; git `0dc578589` serial
+`20220124215309`. We can see that each time ES increases by 0x800, and the data
+to hash is 0x8000 bytes. The first call is `0x2000:0x0000` to `0x2000:0x8000`.
+The second call is `0x2800:0x0000` to `0x2800:0x8000`. Etc. The total number of
+bytes to hash is `0x65156` (ECX in `0x07c0:0x106e`). We can now
+1. Dump the content of this memory
+2. Simulate this memory access and see what causes the INIT signal
+3. Set breakpoint at bios handlers (search for `0xf0002aef` in serial)
+
+
+TODO: breakpoint at bios handlers
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 
 # tmp notes

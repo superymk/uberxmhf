@@ -1410,6 +1410,9 @@ Disassembly of section .data:
      ef5:	66 61                	popal  
      ef7:	c3                   	ret    
 
+	// Some kind of crypto function
+	// Input in 0x2020 - 0x2060
+	// Output / state maintained in 0x2000 - 0x2014
      ef8:	66 60                	pushal 
      efa:	bb 20 20             	mov    $0x2020,%bx
      efd:	66 8b 07             	mov    (%bx),%eax

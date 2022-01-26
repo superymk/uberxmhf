@@ -754,8 +754,106 @@ bytes to hash is `0x65156` (ECX in `0x07c0:0x106e`). We can now
 2. Simulate this memory access and see what causes the INIT signal
 3. Set breakpoint at bios handlers (search for `0xf0002aef` in serial)
 
+### Bios handlers
 
+In results folder, run
+`grep -h -E '^\*0x.... = 0x........' 20220124* | sort | uniq -c`, can see that
+the IVT handlers are always the same (this is expected).
+
+We now dump the bytes to hash (size = `0x65156`) and BIOS memory. Looks like
+the thing hashed is `/bootmgr` in the boot MBR partition, due to size.
+
+We dump the BIOS memory and bootmgr memory.
+Git `84e173465`, QEMU serial `20220125112609`, HP serial `20220125112611`.
+Looks like when HP tries to access bootmgr memory in Hypervisor mode, exception
+happens.
+
+HP Bios image in `hpbios4.img` and `hpbios4.s`. Generated using:
+```sh
+grep -A 4096 'Start dump BIOS' results/20220125112611 | tail -n +2 | cut -b 1-9,11- | xxd -r | dd bs=1K skip=960 > hpbios4.img
+objdump -b binary -m i8086 -D hpbios4.img > hpbios4.s
+```
+
+Dump bootmgr from QEMU
+```sh
+grep -A 25878 'Start dump bootmgr' 20220125112609 | tail -n +2 | cut -b 1-9,11- | xxd -r | dd bs=1K skip=128
+```
+
+We can compare the above output with the `bootmgr` file. They are exactly the
+same. The `bootmgr` file is also the same between HP and QEMU. Attached as
+`bootmgr5.bin`
+
+If we compare dumping bootmgr between HP and QEMU, we can see that at first
+HP dumps successfully.
+```sh
+diff <(grep -A 2050 'Start dump bootmgr' 20220125112609) \
+     <(grep -A 2050 'Start dump bootmgr' 20220125112611)
+```
+
+But then when reading 0x28000, some exception happens (likely #GP). The
+exception output is cluttered because multiple exceptions are printing at the
+same time. Also note that there are a lot of 0s from 0x27c00 to 0x28840.
+
+Another run of git `84e173465` is HP serial `20220125121438`. The BIOS area
+is almost the same, except 1 bit at 0xffa12:
+```diff
+4003c4003
+< 000ffa10:  61c3 0c00 5053 9cfa e461 8ae0 e461 32c4
+---
+> 000ffa10:  61c3 0b00 5053 9cfa e461 8ae0 e461 32c4
+```
+
+This time the exception happens when reading 0x48000. The exception output
+is still cluttered. From now on we mute all APs when an exception happens.
+
+Git `b75dd49dc`, serial `20220125122531`. This time exception happens at
+0x40000. The exception is #MC, happens during `inb` instruction. Now our guess
+to the problem is:
+
+Windows' bootmgr is loaded into multiple segments of 0x8000 bytes. When the
+hypervisor reads the start of a segment, an exception (likely #MC) may happen,
+asynchronously. For example when the hypervisor executes `inb` instruction
+(which is slow), the exception fires.
+
+The next step is to figure out how bootmgr is loaded to memory.
+
+Also, git `13bbb8656` only reads head of segments. This makes reproducing this
+problem faster. Serial `20220125123450`.
+
+In git `3d6f88db3`, we read somewhere near the head. This time, no error
+happens at that time. Serial `20220125123832`.
+
+Git `cf7aa56a5`, serial `20220125124241`. The error happens at
+`n * 0x8000 + 0x10`.
+
+Git `2bc33b682`, serial `20220125124538`, `20220125124753`, `20220125125039`.
+For some reason the exceptions happen at unexpected places. Then cut power of
+HP and restart (need to reconfigure AMT). Serial `20220125130246`. This time
+the read access error happens at 0x40bc0.
+
+We also try to use WBINVD in `0418ed19b`. Serial `20220125130924` and
+`20220125131041`. The WBINVD instruction causes the #MC. This may be a good
+way to test whether the cache is corrupted.
+
+### Review memory type
+
+When searching `"wbinvd" "machine check exception"` on Google, see this, may
+be very related:
+<https://community.intel.com/t5/Software-Archive/EPT-write-back-memory-type-and-Machine-Check-exception/td-p/766564>
+(Archive: <https://web.archive.org/web/20220125181357/https://community.intel.com/t5/Software-Archive/EPT-write-back-memory-type-and-Machine-Check-exception/td-p/766564>)
+
+This looks like a possible cause. MTRRs are documented in
+"11.11 MEMORY TYPE RANGE REGISTERS (MTRRS)". EPT memory type is documented in
+"27.2.7.2 Memory Type Used for Translated Guest-Physical Addresses".
+
+XMHF uses `_vmx_getmemorytypeforphysicalpage()` to read MTRRs and assign EPT
+memory types. However, the algorithm looks suspicious.
+
+### BIOS handler breakpoints
+
+TODO: read <https://community.intel.com/t5/Software-Archive/EPT-write-back-memory-type-and-Machine-Check-exception/td-p/766564>
 TODO: breakpoint at bios handlers
+TODO: how is bootmgr loaded into memory?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 
 # tmp notes

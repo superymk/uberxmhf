@@ -97,6 +97,9 @@ static void _vmx_read_fixed_mtrr(VCPU *vcpu, u32 msraddr, u32 *pindex, u64 start
 		memorytype->startaddr = start + step * i;
 		memorytype->endaddr = start + step * (i + 1) - 1;
 		memorytype->type = (u32)((msr >> (i * 8)) & 0xFF);
+		printf("\nFIXED_MTRR: 0x%08llx-0x%08llx=0x%08x",
+				memorytype->startaddr, memorytype->endaddr,
+				memorytype->type);
 	}
 	*pindex = index;
 }
@@ -302,6 +305,9 @@ static void _vmx_setupEPT(VCPU *vcpu){
 			u64 i = paddr / PAGE_SIZE_4K;
 			u64 memorytype = _vmx_getmemorytypeforphysicalpage(vcpu, paddr);
 			u64 lower;
+			if (paddr < 0x100000ULL) {
+				printf("\nEPT: memorytype(0x%08llx) = 0x%llx", paddr, memorytype);
+			}
 			if ((paddr >= (rpb->XtVmmRuntimePhysBase - PAGE_SIZE_2M)) &&
 				(paddr < (rpb->XtVmmRuntimePhysBase + rpb->XtVmmRuntimeSize))) {
 				lower = 0x0;	/* not present */

@@ -684,7 +684,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 
 
 #define INT3 ((u8)0xcc)
-#define MAX_BP 10
+#define MAX_BP 30
 #define ENABLE_MONITOR_TRAP do { \
 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 27); \
 	} while(0)
@@ -856,12 +856,46 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 				printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
 			}
 		}
+		if ("break IVT") {
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0xe2c3);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0xff54);
+			set_breakpoint(0xf000, 0xf002);
+			set_breakpoint(0xf000, 0x2aef);
+			// set_breakpoint(0xf000, 0xfea8);
+			set_breakpoint(0xf000, 0xe987);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xf000, 0x2aef);
+			set_breakpoint(0xc000, 0x0014);
+			set_breakpoint(0xf000, 0xf84d);
+			set_breakpoint(0xf000, 0xf841);
+			set_breakpoint(0xf000, 0xe9f3);
+			set_breakpoint(0xf000, 0xe739);
+			// set_breakpoint(0x0040, 0x00ac);
+			set_breakpoint(0xf000, 0xe82e);
+			set_breakpoint(0xf000, 0xefd2);
+			set_breakpoint(0xf000, 0xffbe);
+			set_breakpoint(0xf000, 0xe6f2);
+			// set_breakpoint(0x0040, 0x00cc);
+			set_breakpoint(0xf000, 0xff53);
+			set_breakpoint(0xf000, 0xff53);
+			set_breakpoint(0x0000, 0x0000);
+			set_breakpoint(0xf000, 0xefc7);
+			set_breakpoint(0xc000, 0x9f31);
+		}
 		if (!"dump BIOS") {
 			printf("\nStart dump BIOS");
 			xxd(0x0f0000, 0x100000);
 			printf("\nEnd dump BIOS");
 		}
-		if ("dump bootmgr") {
+		if (!"dump bootmgr") {
 			printf("\nWBINVD");
 			wbinvd();
 			printf("\nStart dump bootmgr heads2");

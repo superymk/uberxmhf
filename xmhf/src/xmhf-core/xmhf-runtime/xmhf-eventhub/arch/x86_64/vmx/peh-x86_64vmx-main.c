@@ -831,7 +831,7 @@ static void handle_entry(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	// enable monitor trap
 	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
 	// Set breakpoint
-	//set_breakpoint(0x7c0, 0x1068);
+	set_breakpoint(0x7c0, 0x1068);
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {

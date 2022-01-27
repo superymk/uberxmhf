@@ -435,8 +435,23 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
 			 * Need to change EPT to reflect MTRR changes, because host MTRRs
 			 * are not used when EPT is used.
 			 */
-			printf("\nCPU(0x%02x): Modifying MTRR 0x%08x not supported. Halt!",
-					vcpu->id, r->ecx);
+			{
+				/*
+				 * As a workaround, if writing the MSR will not cause change,
+				 * do not halt. For example Windows 10 will do this.
+				 */
+				u32 eax, edx;
+				rdmsr(r->ecx, &eax, &edx);
+				if (eax == r->eax && edx == r->edx) {
+					break;
+				}
+				printf("\nCPU(0x%02x): Old       MTRR 0x%08x is 0x %08x %08x",
+						vcpu->id, r->ecx, edx, eax);
+			}
+			printf("\nCPU(0x%02x): Modifying MTRR 0x%08x to 0x %08x %08x",
+					vcpu->id, r->ecx, r->edx, r->eax);
+			printf("\nCPU(0x%02x): Modifying MTRR not yet supported. Halt!",
+					vcpu->id);
 			HALT();
 			break;
 		default:{
@@ -816,7 +831,7 @@ static void handle_entry(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	// enable monitor trap
 	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
 	// Set breakpoint
-	set_breakpoint(0x7c0, 0x1068);
+	//set_breakpoint(0x7c0, 0x1068);
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -934,9 +949,11 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			xxd(0x0f0000, 0x100000);
 			printf("\nEnd dump BIOS");
 		}
-		if ("dump bootmgr") {
+		if ("wbinvd") {
 			printf("\nWBINVD");
 			wbinvd();
+		}
+		if (!"dump bootmgr") {
 			printf("\nStart dump bootmgr heads2");
 			for (u32 i = 0x20000; i < 0x85000; i += 0x8000) {
 				xxd(i + 0x100, i + 0x200);

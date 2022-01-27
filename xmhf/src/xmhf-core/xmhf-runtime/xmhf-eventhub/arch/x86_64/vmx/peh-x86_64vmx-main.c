@@ -823,11 +823,14 @@ unsigned char loop3b_bin[] = {
 unsigned int loop3b_bin_len = 6;
 // End loop3.h
 
-static void handle_entry(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
-	(void)vcpu;
-	(void)r;
-	(void)cs;
-	(void)rip;
+static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;(void)r;(void)cs;(void)rip;
+	set_breakpoint(0x0, 0x7c00);
+	// ENABLE_MONITOR_TRAP;
+}
+
+static void handle_entry2(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable monitor trap
 	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);
 	// Set breakpoint
@@ -837,12 +840,9 @@ static void handle_entry(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
+	/* Skip timer intercepts */
+	/*
 	if (cs == 0xf000) {
-		printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-				vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
-		return;
-		/* Skip timer intercepts */
-		/*
 		u16 timer_rips[] = {0xfea8, 0xfeaa, 0xfeab, 0xfeac, 0xfead, 0xfeb0,
 							0xfeb2, 0xfeb6, 0xfeb8, 0xfebe, 0xfecb, 0xfecf,
 							0xfed4, 0xfed6, 0xfeda, 0xfedc, 0xfede, 0xfee1,
@@ -855,25 +855,25 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		printf("Unknown CS:RIP = 0x%04x:0x%016llx", cs, rip);
 		HALT_ON_ERRORCOND(0);
-		*/
 	}
-	HALT_ON_ERRORCOND(cs == 0x7c0);
-	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
-			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	*/
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x *8000=%016llx",
+			vcpu->id, cs, rip, r->ecx, r->edi, r->esi,
+			*(u64 *)0x8000);
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
-	switch (rip) {
-	case 0xe88:
+	switch ((cs << 16) | rip) {
+	case 0x07c00e88:
 		printf(" DS=0x%04x ES=0x%04x", vcpu->vmcs.guest_DS_selector, vcpu->vmcs.guest_ES_selector);
 		DISABLE_MONITOR_TRAP;
 		// set_breakpoint(0x7c0, 0xe9d);
 		set_breakpoint(0x7c0, 0xea2);
 		break;
-//	case 0xea0:
+//	case 0x07c00ea0:
 //		DISABLE_MONITOR_TRAP;
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
-	case 0x13:	// For loop3
+	case 0x07c00013:	// For loop3
 		DISABLE_MONITOR_TRAP;
 		set_breakpoint(0x7c0, 0x12);
 		break;
@@ -886,13 +886,12 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
-	HALT_ON_ERRORCOND(cs == 0x7c0);
 //	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
-	switch (rip) {
-	case 0x1068:
+	switch ((cs << 16) | rip) {
+	case 0x07c01068:
 		if (!"modify code") {
 			memcpy((void *)(0x7c00 + 0x0), loop3a_bin, loop3a_bin_len);
 			memcpy((void *)(0x7c00 + 0x106e), loop3b_bin, loop3b_bin_len);
@@ -1010,11 +1009,14 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
 		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
-		static int count = 0;
+		if ((r->eax & 0xffffU) == 0x2400U) {
+			handle_entry1(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+		}
 		if ((r->eax & 0xffffU) == 0xbb00U) {
+			static int count = 0;
 			count++;
 			if (count == 2) {
-				handle_entry(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+				handle_entry2(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 			}
 		}
 		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",

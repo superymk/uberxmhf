@@ -187,6 +187,11 @@ our C main*/
     leal _sl_start_64(%ebp), %eax
     pushl %eax
 
+1:
+    movb $0x56, %ah
+    call putc
+    jmp 1b
+
     /* enable paging */
     movl %cr0, %eax
     orl $(CR0_PG), %eax
@@ -329,6 +334,16 @@ sl_cpu_common:
     spinforever:
         jmp spinforever
     hlt
+
+putc:
+    movw $(0x3f8 + 5), %dx
+    inb %dx, %al
+    testb $0x20, %al
+    jz putc
+    movb %ah, %al
+    movw $(0x3f8), %dx
+    outb %al, %dx
+    ret
 
 /*----------------------------------------------------------------------
  DATA

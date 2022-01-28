@@ -52,6 +52,9 @@
 
 #define P(c) movb $c, %ah; call putc;
 
+// #define SERIAL 0x3f8 // QEMU
+#define SERIAL 0x5080   // HP
+
 /*----------------------------------------------------------------------
  CODE
 ----------------------------------------------------------------------
@@ -387,12 +390,12 @@ put_hex_1:
 putc:
     // AH is argument
     // Clobber EAX and EDX
-    movw $(0x3f8 + 5), %dx
+    movw $(SERIAL + 5), %dx
     inb %dx, %al
     testb $0x20, %al
     jz putc
     movb %ah, %al
-    movw $(0x3f8), %dx
+    movw $(SERIAL), %dx
     outb %al, %dx
     ret
 

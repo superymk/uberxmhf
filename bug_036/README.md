@@ -922,13 +922,35 @@ Previous ideas
 * Can consider reading debug commands from serial port
 	* Likely too complicated to implement. Too overkill for this bug
 
+### Testing on other hardware
+
+Since this bug is very low level, we can try on machines that do not support
+serial port by using `DEBUG_VGA` as output. When running `./configure`,
+add `--disable-debug-serial --enable-debug-vga`.
+
+But since VGA does not support scrolling, need to quiet some XMHF output.
+
+VGA on QEMU and HP works as expected. So now we can try XMHF on more computers
+without configuring serial port.
+
 ### How is bootmgr loaded into memory
+
+Since this bug happens when we are trying to access bootmgr, we should know
+how it is loaded into memory. Maybe something is wrong with it.
+
+Git `c28d0fa3b` HP serial `20220127105928` shows how the second sector and
+above of NTFS are loaded into memory. Before load, `*8000=0139e8811bbe5652`.
+After load, `*8000=8ea166028e0e8966`. The change happens in BIOS code with
+`CS=0xf000`. NTFS first sector code that calls BIOS is `0x07c0:0x0145`. This
+code is called a few times. This is BIOS int 13h with AH=0x42. Refs:
+* <http://www.ctyme.com/intr/rb-0708.htm>
+* <https://wiki.osdev.org/Disk_access_using_the_BIOS_(INT_13h)>
 
 # tmp notes
 
 TODO: how is bootmgr loaded into memory?
+TODO: test on more hardware using VGA
 TODO: May it be related to `<unavailable>` in QEMU GDB?
-TODO: Reading about TXT, DRTM, SRTM
 
 ## Commits
 

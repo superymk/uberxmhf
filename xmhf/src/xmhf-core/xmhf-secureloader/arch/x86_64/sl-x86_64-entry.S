@@ -200,8 +200,27 @@ our C main*/
     xorl %ebx, %ebx; movw %es, %bx; call put_hex;
     P('\n')P('F')P('S')P('=')
     xorl %ebx, %ebx; movw %fs, %bx; call put_hex;
+    P('\n')P('E')P('B')P('P')P('=')
+    movl %ebp, %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('0')P('=') movl sl_gdt+0x0*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('1')P('=') movl sl_gdt+0x1*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('2')P('=') movl sl_gdt+0x2*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('3')P('=') movl sl_gdt+0x3*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('4')P('=') movl sl_gdt+0x4*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('5')P('=') movl sl_gdt+0x5*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('6')P('=') movl sl_gdt+0x6*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('7')P('=') movl sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('8')P('=') movl sl_gdt+0x8*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('9')P('=') movl sl_gdt+0x9*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('a')P('=') movl sl_gdt+0xa*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('b')P('=') movl sl_gdt+0xb*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('c')P('=') movl sl_gdt+0xc*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('d')P('=') movl sl_gdt+0xd*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('e')P('=') movl sl_gdt+0xe*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('f')P('=') movl sl_gdt+0xf*4(%ebp), %ebx; call put_hex;
 
     P('\n')P('H')P('A')P('L')P('T')
+    P('\n')
 
 1:  jmp 1b
 
@@ -355,20 +374,20 @@ put_hex:
     movl $0, %ecx
     movb $'0', %ah; call putc;
     movb $'x', %ah; call putc;
-    movl %ebx, %ecx
-    shr $28, %ecx; call put_hex_1;
-    shr $24, %ecx; call put_hex_1;
-    shr $20, %ecx; call put_hex_1;
-    shr $16, %ecx; call put_hex_1;
-    shr $12, %ecx; call put_hex_1;
-    shr  $8, %ecx; call put_hex_1;
-    shr  $4, %ecx; call put_hex_1;
-                   call put_hex_1;
+    movl %ebx, %ecx; shr $28, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $24, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $20, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $16, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $12, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr  $8, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr  $4, %ecx; call put_hex_1;
+    movl %ebx, %ecx;                call put_hex_1;
     ret
 
 put_hex_1:
     // CL is argument
     // Clobber EAX and EDX
+    andb $0xf, %cl;
 1:  cmpb $0x0, %cl; jne 1f; movb $'0', %ah; call putc; ret;
 1:  cmpb $0x1, %cl; jne 1f; movb $'1', %ah; call putc; ret;
 1:  cmpb $0x2, %cl; jne 1f; movb $'2', %ah; call putc; ret;
@@ -385,7 +404,7 @@ put_hex_1:
 1:  cmpb $0xd, %cl; jne 1f; movb $'d', %ah; call putc; ret;
 1:  cmpb $0xe, %cl; jne 1f; movb $'e', %ah; call putc; ret;
 1:  cmpb $0xf, %cl; jne 1f; movb $'f', %ah; call putc; ret;
-1:  ret
+1:                          movb $'?', %ah; call putc; ret;
 
 putc:
     // AH is argument

@@ -105,10 +105,10 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
   //nope, search within BIOS areas 0xE0000 to 0xFFFFF
   for(i=0xE0000; i < (0xFFFFF-8); i+=16){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)i, sizeof(ACPI_RSDP));
-    printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
+    //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       printf("\nLINE %d", __LINE__);
-      printf("\nsignature=0x%08llx", rsdp->signature);
+      printf("\nsignature=0x%016llx", rsdp->signature);
       printf("\nchecksum =0x%02x", (u32)rsdp->checksum);
       printf("\noemid[0] =0x%02x", (u32)rsdp->oemid[0]);
       printf("\noemid[1] =0x%02x", (u32)rsdp->oemid[1]);
@@ -117,11 +117,10 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       printf("\noemid[4] =0x%02x", (u32)rsdp->oemid[4]);
       printf("\noemid[5] =0x%02x", (u32)rsdp->oemid[5]);
       printf("\nrevision =0x%02x", (u32)rsdp->revision);
-//88    uintptr_t rsdtaddress;
-//89    u32 length;
-//90    u64 xsdtaddress;
-//91    u8 xchecksum;
-//92    u8 rsvd0[3];
+      printf("\nrsdtaddress =0x%08x", (u32)rsdp->rsdtaddress);
+      printf("\nlength   =0x%08x", (u32)rsdp->length);
+      printf("\nxsdtaddress =0x%016llx", rsdp->xsdtaddress);
+      printf("\nxchecksum =0x%02x", (u32)rsdp->xchecksum);
       printf("\nLINE %d", __LINE__);
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
         printf("\nLINE %d", __LINE__);

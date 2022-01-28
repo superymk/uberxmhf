@@ -50,6 +50,8 @@
 
 #include <xmhf.h>
 
+#define P(c) movb $c, %ah; call putc;
+
 /*----------------------------------------------------------------------
  CODE
 ----------------------------------------------------------------------
@@ -187,10 +189,18 @@ our C main*/
     leal _sl_start_64(%ebp), %eax
     pushl %eax
 
-1:
-    movb $0x56, %ah
-    call putc
-    jmp 1b
+    P('\n')P('C')P('S')P('=')
+    xorl %ebx, %ebx; movw %cs, %bx; call put_hex;
+    P('\n')P('D')P('S')P('=')
+    xorl %ebx, %ebx; movw %ds, %bx; call put_hex;
+    P('\n')P('E')P('S')P('=')
+    xorl %ebx, %ebx; movw %es, %bx; call put_hex;
+    P('\n')P('F')P('S')P('=')
+    xorl %ebx, %ebx; movw %fs, %bx; call put_hex;
+
+    P('\n')P('H')P('A')P('L')P('T')
+
+1:  jmp 1b
 
     /* enable paging */
     movl %cr0, %eax
@@ -335,7 +345,48 @@ sl_cpu_common:
         jmp spinforever
     hlt
 
+put_hex:
+    // EBX is argument to print
+    // Clobber EAX, ECX, EDX
+    // ECX is counter
+    movl $0, %ecx
+    movb $'0', %ah; call putc;
+    movb $'x', %ah; call putc;
+    movl %ebx, %ecx
+    shr $28, %ecx; call put_hex_1;
+    shr $24, %ecx; call put_hex_1;
+    shr $20, %ecx; call put_hex_1;
+    shr $16, %ecx; call put_hex_1;
+    shr $12, %ecx; call put_hex_1;
+    shr  $8, %ecx; call put_hex_1;
+    shr  $4, %ecx; call put_hex_1;
+                   call put_hex_1;
+    ret
+
+put_hex_1:
+    // CL is argument
+    // Clobber EAX and EDX
+1:  cmpb $0x0, %cl; jne 1f; movb $'0', %ah; call putc; ret;
+1:  cmpb $0x1, %cl; jne 1f; movb $'1', %ah; call putc; ret;
+1:  cmpb $0x2, %cl; jne 1f; movb $'2', %ah; call putc; ret;
+1:  cmpb $0x3, %cl; jne 1f; movb $'3', %ah; call putc; ret;
+1:  cmpb $0x4, %cl; jne 1f; movb $'4', %ah; call putc; ret;
+1:  cmpb $0x5, %cl; jne 1f; movb $'5', %ah; call putc; ret;
+1:  cmpb $0x6, %cl; jne 1f; movb $'6', %ah; call putc; ret;
+1:  cmpb $0x7, %cl; jne 1f; movb $'7', %ah; call putc; ret;
+1:  cmpb $0x8, %cl; jne 1f; movb $'8', %ah; call putc; ret;
+1:  cmpb $0x9, %cl; jne 1f; movb $'9', %ah; call putc; ret;
+1:  cmpb $0xa, %cl; jne 1f; movb $'a', %ah; call putc; ret;
+1:  cmpb $0xb, %cl; jne 1f; movb $'b', %ah; call putc; ret;
+1:  cmpb $0xc, %cl; jne 1f; movb $'c', %ah; call putc; ret;
+1:  cmpb $0xd, %cl; jne 1f; movb $'d', %ah; call putc; ret;
+1:  cmpb $0xe, %cl; jne 1f; movb $'e', %ah; call putc; ret;
+1:  cmpb $0xf, %cl; jne 1f; movb $'f', %ah; call putc; ret;
+1:  ret
+
 putc:
+    // AH is argument
+    // Clobber EAX and EDX
     movw $(0x3f8 + 5), %dx
     inb %dx, %al
     testb $0x20, %al

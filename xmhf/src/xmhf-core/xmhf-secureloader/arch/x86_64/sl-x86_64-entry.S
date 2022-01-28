@@ -124,7 +124,11 @@ our C main*/
 5:
 
     /* load 64-bit GDT */
-    /* TODO: for AMD processors, use SS instead of DS */
+    /*
+     * TODO: for AMD processors, use SS instead of DS.
+     * Need to follow sl-x86-entry.S to query CPUID.
+     * See "Cross-processor challenge:" comment in that file.
+     */
     addl %ebp, %ds:sl_gdt_ptr(%ebp)
     lgdt %ds:sl_gdt(%ebp)
 

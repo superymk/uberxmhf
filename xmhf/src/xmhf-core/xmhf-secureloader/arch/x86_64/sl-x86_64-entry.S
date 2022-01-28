@@ -52,9 +52,6 @@
 
 #define P(c) movb $c, %ah; call putc;
 
-// #define SERIAL 0x3f8 // QEMU
-#define SERIAL 0x5080   // HP
-
 /*----------------------------------------------------------------------
  CODE
 ----------------------------------------------------------------------
@@ -218,6 +215,13 @@ our C main*/
     P('\t')P('G')P('D')P('T')P('d')P('=') movl sl_gdt+0xd*4(%ebp), %ebx; call put_hex;
     P('\n')P('G')P('D')P('T')P('e')P('=') movl sl_gdt+0xe*4(%ebp), %ebx; call put_hex;
     P('\t')P('G')P('D')P('T')P('f')P('=') movl sl_gdt+0xf*4(%ebp), %ebx; call put_hex;
+    P('\n')
+
+    P('\n')P('C')P('S')P('G')P('7')P('=') movl %cs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('D')P('S')P('G')P('7')P('=') movl %ds:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('E')P('S')P('G')P('7')P('=') movl %es:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('F')P('S')P('G')P('7')P('=') movl %fs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('S')P('S')P('G')P('7')P('=') movl %ss:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
 
     P('\n')P('H')P('A')P('L')P('T')
     P('\n')
@@ -405,6 +409,9 @@ put_hex_1:
 1:  cmpb $0xe, %cl; jne 1f; movb $'e', %ah; call putc; ret;
 1:  cmpb $0xf, %cl; jne 1f; movb $'f', %ah; call putc; ret;
 1:                          movb $'?', %ah; call putc; ret;
+
+// #define SERIAL 0x3f8 // QEMU
+#define SERIAL 0x5080   // HP
 
 putc:
     // AH is argument

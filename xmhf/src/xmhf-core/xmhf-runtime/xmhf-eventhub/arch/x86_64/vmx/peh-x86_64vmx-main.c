@@ -812,18 +812,15 @@ static void xxd(u32 start, u32 end) {
 
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	set_breakpoint(0x0, 0x7c00);
-	set_breakpoint(0x7c0, 0x118);
-	set_breakpoint(0x7c0, 0x16a);
-	set_breakpoint(0x7c0, 0xdb);
-	set_breakpoint(0x7c0, 0x1000);
+	// set_breakpoint(0x0, 0x7c00);
 }
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
+	set_breakpoint(0x7c0, 0x118);
+	set_breakpoint(0x7c0, 0x16a);
 	printf("\nWBINVD");
 	wbinvd();
-	DISABLE_MONITOR_TRAP;
 }
 
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -832,7 +829,6 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	// set_breakpoint(0x7c0, 0x1068);
 	printf("\nWBINVD");
 	wbinvd();
-	DISABLE_MONITOR_TRAP;
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {

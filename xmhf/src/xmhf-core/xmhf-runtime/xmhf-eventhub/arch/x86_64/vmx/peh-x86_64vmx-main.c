@@ -785,6 +785,9 @@ static void disable_monitor_trap(VCPU *vcpu, int bp) {
 	}
 }
 
+#undef ENABLE_MONITOR_TRAP
+#undef DISABLE_MONITOR_TRAP
+
 static int find_breakpoint_csrip(u16 cs, u64 rip) {
 	int i;
 	for (i = 0; i < MAX_BP; i++) {
@@ -891,7 +894,7 @@ static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
+	set_breakpoint(0x7c0, 0x118);	// jump to second sector
 	set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
 	set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
 	set_breakpoint(0x7c0, 0x145);	// disk read one sector
@@ -927,6 +930,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			*(u64 *)0x20000, *(u64 *)0x30000);
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
+	TRY_WBINVD;
 	switch ((cs << 16) | rip) {
 //	case 0x07c00ea0:
 //		disable_monitor_trap(vcpu, 0);
@@ -1018,14 +1022,18 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
-	case 0x07c0016a:
+	case 0x07c0016a:	// disk read fail
 		HALT_ON_ERRORCOND(0);	/* See strange error */
+		break;
+	case 0x07c00118:	// jump to second sector
+		enable_monitor_trap(vcpu, 0);
 		break;
 	case 0x07c00588: {	// read bootmgr in 3rd call
 		static int count = 0;
 		count++;
 		TRY_WBINVD;
 		printf(" count %d", count);
+		break;
 	case 0x07c0011d:	// disk read multi sector function call
 		TRY_WBINVD;
 		break;

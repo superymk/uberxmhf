@@ -863,6 +863,13 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		DISABLE_MONITOR_TRAP;
 		set_breakpoint(0x7c0, 0x143);
 		set_breakpoint(0x7c0, 0x165);
+		printf(" DX=0x%04x DS=0x%04x",
+				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
+		{
+			u64 dssi = (u64)((u16)vcpu->vmcs.guest_DS_selector) * 16 + (u16)r->esi;
+			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
+					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
+		}
 		break;
 //	case 0x07c00ea0:
 //		DISABLE_MONITOR_TRAP;
@@ -882,16 +889,6 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
 	switch ((cs << 16) | rip) {
-	case 0x07c00143:
-		printf(" DX=0x%04x DS=0x%04x",
-				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
-		{
-			u64 dssi = (u64)((u16)vcpu->vmcs.guest_DS_selector) * 16 + (u16)r->esi;
-			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
-					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
-		}
-		ENABLE_MONITOR_TRAP;
-		break;
 	case 0x07c01068:
 		if ("nop ef8") {
 			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;

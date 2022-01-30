@@ -745,6 +745,11 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 #define DISABLE_MONITOR_TRAP do { \
 	vcpu->vmcs.control_VMX_cpu_based &= ~(1 << 27); \
 	} while(0)
+#define TRY_WBINVD { \
+	printf("\nWBINVD %d", __LINE__); \
+	wbinvd(); \
+	printf(" done"); \
+	} while(0)
 
 struct bp_info {
 	u8 valid;
@@ -888,17 +893,17 @@ static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
 	set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
+	set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
+	set_breakpoint(0x7c0, 0x145);	// disk read one sector
 	set_breakpoint(0x7c0, 0x16a);	// disk read fail
-	printf("\nWBINVD %d", __LINE__);
-	wbinvd();
+	TRY_WBINVD;
 }
 
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable_monitor_trap(vcpu, 0);
 	// set_breakpoint(0x7c0, 0x1068);
-	printf("\nWBINVD %d", __LINE__);
-	wbinvd();
+	TRY_WBINVD;
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -993,8 +998,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			printf("\nEnd dump BIOS");
 		}
 		if ("wbinvd") {
-			printf("\nWBINVD %d", __LINE__);
-			wbinvd();
+			TRY_WBINVD;
 		}
 		if (!"dump bootmgr") {
 			printf("\nStart dump bootmgr heads2");
@@ -1017,15 +1021,15 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	case 0x07c0016a:
 		HALT_ON_ERRORCOND(0);	/* See strange error */
 		break;
-	case 0x07c00588: {
+	case 0x07c00588: {	// read bootmgr in 3rd call
 		static int count = 0;
 		count++;
-		if (count == 3) {
-			printf("\nWBINVD %d", __LINE__);
-			wbinvd();
-			set_breakpoint(0x7c0, 0x145);
-		}
-	case 0x07c00145:
+		TRY_WBINVD;
+		printf(" count %d", count);
+	case 0x07c0011d:	// disk read multi sector function call
+		TRY_WBINVD;
+		break;
+	case 0x07c00145:	// disk read one sector
 		printf(" DX=0x%04x DS=0x%04x",
 				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
 		{
@@ -1033,6 +1037,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
 					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
 		}
+		TRY_WBINVD;
 		break;
 	}
 	default:

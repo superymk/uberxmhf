@@ -189,7 +189,6 @@ void xmhf_xcphandler_arch_hub(uintptr_t vector, struct regs *r){
 
             if (found) {
                 /* Found in xcph table; Modify EIP on stack and iret */
-                printf("\nFound in xcph table");
                 ((uintptr_t *)(r->rsp))[0] = found[2];
                 break;
             }

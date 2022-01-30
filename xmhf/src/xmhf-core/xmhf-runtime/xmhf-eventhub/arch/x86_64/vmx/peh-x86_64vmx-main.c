@@ -810,19 +810,6 @@ static void xxd(u32 start, u32 end) {
 	}
 }
 
-// Begin loop3.h
-unsigned char loop3a_bin[] = {
-  0x66, 0x31, 0xc0, 0x66, 0x31, 0xdb, 0x66, 0x31, 0xc9, 0x66, 0x31, 0xd2,
-  0x40, 0x75, 0x09, 0x43, 0x75, 0x06, 0x41, 0x75, 0x03, 0x42, 0x75, 0x00,
-  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xeb, 0xe8
-};
-unsigned int loop3a_bin_len = 36;
-unsigned char loop3b_bin[] = {
-  0x68, 0xc0, 0x07, 0x6a, 0x00, 0xcb
-};
-unsigned int loop3b_bin_len = 6;
-// End loop3.h
-
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// set_breakpoint(0x0, 0x7c00);
@@ -830,13 +817,15 @@ static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	ENABLE_MONITOR_TRAP;
+	set_breakpoint(0x7c0, 0x118);
 }
 
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// ENABLE_MONITOR_TRAP;
-	set_breakpoint(0x7c0, 0x1068);
+	// set_breakpoint(0x7c0, 0x1068);
+	printf("\nWBINVD");
+	wbinvd();
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -859,9 +848,9 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		HALT_ON_ERRORCOND(0);
 	}
 	*/
-	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x *0x8000=0x%016llx *0x20000=0x%016llx *0x28000=0x%016llx",
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x *0x20000=0x%016llx *0x28000=0x%016llx",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi,
-			*(u64 *)0x8000, *(u64 *)0x20000, *(u64 *)0x28000);
+			*(u64 *)0x20000, *(u64 *)0x28000);
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch ((cs << 16) | rip) {
@@ -875,10 +864,6 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //		DISABLE_MONITOR_TRAP;
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
-	case 0x07c00013:	// For loop3
-		DISABLE_MONITOR_TRAP;
-		set_breakpoint(0x7c0, 0x12);
-		break;
 	default:
 		/* nop */
 		break;
@@ -894,14 +879,6 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
 	switch ((cs << 16) | rip) {
 	case 0x07c01068:
-		if (!"modify code") {
-			memcpy((void *)(0x7c00 + 0x0), loop3a_bin, loop3a_bin_len);
-			memcpy((void *)(0x7c00 + 0x106e), loop3b_bin, loop3b_bin_len);
-			printf("\nModify code!");
-			// ENABLE_MONITOR_TRAP;
-			set_breakpoint(0x7c0, 0x12);
-			break;
-		}
 		if ("nop ef8") {
 			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;
 			printf("\nNOP 0x07c0:0x0ef8 !");
@@ -972,6 +949,8 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 		ENABLE_MONITOR_TRAP;
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
+		break;
+	case 0x07c00118:
 		break;
 	default:
 		ENABLE_MONITOR_TRAP;

@@ -812,15 +812,18 @@ static void xxd(u32 start, u32 end) {
 
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint(0x0, 0x7c00);
+	set_breakpoint(0x0, 0x7c00);
+	set_breakpoint(0x7c0, 0x118);
+	set_breakpoint(0x7c0, 0x16a);
+	set_breakpoint(0x7c0, 0xdb);
+	set_breakpoint(0x7c0, 0x1000);
 }
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	set_breakpoint(0x7c0, 0x118);
-	set_breakpoint(0x7c0, 0x16a);
 	printf("\nWBINVD");
 	wbinvd();
+	DISABLE_MONITOR_TRAP;
 }
 
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -829,6 +832,7 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	// set_breakpoint(0x7c0, 0x1068);
 	printf("\nWBINVD");
 	wbinvd();
+	DISABLE_MONITOR_TRAP;
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -847,9 +851,9 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			}
 		}
 	}
-	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x *0x20000=0x%016llx *0x28000=0x%016llx",
+	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x *0x20000=0x%016llx *0x30000=0x%016llx",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi,
-			*(u64 *)0x20000, *(u64 *)0x28000);
+			*(u64 *)0x20000, *(u64 *)0x30000);
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch ((cs << 16) | rip) {
@@ -995,6 +999,8 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			wbinvd();
 		}
 		printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+		printf(" *0x20000=0x%016llx *0x30000=0x%016llx",
+				*(u64 *)0x20000, *(u64 *)0x30000);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 10) {
 		/* CPUID */
@@ -1002,6 +1008,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
 		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
+		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
+				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
+		printf(" EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",
+				r->eax, r->ebx, r->ecx, r->edx);
 		if ((r->eax & 0xffffU) == 0x2400U) {
 			handle_entry1(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 		}
@@ -1015,10 +1025,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 				handle_entry22(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 			}
 		}
-		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
-				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
-		printf(" EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",
-				r->eax, r->ebx, r->ecx, r->edx);
 	}
 
 	/*

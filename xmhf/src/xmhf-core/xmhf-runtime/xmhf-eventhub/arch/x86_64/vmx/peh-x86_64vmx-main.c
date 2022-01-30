@@ -852,7 +852,7 @@ static int enabled_breakpoints(VCPU *vcpu) {
 			if (bps[i].valid && bps[i].disabled) {
 				u64 addr = (u64)bps[i].cs * 16 + bps[i].rip;
 				u8 *ptr = (u8 *)addr;
-				*ptr = bps[i].old;
+				*ptr = INT3;
 				bps[i].disabled = 0;
 				disabled_bps--;
 				ans++;
@@ -889,7 +889,7 @@ static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
 	set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
 	set_breakpoint(0x7c0, 0x16a);	// disk read fail
-	printf("\nWBINVD");
+	printf("\nWBINVD %d", __LINE__);
 	wbinvd();
 }
 
@@ -897,7 +897,7 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable_monitor_trap(vcpu, 0);
 	// set_breakpoint(0x7c0, 0x1068);
-	printf("\nWBINVD");
+	printf("\nWBINVD %d", __LINE__);
 	wbinvd();
 }
 
@@ -923,15 +923,6 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch ((cs << 16) | rip) {
-	case 0x07c00145:
-		printf(" DX=0x%04x DS=0x%04x",
-				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
-		{
-			u64 dssi = (u64)((u16)vcpu->vmcs.guest_DS_selector) * 16 + (u16)r->esi;
-			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
-					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
-		}
-		break;
 //	case 0x07c00ea0:
 //		disable_monitor_trap(vcpu, 0);
 //		set_breakpoint(0x7c0, 0xe9d);
@@ -949,6 +940,8 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	printf("\nBP%x: 0x%04x:0x%04llx ECX=0x%08x EDI=0x%08x ESI=0x%08x",
 			vcpu->id, cs, rip, r->ecx, r->edi, r->esi);
+	printf(" *0x20000=0x%016llx *0x30000=0x%016llx",
+			*(u64 *)0x20000, *(u64 *)0x30000);
 	switch ((cs << 16) | rip) {
 	case 0x07c01068:
 		if ("nop ef8") {
@@ -1000,7 +993,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			printf("\nEnd dump BIOS");
 		}
 		if ("wbinvd") {
-			printf("\nWBINVD");
+			printf("\nWBINVD %d", __LINE__);
 			wbinvd();
 		}
 		if (!"dump bootmgr") {
@@ -1024,6 +1017,24 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	case 0x07c0016a:
 		HALT_ON_ERRORCOND(0);	/* See strange error */
 		break;
+	case 0x07c00588: {
+		static int count = 0;
+		count++;
+		if (count == 3) {
+			printf("\nWBINVD %d", __LINE__);
+			wbinvd();
+			set_breakpoint(0x7c0, 0x145);
+		}
+	case 0x07c00145:
+		printf(" DX=0x%04x DS=0x%04x",
+				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
+		{
+			u64 dssi = (u64)((u16)vcpu->vmcs.guest_DS_selector) * 16 + (u16)r->esi;
+			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
+					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
+		}
+		break;
+	}
 	default:
 		break;
 	}

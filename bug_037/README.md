@@ -1,7 +1,8 @@
 # Enable DRT (DTRM)
 
 ## Scope
-* HP
+* HP x64
+* Good: HP x86
 * Maybe not applicable to QEMU, because need TXT support
 
 ## Behavior

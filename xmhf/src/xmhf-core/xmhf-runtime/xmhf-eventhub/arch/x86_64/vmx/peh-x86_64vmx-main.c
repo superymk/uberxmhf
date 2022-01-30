@@ -748,31 +748,81 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 
 struct bp_info {
 	u8 valid;
+	u8 disabled;
 	u8 old;
 	u16 cs;
 	u64 rip;
 } bps[MAX_BP] = {};
 
+static int disabled_bps = 0;
+static int monitor_trap_man = 0;	/* Monitor trap requested due to breakpoint */
+static int monitor_trap_bp = 0;		/* Monitor trap requested manually */
+
+static void enable_monitor_trap(VCPU *vcpu, int bp) {
+	if (bp) {
+		monitor_trap_bp = 1;
+	} else {
+		monitor_trap_man = 1;
+	}
+	ENABLE_MONITOR_TRAP;
+}
+
+static void disable_monitor_trap(VCPU *vcpu, int bp) {
+	if (bp) {
+		monitor_trap_bp = 0;
+	} else {
+		monitor_trap_man = 0;
+	}
+	if (monitor_trap_bp || monitor_trap_man) {
+		ENABLE_MONITOR_TRAP;
+	} else {
+		DISABLE_MONITOR_TRAP;
+	}
+}
+
+static int find_breakpoint_csrip(u16 cs, u64 rip) {
+	int i;
+	for (i = 0; i < MAX_BP; i++) {
+		if (bps[i].valid && bps[i].cs == cs && bps[i].rip == rip) {
+			break;
+		}
+	}
+	return i;
+}
+
+static int alloc_breakpoint(void) {
+	int i;
+	for (i = 0; i < MAX_BP; i++) {
+		if (!bps[i].valid) {
+			break;
+		}
+	}
+	HALT_ON_ERRORCOND(i < MAX_BP);	/* overflow of bps */
+	return i;
+}
+
 static void set_breakpoint(u16 cs, u64 rip) {
 	u64 addr = (u64)cs * 16 + rip;
 	u8 *ptr = (u8 *)addr;
 	int i;
-	if (*ptr == INT3) {
-		/* re-set break point, make sure break point exists and do nothing */
-		for (i = 0; i < MAX_BP; i++) {
-			if (bps[i].valid && bps[i].cs == cs && bps[i].rip == rip) {
-				break;
-			}
+	i = find_breakpoint_csrip(cs, rip);
+	if (i < MAX_BP) {
+		if (*ptr == INT3) {
+			/* re-set break point, make sure break point exists and do nothing */
+			HALT_ON_ERRORCOND(bps[i].disabled == 0);
+		} else {
+			/* Breakpoint is disabled */
+			HALT_ON_ERRORCOND(bps[i].disabled == 1);
+			bps[i].disabled = 0;
+			disabled_bps--;
+			*ptr = INT3;
 		}
-		HALT_ON_ERRORCOND(i < MAX_BP);
 	} else {
-		for (i = 0; i < MAX_BP; i++) {
-			if (!bps[i].valid) {
-				break;
-			}
-		}
-		HALT_ON_ERRORCOND(i < MAX_BP);	/* overflow of bps */
+		/* New breakpoint */
+		HALT_ON_ERRORCOND(*ptr != INT3);
+		i = alloc_breakpoint();
 		bps[i].valid = 1;
+		bps[i].disabled = 0;
 		bps[i].old = *ptr;
 		bps[i].cs = cs;
 		bps[i].rip = rip;
@@ -780,19 +830,38 @@ static void set_breakpoint(u16 cs, u64 rip) {
 	}
 }
 
-static void hit_breakpoint(u16 cs, u64 rip) {
+static void hit_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	u64 addr = (u64)cs * 16 + rip;
 	u8 *ptr = (u8 *)addr;
-	int i;
+	int i = find_breakpoint_csrip(cs, rip);
+	HALT_ON_ERRORCOND(i < MAX_BP);	/* breakpoint not found */
 	HALT_ON_ERRORCOND(*ptr == INT3);
-	for (i = 0; i < MAX_BP; i++) {
-		if (bps[i].valid && bps[i].cs == cs && bps[i].rip == rip) {
-			break;
-		}
-	}
-	HALT_ON_ERRORCOND(i < MAX_BP);	/* overflow of bps */
-	bps[i].valid = 0;
+	HALT_ON_ERRORCOND(bps[i].disabled == 0);
+	bps[i].disabled = 1;
+	disabled_bps++;
 	*ptr = bps[i].old;
+	enable_monitor_trap(vcpu, 1);
+}
+
+static int enabled_breakpoints(VCPU *vcpu) {
+	/* Return number of breakpoints enabled */
+	int ans;
+	int i;
+	if (disabled_bps) {
+		for (i = 0; i < MAX_BP; i++) {
+			if (bps[i].valid && bps[i].disabled) {
+				u64 addr = (u64)bps[i].cs * 16 + bps[i].rip;
+				u8 *ptr = (u8 *)addr;
+				*ptr = bps[i].old;
+				bps[i].disabled = 0;
+				disabled_bps--;
+				ans++;
+			}
+		}
+		disable_monitor_trap(vcpu, 1);
+	}
+	HALT_ON_ERRORCOND(disabled_bps == 0);
+	return ans;
 }
 
 static void xxd(u32 start, u32 end) {
@@ -817,15 +886,16 @@ static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	set_breakpoint(0x7c0, 0x118);
-	set_breakpoint(0x7c0, 0x16a);
+	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
+	set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
+	set_breakpoint(0x7c0, 0x16a);	// disk read fail
 	printf("\nWBINVD");
 	wbinvd();
 }
 
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// ENABLE_MONITOR_TRAP;
+	// enable_monitor_trap(vcpu, 0);
 	// set_breakpoint(0x7c0, 0x1068);
 	printf("\nWBINVD");
 	wbinvd();
@@ -853,16 +923,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //	printf("\nMT%x: 0x%04x:0x%04llx ECX=0x%08x EAX=0x%08x EBX=0x%08x",
 //			vcpu->id, cs, rip, r->ecx, r->eax, r->ebx);
 	switch ((cs << 16) | rip) {
-	case 0x07c00e88:
-		printf(" DS=0x%04x ES=0x%04x", vcpu->vmcs.guest_DS_selector, vcpu->vmcs.guest_ES_selector);
-		DISABLE_MONITOR_TRAP;
-		// set_breakpoint(0x7c0, 0xe9d);
-		set_breakpoint(0x7c0, 0xea2);
-		break;
 	case 0x07c00145:
-		DISABLE_MONITOR_TRAP;
-		set_breakpoint(0x7c0, 0x143);
-		set_breakpoint(0x7c0, 0x165);
 		printf(" DX=0x%04x DS=0x%04x",
 				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
 		{
@@ -872,7 +933,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		break;
 //	case 0x07c00ea0:
-//		DISABLE_MONITOR_TRAP;
+//		disable_monitor_trap(vcpu, 0);
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
 	default:
@@ -958,14 +1019,12 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			printf("\nEnd dump bootmgr");
 		}
 
-		ENABLE_MONITOR_TRAP;
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
 	case 0x07c0016a:
 		HALT_ON_ERRORCOND(0);	/* See strange error */
 		break;
 	default:
-		ENABLE_MONITOR_TRAP;
 		break;
 	}
 }
@@ -984,6 +1043,8 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		xmhf_baseplatform_arch_x86_64vmx_dumpVMCS(vcpu);
 		HALT();
 	}
+
+	enabled_breakpoints(vcpu);
 
 	if (vcpu->vmcs.info_vmexit_reason == 37) {
 		// monitor trap
@@ -1134,7 +1195,7 @@ if (0) {
 				case 0x03:	// INT3
 					/* vector = 3, software interrupt, valid */
 					HALT_ON_ERRORCOND(vcpu->vmcs.info_vmexit_interrupt_information == 0x80000603);
-					hit_breakpoint(vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
+					hit_breakpoint(vcpu, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 					handle_breakpoint_hit(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 					break;
 

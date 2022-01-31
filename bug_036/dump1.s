@@ -135,6 +135,9 @@ Disassembly of section .data:
      118:	e9 fe 01             	jmp    0x319
      11b:	90                   	nop
      11c:	90                   	nop
+
+	// Read disk
+	// Arguments: %ds, 0x16, ...
      11d:	66 60                	pushal 
      11f:	1e                   	push   %ds
      120:	06                   	push   %es
@@ -351,6 +354,8 @@ Disassembly of section .data:
      302:	2e 00 00             	add    %al,%cs:(%bx,%si)
 	...
      315:	00 00                	add    %al,(%bx,%si)
+
+	// 319 is a useful instruction
      317:	9a 02 66 0f b7       	lcall  $0xb70f,$0x6602
      31c:	06                   	push   %es
      31d:	0b 00                	or     (%bx,%si),%ax

@@ -933,7 +933,7 @@ But since VGA does not support scrolling, need to quiet some XMHF output.
 VGA on QEMU and HP works as expected. So now we can try XMHF on more computers
 without configuring serial port.
 
-### How is bootmgr loaded into memory
+### How 2nd sector is loaded into memory by the first sector
 
 Since this bug happens when we are trying to access bootmgr, we should know
 how it is loaded into memory. Maybe something is wrong with it.
@@ -946,10 +946,162 @@ code is called a few times. This is BIOS int 13h with AH=0x42. Refs:
 * <http://www.ctyme.com/intr/rb-0708.htm>
 * <https://wiki.osdev.org/Disk_access_using_the_BIOS_(INT_13h)>
 
+The call sequence in the first sector is:
+```
+0xcf (loop 0xc5 - 0xd6)
+	0x11d (function 0x11d - 0x18a)
+		Loop 0x121 - 0x165 is called a lot of times
+		0x16a will be executed if BIOS call results in error
+0xd6 - 0x10d: call int1a bb00h and optionally int1a bb07h
+0x10d - 0x118: clear memory after code in 2nd sector (likely .bss)
+0x118: jump to 2nd sector
+```
+
+### Using VGA to test on other machines
+
+Tested VGA on a machine that does not support serial port. However VGA output
+is too difficult to read (e.g. when other software prints something on VGA,
+the screen has unexpected behavior).
+
+Currently give up using VGA to test.
+
+### How is bootmgr loaded into memory
+
+From analyzing how 2nd sector is loaded, we can jump directly to the first call
+of int1a bb00h.
+
+Git `16edb2fa5`, serial `20220130141416`. This shows how to break at the last
+instruction before second sector.
+
+After some debugging, looks like 0x11d is called from second and later sector,
+even though it is located in the first sector. This function calls BIOS
+extended read and takes a lot of time. So we skip this function during monitor
+trap. But print inputs to this function.
+
+Ref:
+<https://en.wikipedia.org/wiki/INT_13H#INT_13h_AH=42h:_Extended_Read_Sectors_From_Drive>
+
+(Git `ddbbc3edc`, serial `20220130144902` is a failed attempt)
+
+Git `769db5817`, serial `20220130150253`. Use `grep 0x0145 20220130150253` to
+see all DS:SI arguments. For all read requests, # sectors to read = 1,
+
+Observation: before jumping to 2nd sector, the 0x2000:0x0000 memory is already
+filled with bootmgr code.
+
+We can also see the call sequence using the following shell script:
+
+```sh
+(cat -n results/20220130150253 | grep 0x0145;
+cat -n results/20220130150253 | grep 0x011d -B 1 | grep -v 0x011d | grep MT
+) | cut -b 1-26,147- | sort -n | less -S
+```
+
+```
+0x085f
+	0x0145
+		int13 AH=42h target = 0x07c0:0x2400
+		int13 AH=42h target = 0x07e0:0x2400
+0x09de
+	0x0145
+		int13 AH=42h target = 0x07c0:0x2800
+		int13 AH=42h target = 0x07e0:0x2800
+0x0ab6
+	0x0145
+		int13 AH=42h target = 0x0a80:0x0008
+		int13 AH=42h target = 0x0aa0:0x0008
+0x09de
+	0x0145
+		int13 AH=42h target = 0x07c0:0x2800
+		int13 AH=42h target = 0x07e0:0x2800
+0x0ab6
+	0x0145
+		int13 AH=42h target = 0x0ac0:0x0008
+		int13 AH=42h target = 0x0ae0:0x0008
+0x09de
+	0x0145
+		int13 AH=42h target = 0x07c0:0x2800
+		int13 AH=42h target = 0x07e0:0x2800
+0x0ab6
+	0x0145
+		int13 AH=42h target = 0x0b00:0x0008
+		int13 AH=42h target = 0x0b20:0x0008
+Repeat 2 times
+	0x0588
+		0x0145
+			int13 AH=42h target = 0x0b80:0x0008
+			int13 AH=42h target = 0x0ba0:0x0008
+			...
+			int13 AH=42h target = 0x0c60:0x0008
+0x09de
+	0x0145
+		int13 AH=42h target = 0x07c0:0x2800
+		int13 AH=42h target = 0x07e0:0x2800
+0x0ab6
+	0x0145
+		int13 AH=42h target = 0x0b40:0x0008
+		int13 AH=42h target = 0x0b60:0x0008
+0x0588
+	0x0145
+		int13 AH=42h target = 0x2000:0x0000
+		int13 AH=42h target = 0x2020:0x0000
+		...
+		int13 AH=42h target = 0x85e0:0x0000
+```
+
+Looks like bootmgr is loaded in the last call of `0x0145` by `0x0588`. But has
+bootmgr been loaded before?
+
+Git `304558dba`, serial `20220130155235`. We try to print `0x2000:0x0000` and
+`0x3000:0x0000` early, but it looks like the memory is initialized to bootmgr
+as soon as the hypervisor starts running (try
+`grep -oE '0x20000.{47}' 20220130155235 | sort -u`)
+
+We have been using `init 6` to test on HP. Maybe we should shutdown and then
+power on the machine. Git `e65d3372a`, serial `20220130160543` (complete
+shutdown then power on). This time we can confirm that the last call of
+`0x0145` by `0x0588` loads the bootmgr to memory. If the machine is not
+completely powered off, the bootmgr will survive in memory (probably because
+XMHF, GRUB, and Linux do not access this memory).
+
+### Injecting WBINVD
+
+Git `85e01eb9b`, serial `20220130165552`. Can see that when executing WBINVD
+when `0x0588` is executed the 3rd time (i.e. about to read bootmgr, see above),
+the #MC exception already happens.
+
+We inject more WBINVD's. Git `a31ded00a`, serial `20220130171213`. Looks like
+the #MC happens before the first disk read in the second sector.
+
+Git `178646e43`, serial `20220130172244`. Looks like #MC happens before the
+second sector. Is it possible that #MC is related to the 0xbb07 call?
+
+Git `b065d98df`, serial `20220130200551`. Can see that after the 0xbb07 call,
+WBINVD will cause #MC exception.
+
+If inject WBINVD in `xmhf64` branch for Debian x64, Debian can boot (but slow).
+
+Possible causes
+* TPM has some problem
+* BIOS uses SMM mode, which has some problem
+	* Maybe fixed by newer hardware / BIOS?
+* XMHF has some problem
+	* For example, some memory's cache policy do not match MTRR
+
+Next steps
+* Write your own boot loader and call 0xbb07 (make sure Windows is good)
+* How does other TPM configurations fail?
+* Try on a newer machine
+
+Possible solutions
+* Reverse engineer BIOS code
+* If good on a newer machine, do not support old one
+* Find a way to disable TPM in XMHF
+
 # tmp notes
 
-TODO: how is bootmgr loaded into memory?
-TODO: test on more hardware using VGA
+TODO: write your own boot loader and call 0xbb07
+TODO: how does other TPM configurations fail?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 
 ## Commits

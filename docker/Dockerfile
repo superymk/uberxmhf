@@ -14,3 +14,5 @@ RUN sudo apt-get install pkg-config -y
 # /usr/lib/gcc-cross/i686-linux-gnu/10/libgcc.a, expected /usr/lib/gcc
 # Ideal way is to use i686-linux-gnu-gcc etc.
 
+RUN sudo apt-get install gcc-mingw-w64 -y
+

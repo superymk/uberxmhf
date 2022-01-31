@@ -899,6 +899,7 @@ static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
 	set_breakpoint(0x7c0, 0x145);	// disk read one sector
 	set_breakpoint(0x7c0, 0x16a);	// disk read fail
+	enable_monitor_trap(vcpu, 0);
 	TRY_WBINVD;
 }
 
@@ -936,6 +937,14 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 //		disable_monitor_trap(vcpu, 0);
 //		set_breakpoint(0x7c0, 0xe9d);
 //		break;
+	case 0x07c0010b:	// before first bb07
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x7c0, 0x10d);	// after first bb07
+		break;
+	case 0x07c010c0:	// before second bb07
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x7c0, 0x10c2);	// after second bb07
+		break;
 	default:
 		/* nop */
 		break;
@@ -1021,6 +1030,12 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
+		break;
+	case 0x07c0010d:	// after first bb07
+		enable_monitor_trap(vcpu, 0);
+		break;
+	case 0x07c010c2:	// after second bb07
+		enable_monitor_trap(vcpu, 0);
 		break;
 	case 0x07c0016a:	// disk read fail
 		HALT_ON_ERRORCOND(0);	/* See strange error */

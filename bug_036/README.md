@@ -1090,6 +1090,7 @@ Possible causes
 
 Next steps
 * Write your own boot loader and call 0xbb07 (make sure Windows is good)
+* Consider SMM. Is it possible to easily detect use of SMM in VMX?
 * How does other TPM configurations fail?
 * Try on a newer machine
 
@@ -1098,9 +1099,39 @@ Possible solutions
 * If good on a newer machine, do not support old one
 * Find a way to disable TPM in XMHF
 
+### Write your own bootloader
+
+First observe how Windows calls 0xbb07. Use gdb script on QEMU without XMHF:
+```gdb
+hb *0x010b
+hb *0x7c00 + 0x010b
+c
+info reg
+```
+
+Get
+```
+rax            0xbb07              47879
+rbx            0x41504354          1095779156
+rcx            0x1152              4434
+rdx            0x9                 9
+rsi            0x0                 0
+rdi            0x1b8               440
+cs             0x7c0               1984
+ss             0x0                 0
+ds             0x7c0               1984
+es             0x7c0               1984
+```
+
+ES:DI is around the start of second sector, ES:DI + ECX is end of it. Other
+arguments can follow the same thing.
+
+
+
 # tmp notes
 
 TODO: write your own boot loader and call 0xbb07
+TODO: try to detect use of SMM in HP
 TODO: how does other TPM configurations fail?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 

@@ -683,8 +683,8 @@ I think for now should focus on the INIT signal. Maybe #MC is a by product of
 it. Another way is to try a different hardware (try VGA).
 
 Previous ideas
-* TODO: Is it possible that ignoring is the correct choice? Read BIOS' handler
-  for this interrupt
+* Is it possible that ignoring is the correct choice? Read BIOS' handler for
+  this interrupt
 	* Looks like the #MC exception is for the hypervisor. Ignoring is helpful
 	  in confirming the (likely) root cause of Intercept 3, but cannot be an
 	  actual fix.
@@ -1124,14 +1124,86 @@ es             0x7c0               1984
 ```
 
 ES:DI is around the start of second sector, ES:DI + ECX is end of it. Other
-arguments can follow the same thing.
+arguments can follow the same value.
 
+Return code should be `rax = 0x1a`.
 
+A simple boot loader is `bootloader6.s`, compile with `bootloader6.sh` and
+get `bootloader6.bin`. Copy this to `/boot/a` and in chain loader use
+`chainloader (hd0,msdos1)/boot/a` instead of `chainloader +1`.
+
+Can write a GRUB entry (change "hd0,msdos1" and "hd1,msdos1" as necessary):
+```
+#!/bin/sh
+exec tail -n +3 $0
+menuentry 'MyBootLoader' {
+	insmod part_msdos
+	insmod ntfs
+	set root='hd1,msdos1'
+	parttool ${root} hidden-
+	drivemap -s (hd0) ${root}
+	chainloader (hd0,msdos1)/boot/bootloader6.bin
+}
+```
+
+Git `738932fce`, this time HP grub load XMHF then load MyBootLoader, serial
+`20220204225114`. Can reproduce the #MC issue.
+
+Note that for some unknown reason if run MyBootLoader without XMHF on HP, will
+not see "GOOD" printed. But since we are able to reproduce the #MC, do not
+worry for now.
+
+### SMM
+
+After reading some of Intel v3 "30.15 DUAL-MONITOR TREATMENT OF SMIs AND SMM"
+and related sections, and some papers, have some ideas about SMM.
+
+In my understanding, the default treatment of SMI will simply disalbe VMX
+operation and handle the SMI. The dual monitor treatment will transfer control
+to SMM-transfer monitor (STM). Then STM can perform needed tasks in SMM mode.
+
+Intel documentation is low level. The "Applying ... Monitor" paper basically
+shows that STM virtualizes SMM operation. So ideally implementing the dual mode
+treatment will allow us to further debug SMM operations during the 0xbb07 call.
+
+<del>As a quick workaround, to test whether the processor is using SMM, we can
+probably just set "Blocking by SMI" bit (1 << 2) in Interruptibility
+State.</del> To test whether the processor has entered SMM, we need to
+implement STM. It looks like a lot of work to do. Also, maybe activating STM
+requires writing BIOS code (need to set some MSR in SMM mode?) This may be
+considered impossible for now.
+
+Refs: 
+* <https://dl.acm.org/doi/fullHtml/10.1145/3458903.3458907>
+  "Applying the Principle of Least Privilege to System Management Interrupt
+  Handlers with the Intel SMI Transfer Monitor"
+* <https://www.platformsecuritysummit.com/2018/speaker/myers/STMPE2Intelv84a.pdf>
+  "Using the Intel STM for Protected Execution"
+* <https://github.com/jyao1/STM>
+
+### Big Picture
+
+Looks like Xen, QEMU, and Bochs does not run the BIOS on bare metal:
+
+<https://wiki.xenproject.org/wiki/Hvmloader>
+> Currently Xen use its independent BIOS (rombios, originally from the bochs
+  project). And is in the process of switching to SeaBIOS
+
+Now for this to work we try to hide TPM from Windows 10. This can be useful in
+the future to implement TPM virtualization.
+
+Because we can reproduce with bootloader6, we know that the problem is not
+related to Windows. So currently there are 2 things to try:
+* Hide TPM from BIOS and ACPI interface (if any)
+* Try to fix TPM BIOS 0xbb07 call (likely issue in firmware, may be XMHF issue)
+* Try on another computer
+
+The first solution is favored.
+
+### Hide TPM
 
 # tmp notes
 
-TODO: write your own boot loader and call 0xbb07
-TODO: try to detect use of SMM in HP
 TODO: how does other TPM configurations fail?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 

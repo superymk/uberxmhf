@@ -304,6 +304,7 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 //			u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
 //			gueststackregion[2] |= (u16)EFLAGS_CF;
 			printf("\nOther TCG BIOS calls");
+			
 		}
 //		vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 //		return;
@@ -910,6 +911,13 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	TRY_WBINVD;
 }
 
+static void handle_entry3(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	(void)vcpu;(void)r;(void)cs;(void)rip;
+	// bootloader6
+	set_breakpoint(0x0, 0x7caa);
+	TRY_WBINVD;
+}
+
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
@@ -1049,6 +1057,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		TRY_WBINVD;
 		printf(" count %d", count);
 		break;
+	}
 	case 0x07c0011d:	// disk read multi sector function call
 		TRY_WBINVD;
 		break;
@@ -1062,7 +1071,10 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		TRY_WBINVD;
 		break;
-	}
+	case 0x00007caa:	// for bootloader6
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
 	default:
 		break;
 	}
@@ -1120,6 +1132,9 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			if (count == 2) {
 				handle_entry22(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 			}
+		}
+		if ((r->eax & 0xffffU) == 0xbb07) {
+			handle_entry3(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 		}
 	}
 

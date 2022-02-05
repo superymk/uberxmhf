@@ -947,6 +947,10 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint(0x7c0, 0x10c2);	// after second bb07
 		break;
+	case 0x20000e4a:	// Loop e21 - e4a
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x2000, 0x0e4d);
+		TRY_WBINVD;
 	default:
 		/* nop */
 		break;
@@ -1070,6 +1074,10 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		TRY_WBINVD;
 		break;
 	case 0x07c0055b:	// before jump to bootmgr
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
+	case 0x20000e4d:	// Loop e21 - e4a
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;

@@ -287,7 +287,7 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 	if ((r->eax & 0xff00) == 0xbb00) {
 		if ((r->eax & 0xff) == 0x00) {
 			// TCG_StatusCheck, to hide TPM return 0x23 (TCG_PC_TPM_NOT_PRESENT)
-			if (0) {
+			if (1) {
 				printf("\nTCG_StatusCheck, return 0x23");
 				r->rax = 0;
 				r->eax = 0x23U;
@@ -304,7 +304,7 @@ static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD
 //			u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
 //			gueststackregion[2] |= (u16)EFLAGS_CF;
 			printf("\nOther TCG BIOS calls");
-			
+			HALT_ON_ERRORCOND(0);	// TPM should be not present
 		}
 //		vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 //		return;
@@ -895,12 +895,12 @@ static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	set_breakpoint(0x7c0, 0x118);	// jump to second sector
-	set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
-	set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
-	set_breakpoint(0x7c0, 0x145);	// disk read one sector
-	set_breakpoint(0x7c0, 0x16a);	// disk read fail
-	enable_monitor_trap(vcpu, 0);
+	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
+	// set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
+	// set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
+	// set_breakpoint(0x7c0, 0x145);	// disk read one sector
+	// set_breakpoint(0x7c0, 0x16a);	// disk read fail
+	// enable_monitor_trap(vcpu, 0);
 	TRY_WBINVD;
 }
 
@@ -908,13 +908,7 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable_monitor_trap(vcpu, 0);
 	// set_breakpoint(0x7c0, 0x1068);
-	TRY_WBINVD;
-}
-
-static void handle_entry3(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
-	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// bootloader6
-	set_breakpoint(0x0, 0x7caa);
+	set_breakpoint(0x7c0, 0x055b);
 	TRY_WBINVD;
 }
 
@@ -1075,6 +1069,10 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
+	case 0x07c0055b:	// before jump to bootmgr
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
 	default:
 		break;
 	}
@@ -1132,9 +1130,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			if (count == 2) {
 				handle_entry22(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 			}
-		}
-		if ((r->eax & 0xffffU) == 0xbb07) {
-			handle_entry3(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
 		}
 	}
 

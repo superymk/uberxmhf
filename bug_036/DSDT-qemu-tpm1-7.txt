@@ -1,0 +1,180 @@
+Device (ISA.TPM)
+{
+    Name (_HID, EisaId ("PNP0C31"))  // _HID: Hardware ID
+    Name (_STA, 0x0F)  // _STA: Status
+    Name (_CRS, ResourceTemplate ()  // _CRS: Current Resource Settings
+    {
+        Memory32Fixed (ReadWrite,
+            0xFED40000,         // Address Base
+            0x00005000,         // Address Length
+            )
+    })
+    OperationRegion (TPP2, SystemMemory, 0xFED45100, 0x5A)
+    Field (TPP2, AnyAcc, NoLock, Preserve)
+    {
+        PPIN,   8, 
+        PPIP,   32, 
+        PPRP,   32, 
+        PPRQ,   32, 
+        PPRM,   32, 
+        LPPR,   32
+    }
+
+    OperationRegion (TPP3, SystemMemory, 0xFED4515A, One)
+    Field (TPP3, ByteAcc, NoLock, Preserve)
+    {
+        MOVV,   8
+    }
+
+    Method (TPFN, 1, Serialized)
+    {
+        If ((Arg0 >= 0x0100))
+        {
+            Return (Zero)
+        }
+
+        OperationRegion (TPP1, SystemMemory, (0xFED45000 + Arg0), One)
+        Field (TPP1, ByteAcc, NoLock, Preserve)
+        {
+            TPPF,   8
+        }
+
+        Return (TPPF) /* \_SB_.PCI0.ISA_.TPM_.TPFN.TPPF */
+    }
+
+    Name (TPM2, Package (0x02)
+    {
+        Zero, 
+        Zero
+    })
+    Name (TPM3, Package (0x03)
+    {
+        Zero, 
+        Zero, 
+        Zero
+    })
+    Method (_DSM, 4, Serialized)  // _DSM: Device-Specific Method
+    {
+        If ((Arg0 == ToUUID ("3dddfaa6-361b-4eb4-a424-8d10089d1653") /* Physical Presence Interface */))
+        {
+            If ((Arg2 == Zero))
+            {
+                Return (Buffer (0x02)
+                {
+                     0xFF, 0x01                                       // ..
+                })
+            }
+
+            If ((Arg2 == One))
+            {
+                Return ("1.3")
+            }
+
+            If ((Arg2 == 0x02))
+            {
+                Local0 = DerefOf (Arg3 [Zero])
+                Local1 = TPFN (Local0)
+                If (((Local1 & 0x07) == Zero))
+                {
+                    Return (One)
+                }
+
+                PPRQ = Local0
+                PPRM = Zero
+                Return (Zero)
+            }
+
+            If ((Arg2 == 0x03))
+            {
+                If ((Arg1 == One))
+                {
+                    TPM2 [One] = PPRQ /* \_SB_.PCI0.ISA_.TPM_.PPRQ */
+                    Return (TPM2) /* \_SB_.PCI0.ISA_.TPM_.TPM2 */
+                }
+
+                If ((Arg1 == 0x02))
+                {
+                    TPM3 [One] = PPRQ /* \_SB_.PCI0.ISA_.TPM_.PPRQ */
+                    TPM3 [0x02] = PPRM /* \_SB_.PCI0.ISA_.TPM_.PPRM */
+                    Return (TPM3) /* \_SB_.PCI0.ISA_.TPM_.TPM3 */
+                }
+            }
+
+            If ((Arg2 == 0x04))
+            {
+                Return (0x02)
+            }
+
+            If ((Arg2 == 0x05))
+            {
+                TPM3 [One] = LPPR /* \_SB_.PCI0.ISA_.TPM_.LPPR */
+                TPM3 [0x02] = PPRP /* \_SB_.PCI0.ISA_.TPM_.PPRP */
+                Return (TPM3) /* \_SB_.PCI0.ISA_.TPM_.TPM3 */
+            }
+
+            If ((Arg2 == 0x06))
+            {
+                Return (0x03)
+            }
+
+            If ((Arg2 == 0x07))
+            {
+                Local0 = DerefOf (Arg3 [Zero])
+                Local1 = TPFN (Local0)
+                If (((Local1 & 0x07) == Zero))
+                {
+                    Return (One)
+                }
+
+                If (((Local1 & 0x07) == 0x02))
+                {
+                    Return (0x03)
+                }
+
+                If ((Arg1 == One))
+                {
+                    PPRQ = Local0
+                    PPRM = Zero
+                }
+
+                If ((Arg1 == 0x02))
+                {
+                    PPRQ = Local0
+                    PPRM = DerefOf (Arg3 [One])
+                }
+
+                Return (Zero)
+            }
+
+            If ((Arg2 == 0x08))
+            {
+                Local0 = DerefOf (Arg3 [Zero])
+                Local1 = TPFN (Local0)
+                Return ((Local1 & 0x07))
+            }
+
+            Return (Buffer (One)
+            {
+                 0x00                                             // .
+            })
+        }
+
+        If ((Arg0 == ToUUID ("376054ed-cc13-4675-901c-4756d7f2d45d") /* Unknown UUID */))
+        {
+            If ((Arg2 == Zero))
+            {
+                Return (Buffer (One)
+                {
+                     0x03                                             // .
+                })
+            }
+
+            If ((Arg2 == One))
+            {
+                Local0 = DerefOf (Arg3 [Zero])
+                MOVV = Local0
+                Return (Zero)
+            }
+        }
+    }
+}

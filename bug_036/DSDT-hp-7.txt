@@ -1,0 +1,260 @@
+Device (GTPM)
+{
+    Method (_HID, 0, Serialized)  // _HID: Hardware ID
+    {
+        If ((TVID == 0x15D1))
+        {
+            Return (0x0201D824)
+        }
+        Else
+        {
+            Return (0x310CD041)
+        }
+    }
+
+    Name (_CID, EisaId ("PNP0C31"))  // _CID: Compatible ID
+    Method (_CRS, 0, Serialized)  // _CRS: Current Resource Settings
+    {
+        Return (ResourceTemplate ()
+        {
+            IO (Decode16,
+                0xFE00,             // Range Minimum
+                0xFE00,             // Range Maximum
+                0x01,               // Alignment
+                0x10,               // Length
+                )
+            IO (Decode16,
+                0xFE80,             // Range Minimum
+                0xFE80,             // Range Maximum
+                0x01,               // Alignment
+                0x10,               // Length
+                )
+            Memory32Fixed (ReadWrite,
+                0xFED40000,         // Address Base
+                0x00005000,         // Address Length
+                )
+        })
+    }
+
+    OperationRegion (TMMB, SystemMemory, 0xFED40000, 0x1000)
+    Field (TMMB, ByteAcc, Lock, Preserve)
+    {
+        ACCS,   8, 
+        Offset (0x18), 
+        TSTA,   8, 
+        TBCA,   8, 
+        Offset (0xF00), 
+        TVID,   16, 
+        TDID,   16
+    }
+
+    Method (_STA, 0, NotSerialized)  // _STA: Status
+    {
+        If ((ACCS == 0xFF))
+        {
+            Return (0x00)
+        }
+        ElseIf ((TPMX == 0x01))
+        {
+            Return (0x00)
+        }
+        Else
+        {
+            Return (0x0F)
+        }
+    }
+
+    Name (PUID, ToUUID ("3dddfaa6-361b-4eb4-a424-8d10089d1653") /* Physical Presence Interface */)
+    Name (REV1, "1.0")
+    Name (PPIB, Buffer (0x02)
+    {
+         0x00, 0x00                                       // ..
+    })
+    Name (MUID, ToUUID ("376054ed-cc13-4675-901c-4756d7f2d45d") /* Unknown UUID */)
+    Method (_DSM, 4, NotSerialized)  // _DSM: Device-Specific Method
+    {
+        Local0 = Arg0
+        If ((\SRCP (Local0, PUID) == 0x01))
+        {
+            Return (HPPI (Arg0, Arg1, Arg2, Arg3))
+        }
+
+        If ((\SRCP (Local0, MUID) == 0x01))
+        {
+            Return (HMOR (Arg0, Arg1, Arg2, Arg3))
+        }
+
+        Return (0x00)
+    }
+
+    Method (HPPI, 4, NotSerialized)
+    {
+        If ((Arg1 != 0x01))
+        {
+            Return (Buffer (0x01)
+            {
+                 0x00                                             // .
+            })
+        }
+
+        If ((Arg2 <= 0x06))
+        {
+            If ((Arg2 == 0x00))
+            {
+                Return (Buffer (0x01)
+                {
+                     0x7F                                             // .
+                })
+            }
+
+            If ((Arg2 == 0x01))
+            {
+                Return (REV1) /* \_SB_.PCI0.LPCB.GTPM.REV1 */
+            }
+
+            If ((Arg2 == 0x02))
+            {
+                Local0 = DerefOf (Arg3 [0x00])
+                Debug = "TPM Func 2"
+                Debug = Local0
+                If ((Local0 <= 0x0E))
+                {
+                    If (((Local0 == 0x0C) || (Local0 == 0x0D)))
+                    {
+                        Return (0x01)
+                    }
+                    Else
+                    {
+                        Local2 = 0x02
+                        \_SB.SSMI (0xEA7D, 0x05, 0x00, 0x00, 0x00)
+                        Local1 = ECX /* \ECX_ */
+                        If (((Local1 & 0x01) == 0x01))
+                        {
+                            If (((Local1 & 0x02) == 0x00))
+                            {
+                                If (((Local0 == 0x05) || (Local0 == 0x0E)))
+                                {
+                                    Return (Local2)
+                                }
+                            }
+
+                            \_SB.SSMI (0xEA7E, 0x00, Local0, 0x00, 0x01)
+                            Debug = EAX /* \EAX_ */
+                            Debug = EBX /* \EBX_ */
+                            Debug = ECX /* \ECX_ */
+                            If ((EBX == 0x00))
+                            {
+                                Local2 = 0x00
+                            }
+                        }
+
+                        Return (Local2)
+                    }
+                }
+                Else
+                {
+                    Return (0x01)
+                }
+            }
+
+            If ((Arg2 == 0x03))
+            {
+                Debug = "TPM Func 3"
+                \_SB.SSMI (0xEA7D, 0x00, 0x00, 0x00, 0x01)
+                Debug = EAX /* \EAX_ */
+                Debug = EBX /* \EBX_ */
+                Debug = ECX /* \ECX_ */
+                Name (DSMB, Package (0x02)
+                {
+                    0x01, 
+                    0x00
+                })
+                If ((EBX == 0x00))
+                {
+                    DSMB [0x00] = 0x00
+                    DSMB [0x01] = 0x00
+                    Local0 = ECX /* \ECX_ */
+                    If ((Local0 <= 0x0E))
+                    {
+                        DSMB [0x00] = 0x00
+                        DSMB [0x01] = Local0
+                    }
+                }
+
+                Return (DSMB) /* \_SB_.PCI0.LPCB.GTPM.HPPI.DSMB */
+            }
+
+            If ((Arg2 == 0x04))
+            {
+                Return (0x02)
+            }
+
+            If ((Arg2 == 0x05))
+            {
+                Debug = "TPM Func 5"
+                \_SB.SSMI (0xEA7D, 0x01, 0x00, 0x00, 0x01)
+                Name (DSMC, Package (0x03)
+                {
+                    0x01, 
+                    0x00, 
+                    0x00
+                })
+                Debug = EAX /* \EAX_ */
+                Debug = EBX /* \EBX_ */
+                Debug = ECX /* \ECX_ */
+                If ((EBX == 0x00))
+                {
+                    DSMC [0x00] = 0x00
+                    DSMC [0x01] = ECX /* \ECX_ */
+                    \_SB.SSMI (0xEA7D, 0x02, 0x00, 0x00, 0x01)
+                    DSMC [0x02] = ECX /* \ECX_ */
+                }
+
+                Return (DSMC) /* \_SB_.PCI0.LPCB.GTPM.HPPI.DSMC */
+            }
+
+            If ((Arg2 == 0x06))
+            {
+                PPIB = Arg3
+                If ((((DerefOf (PPIB [0x00]) == 0x45) || (DerefOf (
+                    PPIB [0x00]) == 0x65)) && ((DerefOf (PPIB [0x01]) == 0x4E) || 
+                    (DerefOf (PPIB [0x01]) == 0x6E))))
+                {
+                    Return (0x00)
+                }
+                Else
+                {
+                    Return (0x01)
+                }
+            }
+        }
+
+        Return (Buffer (0x01)
+        {
+             0x00                                             // .
+        })
+    }
+
+    Method (HMOR, 4, NotSerialized)
+    {
+        If ((Arg1 != 0x01))
+        {
+            Return (0x01)
+        }
+
+        If ((Arg2 != 0x01))
+        {
+            Return (0x01)
+        }
+
+        Local0 = DerefOf (Arg3 [0x00])
+        \_SB.SSMI (0xEA7F, Local0, 0x00, 0x00, 0x01)
+        Local0 = 0x00
+        If ((EBX != 0x00))
+        {
+            Local0 = 0x01
+        }
+
+        Return (Local0)
+    }
+}

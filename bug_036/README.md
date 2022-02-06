@@ -1200,7 +1200,200 @@ related to Windows. So currently there are 2 things to try:
 
 The first solution is favored.
 
+### Reading about TPM
+
+TPM can be discovered through
+* BIOS, using the 0xbb00 call
+* ACPI, should be an entry in some ACPI Description Table (maybe DSDT)
+	* Descriptor tables in ACPI spec v6.4 chapter 5.2
+	* DSDT should be found through RSDT -> XSDT -> FADT -> DSDT
+
+Hopefully we can see a list of hardware resources (e.g. I/O ports) to block
+in order to hide TPM. "TCG PC Client Specific Implementation Specification
+for Conventional BIOS" version 1.21 page 93 says:
+> When present, the ACPI device object representing the TPM MUST claim all
+> hardware resources consumed by the TPM. This includes any legacy IO ports and
+> other hardware resources.
+
+Looks like `acpidump` can be used to view ACPI tables.
+Install: Debian=`acpidump`, Fedora=`acpica-tools`. It will read
+`/sys/firmware/acpi/tables/*`
+
+QEMU dmesg: `tpm_tis MSFT0101:00: 2.0 TPM (device-id 0x1, rev-id 1)`.
+The `MSFT0101` string is found in `/sys/firmware/acpi/tables/DSDT`.
+<https://01.org/linux-acpi/utilities> contains a way to parse the table in
+Linux.
+```sh
+sudo cat /sys/firmware/acpi/tables/DSDT > DSDT
+iasl -d DSDT
+less DSDT.dsl
+```
+
+Something likely useful appears. See `DSDT-hp-7.txt` for HP result,
+`DSDT-qemu-tpm1-7.txt` for QEMU result when using TPM 1.2,
+`DSDT-qemu-tpm2-7.txt` for QEMU result when using TPM 2.0.
+
+Also, the QEMU `info mtree` shows:
+```
+    00000000fed40000-00000000fed44fff (prio 0, i/o): tpm-tis-mmio
+    00000000fed45000-00000000fed453ff (prio 0, ramd): tpm-ppi
+```
+
+We now think that the following access on HP will relate to TPM:
+* Memory 0xFED40000 - 0xFED45000
+* Memory 0xFED45000 - 0xFED50000 (probably; based on QEMU)
+* IO port 0xFE00 and 0xFE80
+
+In Linux's `tpm_tis_init()` function, looks like `phy->iobase` is the I/O addr
+for TPM. A possible future direction is to see how Linux performs TPM
+initialization (can be used to confirm the above conjectures).
+
 ### Hide TPM
+
+We should now figure out what happens if we hide TPM using any of the two ways:
+* Hide TPM in XMHF using 0x23
+* Hide TPM in BIOS using 0x8600
+
+By looking at previous behaviors, in all configurations HP will eventually
+generate INIT signal in guest mode and #MC in host mode. The difference is when
+this problem appears. For configurations that hide TPM, we should add WBINVD.
+
+From `20220123190706`, can see that `0x07c0:0x055b` is the lret instruction to
+jump to bootmgr. We set a break point there.
+
+For disassembly see `bootmgr5.s.16` and `bootmgr5.s.32`. The call stack in real
+mode is
+```
+Entry 0x1d8
+	Function 0x56c
+		Function 0xa52
+		Function 0xac2
+		Function 0xdce
+			Loop e21 - e4a
+			Return at 0xfa1
+		Function 0x7ee: jump to protected mode
+			GDTR at 0x1500, IDTR at 0x1508
+			LRET to 0x50:0x00000845
+```
+
+Git `4ad474c77`, (serial omitted), stuck at `Loop e21 - e4a` above.
+
+Git `14fd420b6`, serial `20220205171645`, see the transition to protected mode,
+but need to see GDT and IDT. We can use GDB and QEMU.
+
+At `CS:IP=0x2000:0x0826`, use GDB. We see that GDT starts at `0x0001f000`.
+```
+(gdb) info reg
+cs             0x2000              8192
+ss             0x24ad              9389
+ds             0x24ad              9389
+es             0x24ad              9389
+(gdb) x/hx 0x24ad0 + 0x1500
+0x25fd0:	0x007f
+(gdb) x/wx 0x24ad0 + 0x1500 + 2
+0x25fd2:	0x0001f000
+(gdb) x/hx 0x24ad0 + 0x1508
+0x25fd8:	0x07ff
+(gdb) x/wx 0x24ad0 + 0x1508 + 2
+0x25fda:	0x0001f080
+(gdb) x/16gx 0x0001f000
+0x1f000:	0x0000000000000000	0x0000000000000000
+0x1f010:	0x00209a0000000000	0x0000000000000000
+0x1f020:	0x00cf9a000000ffff	0x0000000000000000
+0x1f030:	0x00cf92000000ffff	0x0000000000000000
+0x1f040:	0x000089025f500077	0x0000000000000000
+0x1f050:	0x00009a020000ffff	0x0000000000000000
+0x1f060:	0x000092024ad0ffff	0x0000000000000000
+0x1f070:	0x0000920b80003fff	0x0000000000000000
+(gdb) x/16gx 0x0001f080
+0x1f080:	0x00008f0000500390	0x00008f000050039f
+0x1f090:	0x00008f00005003ae	0x00008f00005003bd
+0x1f0a0:	0x00008f00005003cc	0x00008f00005003db
+0x1f0b0:	0x00008f00005003ea	0x00008f00005003f9
+0x1f0c0:	0x00008f0000500408	0x00008f0000500415
+0x1f0d0:	0x00008f0000500424	0x00008f0000500431
+0x1f0e0:	0x00008f000050043e	0x00008f000050044b
+0x1f0f0:	0x00008f0000500458	0x00008f0000500465
+(gdb) 
+```
+
+Use `gdt.py` to decode `0x00009a020000ffff`:
+```
+0x00	Segment Limit 0x0       Base Address 0x0        Type=0x0 S=0 DPL=0 P=0 AVL=0 L=0 DB=0 G=0
+0x10	Segment Limit 0x0       Base Address 0x0        Type=0xa S=1 DPL=0 P=1 AVL=0 L=1 DB=0 G=0
+0x20	Segment Limit 0xfffff   Base Address 0x0        Type=0xa S=1 DPL=0 P=1 AVL=0 L=0 DB=1 G=1
+0x30	Segment Limit 0xfffff   Base Address 0x0        Type=0x2 S=1 DPL=0 P=1 AVL=0 L=0 DB=1 G=1
+0x40	Segment Limit 0x77      Base Address 0x25f50    Type=0x9 S=0 DPL=0 P=1 AVL=0 L=0 DB=0 G=0
+0x50	Segment Limit 0xffff    Base Address 0x20000    Type=0xa S=1 DPL=0 P=1 AVL=0 L=0 DB=0 G=0
+0x60	Segment Limit 0xffff    Base Address 0x24ad0    Type=0x2 S=1 DPL=0 P=1 AVL=0 L=0 DB=0 G=0
+0x70	Segment Limit 0x3fff    Base Address 0xb8000    Type=0x2 S=1 DPL=0 P=1 AVL=0 L=0 DB=0 G=0
+```
+
+About the type 0xa for CS=0x50, a little bit confusing in documentation.
+In Intel v3 Table 3-1 (page 98) and Table 3-2 (page 100), the first one should
+be used.
+
+Can see that the base address is 0x20000. So `0x50:0x00000845` is 0x845 in the
+bootmgr file. Also from monitor trap results, the last instruction should be
+`0x4aa0` (inclusive), and functions close are called both in real mode and in
+protected mode.
+
+Is it "16 bit protected mode"? Looks like objdump with `-m i386` gives strage
+result. Should still use `-m i8086`. Actually yes, because DB=0
+
+The call stack in 16 bit protected mode is
+```
+Entry 0x1d8
+	Function 0x56c
+		(See above; executed in CS=0x2000 real mode)
+		(Transition to CS=0x50 16-bit protected mode)
+			Return at 0x870 to 0x058c
+		Function 0x22e0
+			Function 0x4a8a
+				Return at 0x4a94
+			Function 0x4350
+				Function 0x4a8a
+					Return at 0x4a94
+				Function 0x760
+					Return at 0x0798
+				Function 0x3720
+					Loop 0x377f - 0x38e9
+					Loop 0x4124 - 0x418f
+					Return at 0x434f
+				Return at 0x4987
+			Return at 0x23c5
+		Function 0xfa2
+			Return at ?
+		Function 0x14bc
+			Return at 0x1950
+		Function 0xa5a
+			0xa98: Jump to CS=0x20
+```
+
+In serial `20220205171645`, stuck at `Loop 0x377f - 0x38e9`. Break at 0x38ec to
+exit the loop.
+
+Git `1f1f79cd3`, serial omitted. Now stuck at `Loop 0x4124 - 0x418f`. 0x3720
+looks like a large function (return at `0x434f`). We set a break point at
+its return instruction.
+
+Git `4c3b22ae7`, serial `20220205195334`. We can see that `0x3720` has returned
+multiple times. So now break at `0x23a9` to see whether `0x4350` returns.
+
+Then looks like stuck in function `0xfa2`. We break at 0x6ec to see whether
+this function returns.
+
+Git `94b3a1012`, we can now see that at `0x50:0xa98` the program jumps to
+`CS=0x20`. We now need to know where the executable is loaded from. QEMU should
+be helpful in this case.
+
+We use GDB. At that time paging is not enabled. Dump `0x400000-0x500000` to
+`dump8.img`. `file` shows its type to be
+`PE32 executable (DLL) Intel 80386, for MS Windows`. In the partition that
+contains bootmgr, only `Boot/bootuwf.dll` and `Boot/bootvhd.dll` have the same
+type.
+
+
 
 # tmp notes
 

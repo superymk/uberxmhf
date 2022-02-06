@@ -936,8 +936,8 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			}
 		}
 	}
-	printf("\nMT%x: 0x%04x:0x%04llx ESP=0x%08x EBP=0x%08x",
-			vcpu->id, cs, rip, r->esp, r->ebp);
+	printf("\nMT%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
+			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
 	TRY_WBINVD;
 	switch ((cs << 16) | rip) {
 	case 0x07c0010b:	// before first bb07
@@ -955,7 +955,8 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	case 0x005038e9:	// Loop 0x377f - 0x38e9
 		disable_monitor_trap(vcpu, 0);
 		// set_breakpoint(0x0050, 0x20000, 0x38ec);
-		set_breakpoint(0x0050, 0x20000, 0x434f);
+		set_breakpoint(0x0050, 0x20000, 0x23c5);
+		set_breakpoint(0x0050, 0x20000, 0x06ec);
 		TRY_WBINVD;
 	default:
 		/* nop */
@@ -966,8 +967,8 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
-	printf("\nBP%x: 0x%04x:0x%04llx ESP=0x%08x EBP=0x%08x",
-			vcpu->id, cs, rip, r->esp, r->ebp);
+	printf("\nBP%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
+			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
 	switch ((cs << 16) | rip) {
 	case 0x07c01068:
 		if ("nop ef8") {
@@ -1083,7 +1084,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
-	case 0x005038ec:	// Loop 0x377f - 0x38e9
+	case 0x005006ec:	// Loop 0x377f - 0x38e9
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;

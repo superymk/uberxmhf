@@ -758,6 +758,7 @@ struct bp_info {
 	u8 old;
 	u16 cs;
 	u64 rip;
+	u64 csbase;
 } bps[MAX_BP] = {};
 
 static int disabled_bps = 0;
@@ -810,8 +811,8 @@ static int alloc_breakpoint(void) {
 	return i;
 }
 
-static void set_breakpoint(u16 cs, u64 rip) {
-	u64 addr = (u64)cs * 16 + rip;
+static void set_breakpoint(u16 cs, u64 csbase, u64 rip) {
+	u64 addr = (u64)csbase + rip;
 	u8 *ptr = (u8 *)addr;
 	int i;
 	i = find_breakpoint_csrip(cs, rip);
@@ -835,15 +836,22 @@ static void set_breakpoint(u16 cs, u64 rip) {
 		bps[i].old = *ptr;
 		bps[i].cs = cs;
 		bps[i].rip = rip;
+		bps[i].csbase = csbase;
 		*ptr = INT3;
 	}
 }
 
+static void set_breakpoint_real(u16 cs, u64 rip) {
+	set_breakpoint(cs, (u64)cs * 16, rip);
+}
+
 static void hit_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
-	u64 addr = (u64)cs * 16 + rip;
-	u8 *ptr = (u8 *)addr;
+	u64 addr;
+	u8 *ptr;
 	int i = find_breakpoint_csrip(cs, rip);
 	HALT_ON_ERRORCOND(i < MAX_BP);	/* breakpoint not found */
+	addr = (u64)(bps[i].csbase) + rip;
+	ptr = (u8 *)addr;
 	HALT_ON_ERRORCOND(*ptr == INT3);
 	HALT_ON_ERRORCOND(bps[i].disabled == 0);
 	bps[i].disabled = 1;
@@ -859,7 +867,7 @@ static int enabled_breakpoints(VCPU *vcpu) {
 	if (disabled_bps) {
 		for (i = 0; i < MAX_BP; i++) {
 			if (bps[i].valid && bps[i].disabled) {
-				u64 addr = (u64)bps[i].cs * 16 + bps[i].rip;
+				u64 addr = (u64)(bps[i].csbase) + bps[i].rip;
 				u8 *ptr = (u8 *)addr;
 				*ptr = INT3;
 				bps[i].disabled = 0;
@@ -890,16 +898,16 @@ static void xxd(u32 start, u32 end) {
 
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint(0x0, 0x7c00);
+	// set_breakpoint_real(0x0, 0x7c00);
 }
 
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint(0x7c0, 0x118);	// jump to second sector
-	// set_breakpoint(0x7c0, 0x588);	// read bootmgr in 3rd call
-	// set_breakpoint(0x7c0, 0x11d);	// disk read multi sector function call
-	// set_breakpoint(0x7c0, 0x145);	// disk read one sector
-	// set_breakpoint(0x7c0, 0x16a);	// disk read fail
+	// set_breakpoint_real(0x7c0, 0x118);	// jump to second sector
+	// set_breakpoint_real(0x7c0, 0x588);	// read bootmgr in 3rd call
+	// set_breakpoint_real(0x7c0, 0x11d);	// disk read multi sector function call
+	// set_breakpoint_real(0x7c0, 0x145);	// disk read one sector
+	// set_breakpoint_real(0x7c0, 0x16a);	// disk read fail
 	// enable_monitor_trap(vcpu, 0);
 	TRY_WBINVD;
 }
@@ -907,8 +915,8 @@ static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable_monitor_trap(vcpu, 0);
-	// set_breakpoint(0x7c0, 0x1068);
-	set_breakpoint(0x7c0, 0x055b);
+	// set_breakpoint_real(0x7c0, 0x1068);
+	set_breakpoint_real(0x7c0, 0x055b);
 	TRY_WBINVD;
 }
 
@@ -937,19 +945,23 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	switch ((cs << 16) | rip) {
 //	case 0x07c00ea0:
 //		disable_monitor_trap(vcpu, 0);
-//		set_breakpoint(0x7c0, 0xe9d);
+//		set_breakpoint_real(0x7c0, 0xe9d);
 //		break;
 	case 0x07c0010b:	// before first bb07
 		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x7c0, 0x10d);	// after first bb07
+		set_breakpoint_real(0x7c0, 0x10d);	// after first bb07
 		break;
 	case 0x07c010c0:	// before second bb07
 		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x7c0, 0x10c2);	// after second bb07
+		set_breakpoint_real(0x7c0, 0x10c2);	// after second bb07
 		break;
 	case 0x20000e4a:	// Loop e21 - e4a
 		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x2000, 0x0e4d);
+		set_breakpoint_real(0x2000, 0x0e4d);
+		TRY_WBINVD;
+	case 0x005038e9:	// Loop 0x377f - 0x38e9
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x0050, 0x20000, 0x38ec);
 		TRY_WBINVD;
 	default:
 		/* nop */
@@ -978,38 +990,38 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			}
 		}
 		if (!"break IVT") {
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0xe2c3);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0xff54);
-			set_breakpoint(0xf000, 0xf002);
-			set_breakpoint(0xf000, 0x2aef);
-			// set_breakpoint(0xf000, 0xfea8);
-			set_breakpoint(0xf000, 0xe987);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xf000, 0x2aef);
-			set_breakpoint(0xc000, 0x0014);
-			set_breakpoint(0xf000, 0xf84d);
-			set_breakpoint(0xf000, 0xf841);
-			set_breakpoint(0xf000, 0xe9f3);
-			set_breakpoint(0xf000, 0xe739);
-			// set_breakpoint(0x0040, 0x00ac);
-			set_breakpoint(0xf000, 0xe82e);
-			set_breakpoint(0xf000, 0xefd2);
-			set_breakpoint(0xf000, 0xffbe);
-			set_breakpoint(0xf000, 0xe6f2);
-			// set_breakpoint(0x0040, 0x00cc);
-			set_breakpoint(0xf000, 0xff53);
-			set_breakpoint(0xf000, 0xff53);
-			set_breakpoint(0x0000, 0x0000);
-			set_breakpoint(0xf000, 0xefc7);
-			set_breakpoint(0xc000, 0x9f31);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0xe2c3);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0xff54);
+			set_breakpoint_real(0xf000, 0xf002);
+			set_breakpoint_real(0xf000, 0x2aef);
+			// set_breakpoint_real(0xf000, 0xfea8);
+			set_breakpoint_real(0xf000, 0xe987);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xf000, 0x2aef);
+			set_breakpoint_real(0xc000, 0x0014);
+			set_breakpoint_real(0xf000, 0xf84d);
+			set_breakpoint_real(0xf000, 0xf841);
+			set_breakpoint_real(0xf000, 0xe9f3);
+			set_breakpoint_real(0xf000, 0xe739);
+			// set_breakpoint_real(0x0040, 0x00ac);
+			set_breakpoint_real(0xf000, 0xe82e);
+			set_breakpoint_real(0xf000, 0xefd2);
+			set_breakpoint_real(0xf000, 0xffbe);
+			set_breakpoint_real(0xf000, 0xe6f2);
+			// set_breakpoint_real(0x0040, 0x00cc);
+			set_breakpoint_real(0xf000, 0xff53);
+			set_breakpoint_real(0xf000, 0xff53);
+			set_breakpoint_real(0x0000, 0x0000);
+			set_breakpoint_real(0xf000, 0xefc7);
+			set_breakpoint_real(0xc000, 0x9f31);
 		}
 		if (!"dump BIOS") {
 			printf("\nStart dump BIOS");
@@ -1078,6 +1090,10 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		TRY_WBINVD;
 		break;
 	case 0x20000e4d:	// Loop e21 - e4a
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
+	case 0x005038ec:	// Loop 0x377f - 0x38e9
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;

@@ -970,6 +970,10 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint(0x0020, 0x0, 0x42a88e);
 		break;
+	case 0x002000410c83:	// Go to Function 0x439e87
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x0020, 0x0, 0x439e87);
+		break;
 	default:
 		/* nop */
 		break;
@@ -1105,6 +1109,15 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		TRY_WBINVD;
 		break;
 	case 0x00200042a88e:	// Skip stuck at 0x4710c3
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
+	case 0x002000439e87:	// Skip stuck at 0x439e87
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x0020, 0x0, 0x434f37);
+		set_breakpoint(0x0020, 0x0, 0x419118);
+		break;
+	case 0x002000419118:	// After skip stuck at 0x439e87
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;

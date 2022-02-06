@@ -964,7 +964,11 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		break;
 	case 0x002000418e33:	// Skip 32-bit protected mode code
 		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x0020, 0x0, 0x42426a);
+		set_breakpoint(0x0020, 0x0, 0x42b43d);
+		break;
+	case 0x0020004710c3:	// Skip stuck at 0x4710c3
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x0020, 0x0, 0x42a88e);
 		break;
 	default:
 		/* nop */
@@ -1096,7 +1100,11 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
-	case 0x00200042426a:	// Skip 32-bit protected mode code
+	case 0x00200042b43d:	// Skip 32-bit protected mode code
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
+	case 0x00200042a88e:	// Skip stuck at 0x4710c3
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;

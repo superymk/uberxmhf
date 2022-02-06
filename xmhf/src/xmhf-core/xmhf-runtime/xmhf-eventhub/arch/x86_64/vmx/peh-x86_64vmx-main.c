@@ -943,25 +943,29 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	printf("\nMT%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
 			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
 	TRY_WBINVD;
-	switch ((cs << 16) | rip) {
-	case 0x07c0010b:	// before first bb07
+	switch (((u64)cs << 32) | rip) {
+	case 0x07c00000010b:	// before first bb07
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint_real(0x7c0, 0x10d);	// after first bb07
 		break;
-	case 0x07c010c0:	// before second bb07
+	case 0x07c0000010c0:	// before second bb07
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint_real(0x7c0, 0x10c2);	// after second bb07
 		break;
-	case 0x20000e4a:	// Loop e21 - e4a
+	case 0x200000000e4a:	// Loop e21 - e4a
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint_real(0x2000, 0x0e4d);
-		TRY_WBINVD;
-	case 0x005038e9:	// Loop 0x377f - 0x38e9
+		break;
+	case 0x0050000038e9:	// Loop 0x377f - 0x38e9
 		disable_monitor_trap(vcpu, 0);
 		// set_breakpoint(0x0050, 0x20000, 0x38ec);
 		set_breakpoint(0x0050, 0x20000, 0x23c5);
 		set_breakpoint(0x0050, 0x20000, 0x06ec);
-		TRY_WBINVD;
+		break;
+	case 0x002000418e33:	// Skip 32-bit protected mode code
+		disable_monitor_trap(vcpu, 0);
+		set_breakpoint(0x0020, 0x0, 0x42426a);
+		break;
 	default:
 		/* nop */
 		break;
@@ -973,8 +977,8 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)r;
 	printf("\nBP%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
 			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
-	switch ((cs << 16) | rip) {
-	case 0x07c01068:
+	switch (((u64)cs << 32) | rip) {
+	case 0x07c000001068:
 		if ("nop ef8") {
 			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;
 			printf("\nNOP 0x07c0:0x0ef8 !");
@@ -1044,29 +1048,29 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
 		break;
-	case 0x07c0010d:	// after first bb07
+	case 0x07c00000010d:	// after first bb07
 		enable_monitor_trap(vcpu, 0);
 		break;
-	case 0x07c010c2:	// after second bb07
+	case 0x07c0000010c2:	// after second bb07
 		enable_monitor_trap(vcpu, 0);
 		break;
-	case 0x07c0016a:	// disk read fail
+	case 0x07c00000016a:	// disk read fail
 		HALT_ON_ERRORCOND(0);	/* See strange error */
 		break;
-	case 0x07c00118:	// jump to second sector
+	case 0x07c000000118:	// jump to second sector
 		enable_monitor_trap(vcpu, 0);
 		break;
-	case 0x07c00588: {	// read bootmgr in 3rd call
+	case 0x07c000000588: {	// read bootmgr in 3rd call
 		static int count = 0;
 		count++;
 		TRY_WBINVD;
 		printf(" count %d", count);
 		break;
 	}
-	case 0x07c0011d:	// disk read multi sector function call
+	case 0x07c00000011d:	// disk read multi sector function call
 		TRY_WBINVD;
 		break;
-	case 0x07c00145:	// disk read one sector
+	case 0x07c000000145:	// disk read one sector
 		printf(" DX=0x%04x DS=0x%04x",
 				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
 		{
@@ -1076,19 +1080,23 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		}
 		TRY_WBINVD;
 		break;
-	case 0x00007caa:	// for bootloader6
+	case 0x000000007caa:	// for bootloader6
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
-	case 0x07c0055b:	// before jump to bootmgr
+	case 0x07c00000055b:	// before jump to bootmgr
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
-	case 0x20000e4d:	// Loop e21 - e4a
+	case 0x200000000e4d:	// Loop e21 - e4a
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
-	case 0x005006ec:	// Loop 0x377f - 0x38e9
+	case 0x0050000006ec:	// Loop 0x377f - 0x38e9
+		enable_monitor_trap(vcpu, 0);
+		TRY_WBINVD;
+		break;
+	case 0x00200042426a:	// Skip 32-bit protected mode code
 		enable_monitor_trap(vcpu, 0);
 		TRY_WBINVD;
 		break;
@@ -1124,8 +1132,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 			wbinvd();
 		}
 		printf("\nCPU(0x%02x): Intercept %d @ 0x%04x:0x%08llx", vcpu->id, vcpu->vmcs.info_vmexit_reason, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
-		printf(" *0x20000=0x%016llx *0x30000=0x%016llx",
-				*(u64 *)0x20000, *(u64 *)0x30000);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 10) {
 		/* CPUID */

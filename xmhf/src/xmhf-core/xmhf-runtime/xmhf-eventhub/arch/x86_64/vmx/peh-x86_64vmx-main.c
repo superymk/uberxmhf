@@ -743,7 +743,7 @@ static void _vmx_handle_intercept_xsetbv(VCPU *vcpu, struct regs *r){
 
 
 #define INT3 ((u8)0xcc)
-#define MAX_BP 10
+#define MAX_BP 20
 #define ENABLE_MONITOR_TRAP do { \
 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 27); \
 	} while(0)
@@ -1009,6 +1009,20 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		set_breakpoint(0x0020, 0x00000, 0x40ebf5);
 		break;
 	case 0x00200040ebf5:	// After skip stuck at 0x4102ef
+		clear_breakpoint(vcpu, 0x0020, 0x40e9f7);
+		clear_breakpoint(vcpu, 0x0020, 0x418e33);
+		clear_breakpoint(vcpu, 0x0020, 0x410c83);
+		clear_breakpoint(vcpu, 0x0020, 0x422391);
+		clear_breakpoint(vcpu, 0x0020, 0x4102ef);
+		clear_breakpoint(vcpu, 0x0020, 0x40ebf5);
+		set_breakpoint(0x0020, 0x00000, 0x4191e0);
+		set_breakpoint(0x0020, 0x00000, 0x470d1a);
+		set_breakpoint(0x0020, 0x00000, 0x4256ff);
+		set_breakpoint(0x0020, 0x00000, 0x470d7f);
+		set_breakpoint(0x0020, 0x00000, 0x419212);
+		set_breakpoint(0x0020, 0x00000, 0x40ec7b);
+		break;
+	case 0x00200040ec7b:	// After skip stuck at 0x4256ff
 		enable_monitor_trap(vcpu, 0);
 		break;
 	default:

@@ -970,7 +970,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint(0x0020, 0x0, 0x42a88e);
 		break;
-	case 0x002000410c83:	// Go to Function 0x439e87
+	case 0x00200041c3a9:	// Go to Function 0x439e87
 		disable_monitor_trap(vcpu, 0);
 		set_breakpoint(0x0020, 0x0, 0x439e87);
 		break;

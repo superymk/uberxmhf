@@ -869,6 +869,16 @@ static void clear_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	bps[i].valid = 0;
 }
 
+static void clear_all_breakpoints(VCPU *vcpu) {
+	int i;
+	for (i = 0; i < MAX_BP; i++) {
+		if (bps[i].valid) {
+			clear_breakpoint(vcpu, bps[i].cs, bps[i].rip);
+		}
+	}
+	HALT_ON_ERRORCOND(disabled_bps == 0);
+}
+
 static void hit_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	u64 addr;
 	u8 *ptr;
@@ -997,10 +1007,7 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		disable_monitor_trap(vcpu, 0);
 		break;
 	case 0x005000000a80:	// before jump to CS=0x20
-		clear_breakpoint(vcpu, 0x7c0, 0x055b);
-		clear_breakpoint(vcpu, 0x2000, 0x83b);
-		clear_breakpoint(vcpu, 0x0050, 0x850);
-		clear_breakpoint(vcpu, 0x0050, 0xa80);
+		clear_all_breakpoints(vcpu);
 		set_breakpoint(0x0020, 0x00000, 0x40e9f7);
 		set_breakpoint(0x0020, 0x00000, 0x418e33);
 		set_breakpoint(0x0020, 0x00000, 0x410c83);
@@ -1009,20 +1016,33 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		set_breakpoint(0x0020, 0x00000, 0x40ebf5);
 		break;
 	case 0x00200040ebf5:	// After skip stuck at 0x4102ef
-		clear_breakpoint(vcpu, 0x0020, 0x40e9f7);
-		clear_breakpoint(vcpu, 0x0020, 0x418e33);
-		clear_breakpoint(vcpu, 0x0020, 0x410c83);
-		clear_breakpoint(vcpu, 0x0020, 0x422391);
-		clear_breakpoint(vcpu, 0x0020, 0x4102ef);
-		clear_breakpoint(vcpu, 0x0020, 0x40ebf5);
+		clear_all_breakpoints(vcpu);
 		set_breakpoint(0x0020, 0x00000, 0x4191e0);
-		set_breakpoint(0x0020, 0x00000, 0x470d1a);
-		set_breakpoint(0x0020, 0x00000, 0x4256ff);
-		set_breakpoint(0x0020, 0x00000, 0x470d7f);
-		set_breakpoint(0x0020, 0x00000, 0x419212);
 		set_breakpoint(0x0020, 0x00000, 0x40ec7b);
 		break;
 	case 0x00200040ec7b:	// After skip stuck at 0x4256ff
+		clear_all_breakpoints(vcpu);
+		set_breakpoint(0x0020, 0x00000, 0x43a4ca);	// function
+		set_breakpoint(0x0020, 0x00000, 0x40ecc2);	// after return
+		set_breakpoint(0x0020, 0x00000, 0x40ecf4);
+		set_breakpoint(0x0020, 0x00000, 0x40ed03);
+		set_breakpoint(0x0020, 0x00000, 0x40ed6e);
+		set_breakpoint(0x0020, 0x00000, 0x40ede4);
+		set_breakpoint(0x0020, 0x00000, 0x40ef5d);
+		set_breakpoint(0x0020, 0x00000, 0x40f00a);
+		set_breakpoint(0x0020, 0x00000, 0x40f01e);
+		set_breakpoint(0x0020, 0x00000, 0x40f0c6);
+		set_breakpoint(0x0020, 0x00000, 0x40f12e);
+		set_breakpoint(0x0020, 0x00000, 0x40f142);
+		set_breakpoint(0x0020, 0x00000, 0x40f153);
+		set_breakpoint(0x0020, 0x00000, 0x40f1a3);
+		set_breakpoint(0x0020, 0x00000, 0x40f1dd);
+		set_breakpoint(0x0020, 0x00000, 0x40f23c);
+		set_breakpoint(0x0020, 0x00000, 0x40f293);
+		set_breakpoint(0x0020, 0x00000, 0x40f2c4);
+		set_breakpoint(0x0020, 0x00000, 0x40f2d3);	// return
+		break;
+	case 0x00200040f2d3:	// After entry returns
 		enable_monitor_trap(vcpu, 0);
 		break;
 	default:

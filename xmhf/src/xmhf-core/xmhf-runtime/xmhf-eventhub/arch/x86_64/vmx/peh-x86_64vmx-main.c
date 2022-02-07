@@ -849,7 +849,7 @@ static void set_breakpoint_real(u16 cs, u64 rip) {
 	set_breakpoint(cs, (u64)cs * 16, rip);
 }
 
-static void clear_breakpoint(u16 cs, u64 rip) {
+static void clear_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	int i = find_breakpoint_csrip(cs, rip);
 	HALT_ON_ERRORCOND(i < MAX_BP);	/* breakpoint not found */
 	if (bps[i].disabled == 0) {
@@ -860,6 +860,10 @@ static void clear_breakpoint(u16 cs, u64 rip) {
 		*ptr = bps[i].old;
 	} else {
 		disabled_bps--;
+		HALT_ON_ERRORCOND(disabled_bps >= 0);
+		if (disabled_bps == 0) {
+			disable_monitor_trap(vcpu, 1);
+		}
 	}
 	HALT_ON_ERRORCOND(bps[i].valid == 1);
 	bps[i].valid = 0;
@@ -987,16 +991,16 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		set_breakpoint(0x0050, 0x20000, 0xa80);
 		break;
 	case 0x20000000083b:	// before jump to CS=0x50
-		clear_breakpoint(0x7c0, 0x055b);
 		enable_monitor_trap(vcpu, 0);
 		break;
-	case 0x200000000850:	// before jump to CS=0x50
+	case 0x005000000850:	// after jump to CS=0x50
 		disable_monitor_trap(vcpu, 0);
 		break;
-	case 0x200000000a80:	// before jump to CS=0x20
-		clear_breakpoint(0x2000, 0x83b);
-		clear_breakpoint(0x0050, 0x850);
-		clear_breakpoint(0x0050, 0xa80);
+	case 0x005000000a80:	// before jump to CS=0x20
+		clear_breakpoint(vcpu, 0x7c0, 0x055b);
+		clear_breakpoint(vcpu, 0x2000, 0x83b);
+		clear_breakpoint(vcpu, 0x0050, 0x850);
+		clear_breakpoint(vcpu, 0x0050, 0xa80);
 		set_breakpoint(0x0020, 0x00000, 0x40e9f7);
 		set_breakpoint(0x0020, 0x00000, 0x418e33);
 		set_breakpoint(0x0020, 0x00000, 0x410c83);

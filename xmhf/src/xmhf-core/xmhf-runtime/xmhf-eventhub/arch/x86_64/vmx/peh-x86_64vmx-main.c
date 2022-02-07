@@ -849,6 +849,22 @@ static void set_breakpoint_real(u16 cs, u64 rip) {
 	set_breakpoint(cs, (u64)cs * 16, rip);
 }
 
+static void clear_breakpoint(u16 cs, u64 rip) {
+	int i = find_breakpoint_csrip(cs, rip);
+	HALT_ON_ERRORCOND(i < MAX_BP);	/* breakpoint not found */
+	if (bps[i].disabled == 0) {
+		u64 addr;
+		u8 *ptr;
+		addr = (u64)(bps[i].csbase) + rip;
+		ptr = (u8 *)addr;
+		*ptr = bps[i].old;
+	} else {
+		disabled_bps--;
+	}
+	HALT_ON_ERRORCOND(bps[i].valid == 1);
+	bps[i].valid = 0;
+}
+
 static void hit_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	u64 addr;
 	u8 *ptr;
@@ -908,10 +924,6 @@ static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// set_breakpoint_real(0x7c0, 0x118);	// jump to second sector
-	// set_breakpoint_real(0x7c0, 0x588);	// read bootmgr in 3rd call
-	// set_breakpoint_real(0x7c0, 0x11d);	// disk read multi sector function call
-	// set_breakpoint_real(0x7c0, 0x145);	// disk read one sector
-	// set_breakpoint_real(0x7c0, 0x16a);	// disk read fail
 	// enable_monitor_trap(vcpu, 0);
 	TRY_WBINVD;
 }
@@ -920,7 +932,7 @@ static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// enable_monitor_trap(vcpu, 0);
 	// set_breakpoint_real(0x7c0, 0x1068);
-	set_breakpoint_real(0x7c0, 0x055b);
+	set_breakpoint_real(0x7c0, 0x055b);		// jump to bootmgr
 	TRY_WBINVD;
 }
 
@@ -944,36 +956,6 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
 	TRY_WBINVD;
 	switch (((u64)cs << 32) | rip) {
-	case 0x07c00000010b:	// before first bb07
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint_real(0x7c0, 0x10d);	// after first bb07
-		break;
-	case 0x07c0000010c0:	// before second bb07
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint_real(0x7c0, 0x10c2);	// after second bb07
-		break;
-	case 0x200000000e4a:	// Loop e21 - e4a
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint_real(0x2000, 0x0e4d);
-		break;
-	case 0x0050000038e9:	// Loop 0x377f - 0x38e9
-		disable_monitor_trap(vcpu, 0);
-		// set_breakpoint(0x0050, 0x20000, 0x38ec);
-		set_breakpoint(0x0050, 0x20000, 0x23c5);
-		set_breakpoint(0x0050, 0x20000, 0x06ec);
-		break;
-	case 0x002000418e33:	// Skip 32-bit protected mode code
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x0020, 0x0, 0x42b43d);
-		break;
-	case 0x0020004710c3:	// Skip stuck at 0x4710c3
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x0020, 0x0, 0x42a88e);
-		break;
-	case 0x00200041c3a9:	// Go to Function 0x439e87
-		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x0020, 0x0, 0x439e87);
-		break;
 	default:
 		/* nop */
 		break;
@@ -985,141 +967,45 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)r;
 	printf("\nBP%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
 			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
+	TRY_WBINVD;
 	switch (((u64)cs << 32) | rip) {
 	case 0x07c000001068:
-		if ("nop ef8") {
-			*(char *)(0x7c00 + 0xef8) = 0xc3;	// ret;
-			printf("\nNOP 0x07c0:0x0ef8 !");
-		}
 		if ("dump IVT") {
 			for (u32 i = 0; i < 32; i++) {
 				printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
 			}
+			xxd(0, 0);
 		}
-		if (!"break IVT") {
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0xe2c3);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0xff54);
-			set_breakpoint_real(0xf000, 0xf002);
-			set_breakpoint_real(0xf000, 0x2aef);
-			// set_breakpoint_real(0xf000, 0xfea8);
-			set_breakpoint_real(0xf000, 0xe987);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xf000, 0x2aef);
-			set_breakpoint_real(0xc000, 0x0014);
-			set_breakpoint_real(0xf000, 0xf84d);
-			set_breakpoint_real(0xf000, 0xf841);
-			set_breakpoint_real(0xf000, 0xe9f3);
-			set_breakpoint_real(0xf000, 0xe739);
-			// set_breakpoint_real(0x0040, 0x00ac);
-			set_breakpoint_real(0xf000, 0xe82e);
-			set_breakpoint_real(0xf000, 0xefd2);
-			set_breakpoint_real(0xf000, 0xffbe);
-			set_breakpoint_real(0xf000, 0xe6f2);
-			// set_breakpoint_real(0x0040, 0x00cc);
-			set_breakpoint_real(0xf000, 0xff53);
-			set_breakpoint_real(0xf000, 0xff53);
-			set_breakpoint_real(0x0000, 0x0000);
-			set_breakpoint_real(0xf000, 0xefc7);
-			set_breakpoint_real(0xc000, 0x9f31);
-		}
-		if (!"dump BIOS") {
-			printf("\nStart dump BIOS");
-			xxd(0x0f0000, 0x100000);
-			printf("\nEnd dump BIOS");
-		}
-		if ("wbinvd") {
-			TRY_WBINVD;
-		}
-		if (!"dump bootmgr") {
-			printf("\nStart dump bootmgr heads2");
-			for (u32 i = 0x20000; i < 0x85000; i += 0x8000) {
-				xxd(i + 0x100, i + 0x200);
-			}
-			printf("\nEnd dump bootmgr heads2");
-			printf("\nStart dump bootmgr heads1");
-			for (u32 i = 0x20000; i < 0x85000; i += 0x8000) {
-				xxd(i, i + 0x100);
-			}
-			printf("\nEnd dump bootmgr heads1");
-			printf("\nStart dump bootmgr");
-			xxd(0x20000, 0x20000 + 0x65160);
-			printf("\nEnd dump bootmgr");
-		}
-
 		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
-		break;
-	case 0x07c00000010d:	// after first bb07
-		enable_monitor_trap(vcpu, 0);
-		break;
-	case 0x07c0000010c2:	// after second bb07
-		enable_monitor_trap(vcpu, 0);
-		break;
-	case 0x07c00000016a:	// disk read fail
-		HALT_ON_ERRORCOND(0);	/* See strange error */
 		break;
 	case 0x07c000000118:	// jump to second sector
 		enable_monitor_trap(vcpu, 0);
 		break;
-	case 0x07c000000588: {	// read bootmgr in 3rd call
-		static int count = 0;
-		count++;
-		TRY_WBINVD;
-		printf(" count %d", count);
-		break;
-	}
-	case 0x07c00000011d:	// disk read multi sector function call
-		TRY_WBINVD;
-		break;
-	case 0x07c000000145:	// disk read one sector
-		printf(" DX=0x%04x DS=0x%04x",
-				(u32)(u16)r->edx, (u32)(u16)vcpu->vmcs.guest_DS_selector);
-		{
-			u64 dssi = (u64)((u16)vcpu->vmcs.guest_DS_selector) * 16 + (u16)r->esi;
-			printf(" *0x%05llx=0x%016llx *0x%05llx=0x%016llx",
-					dssi, ((u64*)dssi)[0], dssi + 8, ((u64*)dssi)[1]);
-		}
-		TRY_WBINVD;
-		break;
-	case 0x000000007caa:	// for bootloader6
-		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
-		break;
 	case 0x07c00000055b:	// before jump to bootmgr
-		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
+		set_breakpoint(0x2000, 0x20000, 0x83b);
+		set_breakpoint(0x0050, 0x20000, 0x850);
+		set_breakpoint(0x0050, 0x20000, 0xa80);
 		break;
-	case 0x200000000e4d:	// Loop e21 - e4a
+	case 0x20000000083b:	// before jump to CS=0x50
+		clear_breakpoint(0x7c0, 0x055b);
 		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
 		break;
-	case 0x0050000006ec:	// Loop 0x377f - 0x38e9
-		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
-		break;
-	case 0x00200042b43d:	// Skip 32-bit protected mode code
-		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
-		break;
-	case 0x00200042a88e:	// Skip stuck at 0x4710c3
-		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
-		break;
-	case 0x002000439e87:	// Skip stuck at 0x439e87
+	case 0x200000000850:	// before jump to CS=0x50
 		disable_monitor_trap(vcpu, 0);
-		set_breakpoint(0x0020, 0x0, 0x434f37);
-		set_breakpoint(0x0020, 0x0, 0x419118);
 		break;
-	case 0x002000419118:	// After skip stuck at 0x439e87
+	case 0x200000000a80:	// before jump to CS=0x20
+		clear_breakpoint(0x2000, 0x83b);
+		clear_breakpoint(0x0050, 0x850);
+		clear_breakpoint(0x0050, 0xa80);
+		set_breakpoint(0x0020, 0x00000, 0x40e9f7);
+		set_breakpoint(0x0020, 0x00000, 0x418e33);
+		set_breakpoint(0x0020, 0x00000, 0x410c83);
+		set_breakpoint(0x0020, 0x00000, 0x422391);
+		set_breakpoint(0x0020, 0x00000, 0x4102ef);
+		set_breakpoint(0x0020, 0x00000, 0x40ebf5);
+		break;
+	case 0x00200040ebf5:	// After skip stuck at 0x4102ef
 		enable_monitor_trap(vcpu, 0);
-		TRY_WBINVD;
 		break;
 	default:
 		break;

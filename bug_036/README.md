@@ -1383,20 +1383,164 @@ multiple times. So now break at `0x23a9` to see whether `0x4350` returns.
 Then looks like stuck in function `0xfa2`. We break at 0x6ec to see whether
 this function returns.
 
-Git `94b3a1012`, we can now see that at `0x50:0xa98` the program jumps to
-`CS=0x20`. We now need to know where the executable is loaded from. QEMU should
-be helpful in this case.
+Git `94b3a1012`, serial `20220206161655`, we can now see that at `0x50:0xa98`
+the program jumps to `CS=0x20`. We now need to know where the executable is
+loaded from. QEMU should be helpful in this case.
 
 We use GDB. At that time paging is not enabled. Dump `0x400000-0x500000` to
 `dump8.img`. `file` shows its type to be
 `PE32 executable (DLL) Intel 80386, for MS Windows`. In the partition that
 contains bootmgr, only `Boot/bootuwf.dll` and `Boot/bootvhd.dll` have the same
-type.
+type. But these files don't look alike to `dump8.img`
 
+`objdump -h dump8.img` can show the file sections. Wrote `compare8.exe` to
+compare starting content of `dump8.img` with other files. But did not find
+anything useful.
 
+In bootmgr, starting from file offset `0x8840` looks like some compressed data?
+Not sure the format and how to uncompress, so we simply deal with `dump8.img`.
+
+Note that `objdump -d dump8.img` gives incorrect result, because the file is
+not consecutive after loaded to memory. The correct command is
+`objdump --adjust-vma=0x400000 -b binary -D -m i386 dump8.img`
+
+Now we can explain serial `20220206161655`. While inspecting this log, at
+`call INT 0x1a, AX=0xbb00` in `Function 0x42426a`, noticed that the TPM hiding
+is done incorrectly.
+
+After jumping to 32-bit protected mode, the program logic is:
+```
+Entry 0x40e9f7
+	Function 0x418e33 (ESP=0x00061f3c)
+		Function 0x477a26 (ESP=0x00061f14)
+			Function 0x41821c (ESP=0x00061efc)
+			Function 0x426006 (ESP=0x00061ef4)
+			...
+		Function 0x4458c8 (ESP=0x00061f14)
+		Function 0x446333 (ESP=0x00061f14)
+			rdmsr(0x10)
+			rdmsr(0x1a0)
+			wrmsr(0x1a0)
+			cpuid
+			Return at 0x446407
+		Function 0x4287d8 (ESP=0x00061f10)
+			Transition to 0x0050:0x0200
+				Transition to 0x2000:0x08c6
+					Call INT 0x15, AH=0xc0 (SYSTEM - GET CONFIGURATION)
+				Back to CS=0x0050
+			Back to CS=0x0020
+			Go to real mode, call INT 0x15, AH=0xc1 (EBDA)
+			Go to real mode, call INT 0x15, AX=0xe820 (scan once)
+			Return at 0x4288a2
+		Function 0x418779 (ESP=0x00061f0c)
+		Function 0x418508 (ESP=0x00061f10)
+		Function 0x423a01 (ESP=0x00061f14)
+			Go to real mode, call INT 0x1a, AX=0x0000 (TIME - GET SYSTEM TIME)
+			Go to real mode, call INT 0x1a, AX=0x0000 (TIME - GET SYSTEM TIME)
+			Go to real mode, call INT 0x1a, AX=0x0000 (TIME - GET SYSTEM TIME)
+			Return at 0x423a7c
+		Function 0x446333 (ESP=0x00061f14)
+		Function 0x41b0ca (ESP=0x00061f14)
+			Go to real mode, call INT 0x1a, AX=0x0200 (get RT clock time)
+			Go to real mode, call INT 0x1a, AX=0x0400 (get RT clock date)
+			Return at 0x41b1b2
+		Function 0x45b550 (ESP=0x00061f14)
+			cpuid(0x0)
+			cpuid(0x1)
+			cpuid(0x7)
+			cpuid(0x1)
+			cpuid(0x0)
+			cpuid(0x1)
+			Return at 0x45b5a0
+		Function 0x42426a (ESP=0x00061f14)
+			Go to real mode, call INT 0x1a, AX=0xbb00 (detect TPM)
+			Return at 0x4242d9
+		Function 0x42513a (ESP=0x00061f14)
+			Return at 0x425229
+		Function 0x41d3b0 (ESP=0x00061f14)
+			Return at 0x41d47a
+		Function 0x42a82f (ESP=0x00061f14)
+			Function 0x426f7b (ESP=0x00061f08)
+			Function 0x48b860 (ESP=0x00061f00)
+			Function 0x468020 (ESP=0x00061f0c)
+				Return at 0x469f04
+			Function 0x42b347 (ESP=0x00061f0c)
+				Return at 0x42b43d
+			Function 0x4710c3 (ESP=0x00061f0c)
+			Return at 0x42a89c
+		Function 0x410c83 (ESP=0x00061f08)
+		Function 0x41c3a9 (ESP=0x00061f14)
+			Go to real mode, call INT 0x1a, AX=0x0200 (get RT clock time)
+			Return at 0x41c4b1
+		Function 0x41b48c (ESP=0x00061f14)
+			Return at 0x41b564
+		Function 0x445c56 (ESP=0x00061f14)
+			Go to real mode, call INT 0x15, AH=0xc1 (EBDA)
+			Return at 0x445f34
+		Function 0x422ebf (ESP=0x00061f14)
+			Return at 0x422f42
+		Function 0x4767cb (ESP=0x00061f14)
+		Function 0x434f1a (ESP=0x00061f14)
+			Function 0x4350ec (ESP=0x00061f0c)
+				Function 0x437672 (ESP=0x00061ea4)
+					Function 0x439712 (ESP=0x00061e9c)
+						Function 0x439e87 (ESP=0x00061d7c)
+							... (contains a lot of `int $0x10`)
+		(Next instruction 0x419118)
+		Function 0x41d059 (ESP=0x00061f14)
+			Function 0x410c83 (ESP=0x00061ef8) (second time calling this func)
+				Return at 0x410cbd
+			Function 0x41d728
+			Return at 0x41d0ff
+		Function 0x42252a (ESP=0x00061f14)
+		...
+		Return at 0x4191df
+	Function 0x410c83
+	Function 0x422391
+	...
+	Function 0x4102ef (ESP=0x00061f38)
+		...
+	(Next instruction 0x40ebf5)
+	Function 0x418779
+	Function 0x4170d9
+	Function 0x4191e0 (ESP=0x00061f3c)
+		Function 0x470d1a (ESP=0x00061f2c)
+			Function 0x4256ff (ESP=0x00061f0c)
+				...
+			(Next instruction is 0x470d7f)
+		(Next instruction 0x419212)
+	(Next instruction 0x40ec7b)
+	Function 0x43a4ca (ESP=0x00061f3c)
+	(Next instruction 0x40ecc2)
+```
+
+Git `d6f9c1e1b` solves the problem. Serial `20220206170421`. Now it stucks in
+`Function 0x4710c3`.
+
+Git `249649bea`, serial `20220206173605`. Now it stucks in `Function 0x439e87`
+
+Git `cb9b93f77`, serial `20220206175403`. Because of some problem in
+breakpoints, can only monitor trap until second call to `Function 0x410c83`.
+
+Git `185d3031c`, serial `20220206203623`. Stuck in `Function 0x4102ef`.
+
+Git `e1f15fbe8`, serial `20220206212911`. This commit revised logic of break
+points, and support clearing a breakpoint. Stuck in `Function 0x4256ff`.
+
+Git `6d2fd8815`, serial `20220206214718`. Stuck in `Function 0x43a4ca`.
+Currently we are waiting for `0x40ecc2`, and we guess that `0x40f2d3` is the
+return instruction of the top most function / entry point `0x40e9f7`. So
+we randomly add some breakpoints in between. Use the following to generate some
+break points
+```sh
+grep -A 10000 40ecc2 dump8.s | grep 40f2d3 -B 10000 | cut -b -9 | shuf | head -n 16 | sort
+```
+
+Git `1613a757e`, serial `20220206215928`.
 
 # tmp notes
 
+TODO: try WinDBG, see whether have symbols.
 TODO: how does other TPM configurations fail?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 

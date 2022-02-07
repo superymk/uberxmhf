@@ -1023,10 +1023,11 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	case 0x00200040ec7b:	// After skip stuck at 0x4256ff
 		clear_all_breakpoints(vcpu);
 		set_breakpoint(0x0020, 0x00000, 0x40ed10);	// Call 0x434d7e
+		set_breakpoint(0x0020, 0x00000, 0x48b1e0);	// Function that cause #MC
 		set_breakpoint(0x0020, 0x00000, 0x40ed15);	// Return from 0x434d7e
 		set_breakpoint(0x0020, 0x00000, 0x40f2d3);	// return
 		break;
-	case 0x00200040ed10:	// After entry returns
+	case 0x00200048b1e0:	// Function that cause #MC
 		enable_monitor_trap(vcpu, 0);
 		break;
 	default:

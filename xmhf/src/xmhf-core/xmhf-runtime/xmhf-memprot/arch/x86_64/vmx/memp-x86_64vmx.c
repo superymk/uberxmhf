@@ -135,7 +135,12 @@ static void _vmx_gathermemorytypes(VCPU *vcpu){
   	HALT_ON_ERRORCOND( ((eax & (1 << 8)) >> 8) );
   	//ensure number of variable MTRRs are within the maximum supported
   	HALT_ON_ERRORCOND( (num_vmtrrs <= MAX_VARIABLE_MEMORYTYPE_ENTRIES) );
-  	
+
+  	{
+  		u32 eax, edx;
+  		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
+  		printf("\nIA32_MTRR_DEF_TYPE: 0x%08x 0x%08x", edx, eax);
+  	}
 
 	#ifndef __XMHF_VERIFICATION__
 	//1. clear memorytypes array

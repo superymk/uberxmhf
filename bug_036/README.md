@@ -1512,6 +1512,15 @@ Entry 0x40e9f7
 	(Next instruction 0x40ec7b)
 	Function 0x43a4ca (ESP=0x00061f3c)
 	(Next instruction 0x40ecc2)
+	Function 0x434d7e (ESP=0x00061f3c)
+		Function 0x4377f0 (ESP=0x00061f2c)
+			Function 0x4357c9 (ESP=0x00061f24)
+				Function 0x437a05 (ESP=0x00061f14)
+					Function 0x438285 (ESP=0x00061ef8)
+						Function 0x48b1e0 (ESP=0x00061ec8)
+							#MC at 0x48b213 (rep movsl %ds:(%esi),%es:(%edi))
+		(Next instruction 0x437807)
+	(Next instruction 0x40ed15)
 ```
 
 Git `d6f9c1e1b` solves the problem. Serial `20220206170421`. Now it stucks in
@@ -1537,10 +1546,36 @@ grep -A 10000 40ecc2 dump8.s | grep 40f2d3 -B 10000 | cut -b -9 | shuf | head -n
 ```
 
 Git `1613a757e`, serial `20220206215928`.
+Git `27270aeb1`, serial `20220207103704`. From these two can see that the
+problem happens during `Function 0x434d7e`.
+
+Git `96554877d`, serial `20220207104301`. This time we have monitor trap until
+the #MC exception. The good news is that #MC no longer happens at INIT
+intercept. Instead, it happens at Intercept 37 (monitor trap). But the strange
+thing is that there is no special instructions close to it? Maybe memory mapped
+I/O? We are sure that `0x48b213` is the instruction causing the problem. This
+instruction is `rep movsl %ds:(%esi),%es:(%edi)`.
+
+Also, in QEMU looks like `0x48b213` is not executed. The processor jumps from
+`0x48b211` to `0x48b23c`. i.e. Not reproducible on QEMU.
+
+Next steps:
+* is the behavior deterministic?
+* what memory address is it accessing?
+* what happens if disable TPM in hardware?
+* try WinDBG, see whether have symbols.
+* in extreme case, change Windows code to add some time delay
+
+### REP MOVSL
+
+TODO: is the behavior deterministic?
+TODO: what memory address is it accessing?
+TODO: what happens if disable TPM in hardware?
+TODO: try WinDBG, see whether have symbols.
+TODO: in extreme case, change Windows code to add some time delay
 
 # tmp notes
 
-TODO: try WinDBG, see whether have symbols.
 TODO: how does other TPM configurations fail?
 TODO: May it be related to `<unavailable>` in QEMU GDB?
 

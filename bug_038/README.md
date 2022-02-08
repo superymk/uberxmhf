@@ -24,3 +24,43 @@ conventions. A few possibilities:
 	* Install: `gcc-mingw-w64`
 	* GCC: `/usr/bin/{i686,x86_64}-w64-mingw32-gcc`
 
+We can try to build PAL demo using:
+```sh
+cd hypapps/trustvisor/pal_demo/
+CC=/usr/bin/x86_64-w64-mingw32-gcc LD=/usr/bin/x86_64-w64-mingw32-ld make WINDOWS=y
+CC=/usr/bin/i686-w64-mingw32-gcc LD=/usr/bin/i686-w64-mingw32-ld make WINDOWS=y
+```
+
+A few problems need to be fixed
+* `sys/mman.h` is not available in Windows, cannot use `mmap()` and `mlock()`.
+  See <https://github.com/msys2/MINGW-packages/issues/6002>
+* `RAND_MAX` is only `0x7fff` in MinGW, see
+  `/usr/i686-w64-mingw32/include/stdlib.h`. Need to change `test_args.c`.
+
+The memory management APIs in Windows are:
+* VirtualAlloc(): replace anonymous mmap()
+* VirtualProtect(): can replace mprotect()
+* VirtualLock(): replace mlock()
+
+### Wine
+
+We can likely install wine on Debian and test first. 
+
+Install
+```sh
+sudo dpkg --add-architecture i386
+sudo apt-get update
+sudo aptitude install wine wine32 wine64
+```
+
+Git `a7fa77062`, branch `xmhf64-win`, test result is
+* `test.exe`
+	* Runs well on x64 and x86
+* `test_args.exe`
+	* Runs well on x86
+	* VMEXIT-EXCEPTION in x64 (did not translate calling convention)
+* `main.exe`
+	* Did not test
+
+### Calling convention
+

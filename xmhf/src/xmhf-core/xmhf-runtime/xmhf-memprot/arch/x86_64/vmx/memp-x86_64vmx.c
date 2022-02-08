@@ -97,8 +97,8 @@ static void _vmx_read_fixed_mtrr(VCPU *vcpu, u32 msraddr, u32 *pindex, u64 start
 		memorytype->startaddr = start + step * i;
 		memorytype->endaddr = start + step * (i + 1) - 1;
 		memorytype->type = (u32)((msr >> (i * 8)) & 0xFF);
-		printf("\nFIXED_MTRR: 0x%08llx-0x%08llx=0x%08x",
-				memorytype->startaddr, memorytype->endaddr,
+		printf("\nFIXED_MTRR[%d]: 0x%08llx-0x%08llx=0x%08x",
+				vcpu->id, memorytype->startaddr, memorytype->endaddr,
 				memorytype->type);
 	}
 	*pindex = index;
@@ -190,8 +190,13 @@ static void _vmx_gathermemorytypes(VCPU *vcpu){
 					(u64) (~(vMTRR_mask & (u64)0xFFFFFFFFFFFFF000ULL) &
 						paddrmask);
 				vcpu->vmx_ept_memorytypes[index++].type = ((u32)vMTRR_base & (u32)0x000000FF);       
+				printf("\nVAR_MTRR[%d]: 0x%08llx-0x%08llx=0x%08x", index - 1,
+						vcpu->vmx_ept_memorytypes[index - 1].startaddr,
+						vcpu->vmx_ept_memorytypes[index - 1].endaddr,
+						vcpu->vmx_ept_memorytypes[index - 1].type);
 			}else{
 				vcpu->vmx_ept_memorytypes[index++].invalid = 1;
+				printf("\nVAR_MTRR[%d]: invalid", index - 1);
 			}
 		}
 	}

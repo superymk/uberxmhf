@@ -1048,18 +1048,12 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		break;
 	case 0x002000434d7e:
 		set_breakpoint(0x0020, 0x00000, 0x438285);
-		set_breakpoint(0x0020, 0x00000, 0x48b1e0);	// Function that cause #MC
-		set_breakpoint(0x0020, 0x00000, 0x48b211);	// Before inst cause #MC
+		set_breakpoint(0x0020, 0x00000, 0x48b1ee);	// Args of Function 0x48b1e0
 		set_breakpoint(0x0020, 0x00000, 0x48b213);	// Inst that cause #MC
-		set_breakpoint(0x0020, 0x00000, 0x48b215);	// After inst cause #MC
-		set_breakpoint(0x0020, 0x00000, 0x48b342);	// Return from 0x48b1e0
 		set_breakpoint(0x0020, 0x00000, 0x40f2d3);	// return
 		break;
 	case 0x00200048b213:	// Inst that cause #MC
 		enable_monitor_trap(vcpu, 0);
-		break;
-	case 0x00200048b342:	// Function that cause #MC
-		disable_monitor_trap(vcpu, 0);
 		break;
 	default:
 		break;

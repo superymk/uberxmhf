@@ -930,6 +930,30 @@ static void xxd(u32 start, u32 end) {
 	}
 }
 
+static void print_bpmt_info(char *type, VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
+	printf("\n%s%x: 0x%04x:0x%04llx\tESP=0x%08llx"
+		"\tDS=0x%04x"
+		"\tES=0x%04x"
+		"\tESI=0x%08x"
+		"\tEDI=0x%08x"
+		"\tEBP=0x%08x"
+		"\tEAX=0x%08x"
+		"\tEBX=0x%08x"
+		"\tECX=0x%08x"
+		"\tEDX=0x%08x"
+		,type, vcpu->id, cs, rip, vcpu->vmcs.guest_RSP
+		,(u32)vcpu->vmcs.guest_DS_selector
+		,(u32)vcpu->vmcs.guest_ES_selector
+		,r->esi
+		,r->edi
+		,r->ebp
+		,r->eax
+		,r->ebx
+		,r->ecx
+		,r->edx
+		);
+}
+
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
 	// set_breakpoint_real(0x0, 0x7c00);
@@ -966,8 +990,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 			}
 		}
 	}
-	printf("\nMT%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
-			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
+	print_bpmt_info("MT", vcpu, r, cs, rip);
 	TRY_WBINVD;
 	switch (((u64)cs << 32) | rip) {
 	default:
@@ -979,8 +1002,7 @@ static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;
 	(void)r;
-	printf("\nBP%x: 0x%04x:0x%04llx ESP=0x%08llx EBP=0x%08x",
-			vcpu->id, cs, rip, vcpu->vmcs.guest_RSP, r->ebp);
+	print_bpmt_info("BP", vcpu, r, cs, rip);
 	TRY_WBINVD;
 	switch (((u64)cs << 32) | rip) {
 	case 0x07c000001068:
@@ -1022,13 +1044,22 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 		break;
 	case 0x00200040ec7b:	// After skip stuck at 0x4256ff
 		clear_all_breakpoints(vcpu);
-		set_breakpoint(0x0020, 0x00000, 0x40ed10);	// Call 0x434d7e
+		set_breakpoint(0x0020, 0x00000, 0x434d7e);
+		break;
+	case 0x002000434d7e:
+		set_breakpoint(0x0020, 0x00000, 0x438285);
 		set_breakpoint(0x0020, 0x00000, 0x48b1e0);	// Function that cause #MC
-		set_breakpoint(0x0020, 0x00000, 0x40ed15);	// Return from 0x434d7e
+		set_breakpoint(0x0020, 0x00000, 0x48b211);	// Before inst cause #MC
+		set_breakpoint(0x0020, 0x00000, 0x48b213);	// Inst that cause #MC
+		set_breakpoint(0x0020, 0x00000, 0x48b215);	// After inst cause #MC
+		set_breakpoint(0x0020, 0x00000, 0x48b342);	// Return from 0x48b1e0
 		set_breakpoint(0x0020, 0x00000, 0x40f2d3);	// return
 		break;
-	case 0x00200048b1e0:	// Function that cause #MC
+	case 0x00200048b213:	// Inst that cause #MC
 		enable_monitor_trap(vcpu, 0);
+		break;
+	case 0x00200048b342:	// Function that cause #MC
+		disable_monitor_trap(vcpu, 0);
 		break;
 	default:
 		break;

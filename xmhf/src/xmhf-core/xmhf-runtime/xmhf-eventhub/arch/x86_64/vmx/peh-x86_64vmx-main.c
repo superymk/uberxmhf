@@ -273,79 +273,8 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 	vcpu->vmcs.guest_CS_selector = cs;
 }
 
-static void _vmx_int1a_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD_AC){
-	u16 cs, ip;
-	u8 *bdamemory = (u8 *)(0x400 + OLD_AC);
-	(void)r;
 
-	//if in V86 mode translate the virtual address to physical address
-	if( (vcpu->vmcs.guest_CR0 & CR0_PE) && (vcpu->vmcs.guest_CR0 & CR0_PG) &&
-			(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM) ){
-		HALT_ON_ERRORCOND(0);
-	}
 
-	if ((r->eax & 0xff00) == 0xbb00) {
-		if ((r->eax & 0xff) == 0x00) {
-			// TCG_StatusCheck, to hide TPM return 0x23 (TCG_PC_TPM_NOT_PRESENT)
-			if (1) {
-				u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
-				printf("\nTCG_StatusCheck, return 0x23");
-				r->rax = 0;
-				r->eax = 0x23U;
-				r->rbx = 0;
-				r->ebx = 0x41504354U;
-				r->rcx = 0;
-				r->rdx = 0;
-				r->rsi = 0;
-				r->rdi = 0;
-				gueststackregion[2] &= ~(u16)EFLAGS_CF;
-				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
-				return;
-			} else {
-				printf("\nTCG_StatusCheck, no modify");
-			}
-		} else {
-//			u16 *gueststackregion = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
-//			gueststackregion[2] |= (u16)EFLAGS_CF;
-			printf("\nOther TCG BIOS calls");
-			HALT_ON_ERRORCOND(0);	// TPM should be not present
-		}
-//		vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
-//		return;
-	}
-
-	//get IP and CS of the original INT 15h handler
-	ip = *((u16 *)((hva_t)bdamemory + 4));
-	cs = *((u16 *)((hva_t)bdamemory + 6));
-
-	//update VMCS with the CS and IP and let go
-	vcpu->vmcs.guest_RIP = ip;
-	vcpu->vmcs.guest_CS_base = cs * 16;
-	vcpu->vmcs.guest_CS_selector = cs;
-}
-
-/*
-static void _vmx_int_handleintercept(VCPU *vcpu, struct regs *r, uintptr_t OLD_AC){
-	u16 cs, ip;
-	u8 *bdamemory = (u8 *)(0x400 + OLD_AC);
-	(void)r;
-
-	//if in V86 mode translate the virtual address to physical address
-	if( (vcpu->vmcs.guest_CR0 & CR0_PE) && (vcpu->vmcs.guest_CR0 & CR0_PG) &&
-			(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM) ){
-		HALT_ON_ERRORCOND(0);
-	}
-
-	//get IP and CS of the original INT 15h handler
-	ip = *((u16 *)((hva_t)bdamemory + 4));
-	cs = *((u16 *)((hva_t)bdamemory + 6));
-
-	//update VMCS with the CS and IP and let go
-	vcpu->vmcs.guest_RIP = ip;
-	vcpu->vmcs.guest_CS_base = cs * 16;
-	vcpu->vmcs.guest_CS_selector = cs;
-}
-*/
 
 //------------------------------------------------------------------------------
 // guest MSR r/w intercept handling
@@ -894,7 +823,7 @@ static void hit_breakpoint(VCPU *vcpu, u16 cs, u64 rip) {
 	enable_monitor_trap(vcpu, 1);
 }
 
-static int enabled_breakpoints(VCPU *vcpu) {
+static int enable_breakpoints(VCPU *vcpu) {
 	/* Return number of breakpoints enabled */
 	int ans;
 	int i;
@@ -956,22 +885,8 @@ static void print_bpmt_info(char *type, VCPU *vcpu, struct regs *r, u16 cs, u64 
 
 static void handle_entry1(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint_real(0x0, 0x7c00);
-}
-
-static void handle_entry21(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
-	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// set_breakpoint_real(0x7c0, 0x118);	// jump to second sector
-	// enable_monitor_trap(vcpu, 0);
-	TRY_WBINVD;
-}
-
-static void handle_entry22(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
-	(void)vcpu;(void)r;(void)cs;(void)rip;
-	// enable_monitor_trap(vcpu, 0);
-	// set_breakpoint_real(0x7c0, 0x1068);
-	set_breakpoint_real(0x7c0, 0x055b);		// jump to bootmgr
-	TRY_WBINVD;
+	vcpu->vmcs.control_exception_bitmap |= (1 << 3);
+	set_breakpoint_real(0x0, 0x7c00);
 }
 
 static void handle_monitor_trap(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
@@ -1005,55 +920,17 @@ static void handle_breakpoint_hit(VCPU *vcpu, struct regs *r, u16 cs, u64 rip) {
 	print_bpmt_info("BP", vcpu, r, cs, rip);
 	TRY_WBINVD;
 	switch (((u64)cs << 32) | rip) {
-	case 0x07c000001068:
-		if ("dump IVT") {
-			for (u32 i = 0; i < 32; i++) {
-				printf("\n*0x%04x = 0x%08x", i * 4, *(u32*)(uintptr_t)(i * 4));
-			}
-			xxd(0, 0);
-		}
-		vcpu->vmcs.control_exception_bitmap |= 0xffffffff;
-		break;
-	case 0x07c000000118:	// jump to second sector
+	case 0x000000007c00:
+		xxd(0, 16);
 		enable_monitor_trap(vcpu, 0);
+		set_breakpoint_real(0x0, 0x7c5c);
+		set_breakpoint_real(0x7c0, 0x118);
 		break;
-	case 0x07c00000055b:	// before jump to bootmgr
-		set_breakpoint(0x2000, 0x20000, 0x83b);
-		set_breakpoint(0x0050, 0x20000, 0x850);
-		set_breakpoint(0x0050, 0x20000, 0xa80);
-		break;
-	case 0x20000000083b:	// before jump to CS=0x50
-		enable_monitor_trap(vcpu, 0);
-		break;
-	case 0x005000000850:	// after jump to CS=0x50
+	case 0x000000007c5c:
 		disable_monitor_trap(vcpu, 0);
 		break;
-	case 0x005000000a80:	// before jump to CS=0x20
+	case 0x07c000000118:	// jump to second sector
 		clear_all_breakpoints(vcpu);
-		set_breakpoint(0x0020, 0x00000, 0x40e9f7);
-		set_breakpoint(0x0020, 0x00000, 0x418e33);
-		set_breakpoint(0x0020, 0x00000, 0x410c83);
-		set_breakpoint(0x0020, 0x00000, 0x422391);
-		set_breakpoint(0x0020, 0x00000, 0x4102ef);
-		set_breakpoint(0x0020, 0x00000, 0x40ebf5);
-		break;
-	case 0x00200040ebf5:	// After skip stuck at 0x4102ef
-		clear_all_breakpoints(vcpu);
-		set_breakpoint(0x0020, 0x00000, 0x4191e0);
-		set_breakpoint(0x0020, 0x00000, 0x40ec7b);
-		break;
-	case 0x00200040ec7b:	// After skip stuck at 0x4256ff
-		clear_all_breakpoints(vcpu);
-		set_breakpoint(0x0020, 0x00000, 0x434d7e);
-		break;
-	case 0x002000434d7e:
-		set_breakpoint(0x0020, 0x00000, 0x438285);
-		set_breakpoint(0x0020, 0x00000, 0x48b1ee);	// Args of Function 0x48b1e0
-		set_breakpoint(0x0020, 0x00000, 0x48b213);	// Inst that cause #MC
-		set_breakpoint(0x0020, 0x00000, 0x40f2d3);	// return
-		break;
-	case 0x00200048b213:	// Inst that cause #MC
-		enable_monitor_trap(vcpu, 0);
 		break;
 	default:
 		break;
@@ -1075,7 +952,7 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		HALT();
 	}
 
-	enabled_breakpoints(vcpu);
+	enable_breakpoints(vcpu);
 
 	if (vcpu->vmcs.info_vmexit_reason == 37) {
 		// monitor trap
@@ -1093,23 +970,10 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		printf(" CPUID 0x%08lx", r->eax);
 	}
 	if (vcpu->vmcs.info_vmexit_reason == 18) {
-		u16 *rsp = (u16 *)( (hva_t)vcpu->vmcs.guest_SS_base + (u16)vcpu->vmcs.guest_RSP );
-		printf(" VMCALL CS:IP=0x%04x:0x%04x EFLAGS=0x%04x",
-				(unsigned)rsp[1], (unsigned)rsp[0], (unsigned)rsp[2]);
-		printf(" EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",
+		printf(" VMCALL EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x",
 				r->eax, r->ebx, r->ecx, r->edx);
 		if ((r->eax & 0xffffU) == 0x2400U) {
 			handle_entry1(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
-		}
-		if ((r->eax & 0xffffU) == 0xbb00U) {
-			static int count = 0;
-			count++;
-			if (count == 1) {
-				handle_entry21(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
-			}
-			if (count == 2) {
-				handle_entry22(vcpu, r, vcpu->vmcs.guest_CS_selector, vcpu->vmcs.guest_RIP);
-			}
 		}
 	}
 
@@ -1125,20 +989,6 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 		//xmhf-core and hypapp intercepts
 		//--------------------------------------------------------------
 
-#define CAPTURE_BIOS1A(OLD_AC, OLD_54) \
-	else if (vcpu->vmcs.guest_CS_base == 0x400 && \
-			vcpu->vmcs.guest_RIP == OLD_AC) { \
-		printf(" INT=0x%02x", (unsigned)OLD_54 / 4); \
-		_vmx_int1a_handleintercept(vcpu, r, OLD_AC); \
-	}
-
-#define CAPTURE_BIOS(OLD_AC, OLD_54) \
-	else if (vcpu->vmcs.guest_CS_base == 0x400 && \
-			vcpu->vmcs.guest_RIP == OLD_AC) { \
-		printf(" INT=0x%02x", (unsigned)OLD_54 / 4); \
-		_vmx_int_handleintercept(vcpu, r, OLD_AC); \
-	}
-
 		case VMX_VMEXIT_VMCALL:{
 			//if INT 15h E820 hypercall, then let the xmhf-core handle it
 			if(vcpu->vmcs.guest_CS_base == (VMX_UG_E820HOOK_CS << 4) &&
@@ -1149,29 +999,13 @@ u32 xmhf_parteventhub_arch_x86_64vmx_intercept_handler(VCPU *vcpu, struct regs *
 					( (vcpu->vmcs.guest_CR0 & CR0_PE) && (vcpu->vmcs.guest_CR0 & CR0_PG) &&
 						(vcpu->vmcs.guest_RFLAGS & EFLAGS_VM)  ) );
 				_vmx_int15_handleintercept(vcpu, r);
-			}
-			CAPTURE_BIOS1A(0xcc, 0x68)
-//			CAPTURE_BIOS(0xbc, 0x50)
-//			CAPTURE_BIOS(0xc4, 0x58)
-//			CAPTURE_BIOS(0xcc, 0x5c)
-//			CAPTURE_BIOS(0xd4, 0x60)
-//			CAPTURE_BIOS(0xdc, 0x64)
-//			CAPTURE_BIOS(0xe4, 0x6c)
-//			CAPTURE_BIOS(0xec, 0x70)
-//			CAPTURE_BIOS(0xf4, 0x74)
-//			CAPTURE_BIOS(0xfc, 0x78)
-			else{	//if not E820 hook, give hypapp a chance to handle the hypercall
-				// Simulate handler for KVM_HC_VAPIC_POLL_IRQ
-				HALT_ON_ERRORCOND(r->eax == 1);
-				r->eax = 0;
-if (0) {
+			}else{	//if not E820 hook, give hypapp a chance to handle the hypercall
 				xmhf_smpguest_arch_x86_64vmx_quiesce(vcpu);
 				if( xmhf_app_handlehypercall(vcpu, r) != APP_SUCCESS){
 					printf("\nCPU(0x%02x): error(halt), unhandled hypercall 0x%08x!", vcpu->id, r->eax);
 					HALT();
 				}
 				xmhf_smpguest_arch_x86_64vmx_endquiesce(vcpu);
-}
 				vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 			}
 		}
@@ -1342,13 +1176,6 @@ if (0) {
 		case 37: {
 			// monitor trap flag
 			// printf(" monitor trap");
-		}
-		break;
-
-		case 52: {
-			// preemption timer
-			printf(" preemption timer 0x%08x",
-					(u32)vcpu->vmcs.preemption_timer_value);
 		}
 		break;
 

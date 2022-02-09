@@ -1517,6 +1517,8 @@ Entry 0x40e9f7
 			Function 0x4357c9 (ESP=0x00061f24)
 				Function 0x437a05 (ESP=0x00061f14)
 					Function 0x438285 (ESP=0x00061ef8)
+						Function 0x48b1e0 (ESP=0x00061ec8) (1024 times)
+							Return at 0x48b342
 						Function 0x48b1e0 (ESP=0x00061ec8)
 							#MC at 0x48b213 (rep movsl %ds:(%esi),%es:(%edi))
 		(Next instruction 0x437807)
@@ -1556,8 +1558,8 @@ thing is that there is no special instructions close to it? Maybe memory mapped
 I/O? We are sure that `0x48b213` is the instruction causing the problem. This
 instruction is `rep movsl %ds:(%esi),%es:(%edi)`.
 
-Also, in QEMU looks like `0x48b213` is not executed. The processor jumps from
-`0x48b211` to `0x48b23c`. i.e. Not reproducible on QEMU.
+<del>Also, in QEMU looks like `0x48b213` is not executed. The processor jumps
+from `0x48b211` to `0x48b23c`. i.e. Not reproducible on QEMU.</del>
 
 Next steps:
 * is the behavior deterministic?
@@ -1568,22 +1570,165 @@ Next steps:
 
 ### REP MOVSL
 
-TODO: is the behavior deterministic?
-TODO: what memory address is it accessing?
-TODO: what happens if disable TPM in hardware?
-TODO: try WinDBG, see whether have symbols.
-TODO: in extreme case, change Windows code to add some time delay
+Note that `Function 0x48b1e0` is called a lot of times, and in most times
+0x48b211 are executed. Only at the last time 0x48b213 is executed and soon
+comes the #MC. So we need to enable monitor trap at 0x48b213.
 
-# tmp notes
+Git `f911ef1bb`, serial `20220208124414`. We can see that the behavior is
+almost the same as last time. DS = ES = 0x30, which has base address = 0.
+The first instruction is ESI=0x0010be78, EDI=0xc0000000. The second is
+ESI=0x0010be7c, EDI=0xc0000004. So after the guest writes to address
+0xc0000000, WBINVD on the host raises #MC.
 
-TODO: how does other TPM configurations fail?
-TODO: May it be related to `<unavailable>` in QEMU GDB?
+When we reverse engineer `Function 0x48b1e0`, it looks like a simple memcpy.
+Arguments are on the stack. At `0x48b1ee` arguments are loaded to registers
+ECX, ESI, EDI.
 
-## Commits
+Try again at git `79dd64695`, hp serial `20220208131330`, qemu serial
+`20220208132103`. The addresses are deterministic. Looks like the same call is
+reproducible on QEMU, but ESI and EDI are different (strange to see different
+ESI).
 
-`43b3d6552..835d832f6`
+Answers to previous questions:
+* is the behavior deterministic?
+	* Yes, it is
+* what memory address is it accessing?
+	* HP is    `memcpy(0xc0000000, 0x0010be78, 0x400)`
+	* QEMU is  `memcpy(0xfd000000, 0x0010bd80, 0x400)`
+
+I think 0xc0000000 is not mapped physical memory, so we need to check whether
+paging is on. In QEMU can print easily:
+```
+(gdb) p/x vcpu->vmcs.guest_CR0
+$7 = 0x31
+(gdb) p/x vcpu->vmcs.guest_CR3
+$8 = 0x0
+(gdb) p/x vcpu->vmcs.guest_CR4
+$9 = 0x42200
+(gdb) 
+```
+
+Since CR0.PG = 0, paging should be disabled. From QEMU's `info mtree`, looks
+like `0x00000000fd000000` is the start of vga.vram:
+`00000000fd000000-00000000fdffffff (prio 1, ram): vga.vram`
+
+<https://wiki.osdev.org/Memory_Map_(x86)> confirms that this memory area
+is likely to be used by VGA and other memory mapped devices. Note that these
+addresses are not reported by e820.
+
+In <https://stackoverflow.com/questions/4185338/>, looks like can find related
+info in `/proc/iomem`, `/proc/ioports`, and `lspci -vvv`. In HP:
+```
+/proc/iomem
+	c0000000-dfffffff : PCI Bus 0000:00
+	  c0000000-cfffffff : 0000:00:02.0
+lspci -vvv
+	00:02.0 VGA compatible controller: Intel ... (prog-if 00 [VGA controller])
+		IOMMU group: 1
+		...
+		Region 0: Memory at d0000000 (64-bit, non-prefetchable) [size=4M]
+		Region 2: Memory at c0000000 (64-bit, prefetchable) [size=256M]
+		Region 4: I/O ports at 5088 [size=8]
+		Expansion ROM at 000c0000 [virtual] [disabled] [size=128K]
+		...
+```
+
+In QEMU:
+```
+/proc/iomem
+	80000000-febfffff : PCI Bus 0000:00
+	  fd000000-fdffffff : 0000:00:02.0
+lspci -vvv
+	00:02.0 VGA compatible controller: ... (prog-if 00 [VGA controller])
+		...
+		Region 0: Memory at fd000000 (32-bit, prefetchable) [size=16M]
+		Region 2: Memory at febf0000 (32-bit, non-prefetchable) [size=4K]
+		Expansion ROM at 000c0000 [disabled] [size=128K]
+		...
+```
+
+For now, it still looks strange because other OSes should be also accessing
+this memory.
+
+### Check VGA MTRRs
+
+Git `a91435624`, HP serial `20220208171146`, QEMU serial `20220208171149`. We
+print variable MTRRs. HP results are (sorted):
+```
+VAR_MTRR[89]: 0x00000000-0x7fffffff=0x00000006		WB
+VAR_MTRR[90]: 0x80000000-0xbfffffff=0x00000006		WB
+VAR_MTRR[91]: 0xbc000000-0xbfffffff=0x00000000		UC
+VAR_MTRR[88]: 0xffc00000-0xffffffff=0x00000005		WT
+VAR_MTRR[92]: 0x100000000-0x13fffffff=0x00000006	WB
+VAR_MTRR[93]: 0x138000000-0x13fffffff=0x00000000	UC
+VAR_MTRR[94]: invalid
+VAR_MTRR[95]: invalid
+```
+
+QEMU results are:
+```
+VAR_MTRR[88]: 0x80000000-0xffffffff=0x00000000
+VAR_MTRR[89]: invalid
+VAR_MTRR[90]: invalid
+...
+```
+
+For overlapping MTRR, the "PATting Linux" paper
+<https://www.kernel.org/doc/ols/2008/ols2008v2-pages-135-144.pdf> says
+behaviors are mostly undefined. But `UC + * = UC`, and `WB + WT = WT`.
+Actually this is in Intel v3 "11.11.4.1 MTRR Precedences"
+
+Can see that the VGA VRAM region is not covered by variable MTRRs.
+
+Git `8c7b9558b`, serial `20220208173734`. Looks like we found the problem.
+In the serial shows `IA32_MTRR_DEF_TYPE: 0x00000000 0x00000c00`, which means
+that memory region not covered by MTRRs should be UC, not WB. According to a
+comment in XMHF source code, memory not covered by MTRRs are assumed to be WB.
+
+After changing MTRR type, HP Windows 10 can see logo (then stuck on PAE).
+
+### Untested ideas
+
+* check how vga.vram should be detected in low level.
+	* Not needed because Windows 10 should be allowed to access vga.vram
+* what happens if disable TPM in hardware?
+	* Not needed because fixing MTRR allows access to TPM
+* try WinDBG, see whether have symbols.
+	* Not needed because problem is fixed
+* see starting from when, writing to 0xc0000000 will cause #MC. (bisect?)
+	* I think writing to 0xc0000000 will cause #MC from the beginning. But
+	  not going to test now.
+* in extreme case, change Windows code to add some time delay
+	* Not needed because problem is deterministic
+* May it be related to `<unavailable>` in QEMU GDB?
+	* Maybe, but not likely
+
+### Root cause
+
+In conclusion, the root cause is that cache type for memory region not covered
+by variable MTRRs are incorrect. Should be UC, but is WB. This causes the
+strange #MC errors when special memory access happens:
+* TPM related operations
+* Accessing vga.vram (i.e. video memory)
+
+After fixing this bug, Windows can successfully boot (see login screen), after
+patching the PAE workaround (`ee1e4c976`).
+
+### Debugging tool
+
+During this bug, I found a good way to debug the guest OS using monitor traps
+(provided by Intel's VMX) and software breakpoint (using INT3 instruction).
+
+Commit `91b493b2f` (`3bbcf39a8..91b493b2f`) is based on `xmhf64` branch. It is
+a demo of using the above techniques to debug. For example QEMU serial is
+`20220208213320`. See `grep -E '^(BP|MT)' results/20220208213320`.
+
+## Fix
+
+`43b3d6552..835d832f6`, `a2fe5a973..3bbcf39a8`
 * Fix bug of interpreting RSP in real mode
 * Reduce code used to read fixed MTRRs
 * Remove hardcoding of memorytype=WB in `_vmx_setupEPT()`
 * Block guest's changes to MTRR
+* Read MTRR default type MSR and apply it
 

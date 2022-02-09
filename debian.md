@@ -26,6 +26,13 @@ apt-get install -y sudo    (others same as Ubuntu)
 apt-get install -y linux-image-686
 ```
 
+### Disable NTP
+Looks like NTP will cause reboot to be slow. We can disable it:
+
+```sh
+sudo timedatectl set-ntp 0
+```
+
 ### Compile XMHF
 Warnings generated because high gcc version. Manually fix the code
 

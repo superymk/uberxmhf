@@ -214,7 +214,7 @@ LINE 66 0x0000ff
 
 ## Fix
 
-`835d832f6..` (5461d4844)
+`835d832f6..a2fe5a973`
 * Fix compile errors due to data types
 * Use DS to access memory to work in Inel TXT mode
 

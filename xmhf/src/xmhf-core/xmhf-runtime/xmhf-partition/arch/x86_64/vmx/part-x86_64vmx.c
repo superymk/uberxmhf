@@ -247,36 +247,6 @@ static void	_vmx_int15_initializehook(VCPU *vcpu){
 		ivt_int15[0]=0x00AC;
 		ivt_int15[1]=0x0040;					
 	}
-
-	/* For debugging, capture all BIOS interrupts */
-#define CAPTURE_BIOS(OLD_AC, OLD_54) \
-	{\
-		u8 *bdamemory = (u8 *)0x400 + OLD_AC;\
-		u16 *ivt_int15 = (u16 *)(OLD_54);\
-		memset(bdamemory, 0x0, 8);		\
-		printf("\noriginal BDA at 0x%08x: 0x%016llx",\
-				(unsigned)(uintptr_t)bdamemory, *(u64 *)bdamemory);\
-		bdamemory[0]= 0x0f;\
-		bdamemory[1]= 0x01;\
-		bdamemory[2]= 0xc1;\
-		bdamemory[3]= 0xcf;\
-		*((u16 *)(&bdamemory[4])) = ivt_int15[0];\
-		*((u16 *)(&bdamemory[6])) = ivt_int15[1];\
-		ivt_int15[0]=OLD_AC;\
-		ivt_int15[1]=0x0040;\
-	}
-
-	CAPTURE_BIOS(0xcc, 0x68)
-//	CAPTURE_BIOS(0xbc, 0x50)
-//	CAPTURE_BIOS(0xc4, 0x58)
-//	CAPTURE_BIOS(0xcc, 0x5c)
-//	CAPTURE_BIOS(0xd4, 0x60)
-//	CAPTURE_BIOS(0xdc, 0x64)
-//	CAPTURE_BIOS(0xe4, 0x6c)
-//	CAPTURE_BIOS(0xec, 0x70)
-//	CAPTURE_BIOS(0xf4, 0x74)
-//	CAPTURE_BIOS(0xfc, 0x78)
-	// CAPTURE_BIOS(0xg4, 0x7c)
 }
 
 /* Return nonzero if this CPU supports INVPCID according to CPUID */
@@ -413,7 +383,7 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 
 	vcpu->vmcs.control_pagefault_errorcode_mask  = 0x00000000;	//dont be concerned with 
 	vcpu->vmcs.control_pagefault_errorcode_match = 0x00000000; //guest page-faults
-	vcpu->vmcs.control_exception_bitmap = (1 << 3);
+	vcpu->vmcs.control_exception_bitmap = 0;
 	vcpu->vmcs.control_CR3_target_count = 0;
       
 	//setup guest state
@@ -511,9 +481,6 @@ void vmx_initunrestrictedguestVMCS(VCPU *vcpu){
 	//activate secondary processor controls
 	vcpu->vmcs.control_VMX_seccpu_based = vcpu->vmx_msrs[INDEX_IA32_VMX_PROCBASED_CTLS2_MSR];
 	vcpu->vmcs.control_VMX_cpu_based |= (1 << 31); //activate secondary processor controls
-	// vcpu->vmcs.control_VMX_pin_based |= (1 << 6);	// preemption timer
-	// vcpu->vmcs.preemption_timer_value = 0x10000;
-	// vcpu->vmcs.control_VMX_cpu_based |= (1 << 27);	// monitor trap flag
 
 	//setup unrestricted guest
 	vcpu->vmcs.control_VMX_seccpu_based |= (1 << 7); //enable unrestricted guest

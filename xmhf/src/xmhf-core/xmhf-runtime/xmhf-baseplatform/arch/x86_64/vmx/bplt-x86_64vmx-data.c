@@ -211,7 +211,6 @@ struct _vmx_vmcsrwfields_encodings g_vmx_vmcsrwfields_encodings[] __attribute__(
     DECLARE_FIELD(0x4828, guest_SMBASE)
 #endif /* !__DEBUG_QEMU__ */
     DECLARE_FIELD(0x482A, guest_SYSENTER_CS)
-    DECLARE_FIELD(0x482E, preemption_timer_value)
     // Natural 16-bit Guest-State fields
     DECLARE_FIELD(0x0800, guest_ES_selector)
     DECLARE_FIELD(0x0802, guest_CS_selector)

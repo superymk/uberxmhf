@@ -111,6 +111,21 @@ However, not sure whether MTRRs are related to the problem.
 For next step, need to find a way to see RIP of CPU 0 after HP graphics mode
 stucks. May need to set a timer and cause intercept.
 
+### After `bug_036`
+
+After `bug_036` is fixed, I guess this bug is likely related to MTRR. From logs
+can see that GRUB is trying to modify MTRR for some reason. However supporting
+modifying MTRR will be complicated, so cannot fix for now.
+```
+CPU(0x00): Old       MTRR 0x0000020d is 0x 0000000f fe010000
+CPU(0x00): Modifying MTRR 0x0000020d to 0x 0000000f fe010800
+CPU(0x00): Modifying MTRR not yet supported. Halt!
+```
+
+Before `bug_036` is fixed, guest modifying MTRR will result in XMHF's MTRR to
+be modified. If after that unwanted access to memory happens, may get strange
+results (including #MC, see `bug_036`)
+
 ## Result
 
 Less important feature to fix, skipped for now

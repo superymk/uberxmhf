@@ -1,8 +1,9 @@
-# HP cannot boot Windows 10
+# HP cannot boot Windows 10 (MTRR)
 
 ## Scope
-* HP, x64 Windows 10, x86 XMHF
+* HP, x64 Windows 10, x64 XMHF
 * Cannot testing x86 Windows 10 easily due to bootloader issues
+	* (After this bug is fixed: x86 Windows 10 has the same problem)
 * good: QEMU
 
 ## Behavior

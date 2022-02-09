@@ -5,7 +5,7 @@
 
 ### QEMU
 ```sh
-qemu-img create -f qcow2 a.qcow2 4G
+qemu-img create -f qcow2 a.qcow2 32G
 qemu-system-i386 -m 512M \
 	--drive media=cdrom,file=debian-11.1.0-i386-netinst.iso,index=1 \
 	--drive media=disk,file=a.qcow2,index=2 \

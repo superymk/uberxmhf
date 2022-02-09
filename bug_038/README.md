@@ -62,5 +62,15 @@ Git `a7fa77062`, branch `xmhf64-win`, test result is
 * `main.exe`
 	* Did not test
 
+### Testing x86
+Later tested x86 PAL x86 Windows 10 {x86,x64} XMHF on HP, everything runs well.
+
 ### Calling convention
+
+## Fix
+
+`a2fe5a973..a7fa77062`
+* Allow RAND_MAX to be 0x7fff (to support MinGW)
+* Update Makefile to set Windows macro
+* Use Windows memory APIs
 

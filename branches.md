@@ -229,10 +229,14 @@ Linux
 |    |   | Debian 11 x64    |pal_demo x86|                                     |
 |    |   |                  +------------+                                     |
 |    |   |                  |pal_demo x64|                                     |
+|    |   +------------------+------------+------------------+------------------+
+|    |   | Fedora 35 x64    |pal_demo x86| Cannot boot      | Not tested       |
+|    |   |                  +------------+ (bug_039)        |                  |
+|    |   |                  |pal_demo x64|                  |                  |
 +----+---+------------------+------------+------------------+------------------+
 | x86| Y | Debian 11 x86    |pal_demo x86| good             | Not Applicable   |
 +----+   +------------------+------------+------------------+                  |
-| x64|   | Debian 11 x86    |pal_demo x86| cannot boot      |                  |
+| x64|   | Debian 11 x86    |pal_demo x86| cannot boot xmhf |                  |
 |    |   +------------------+------------+ (bug_037)        |                  |
 |    |   | Debian 11 x64    |pal_demo x86|                  |                  |
 |    |   |                  +------------+                  |                  |
@@ -248,22 +252,24 @@ Windows
 |XMHF|DRT|System            |Application | HP               | QEMU             |
 +====+===+==================+============+==================+==================+
 | x86| N | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
+|    |   +------------------+------------+------------------+------------------+
+|    |   | Win10 x86        |pal_demo x86| good             | Can boot         |
++----+   +------------------+------------+------------------+------------------+
+| x64|   | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
 |    |   +------------------+------------+                  +------------------+
-|    |   | Win10 x86        | N/A        |                  | Good             |
-+----+   +------------------+------------+                  +------------------+
-| x64|   | WinXP x86 SP3    | N/A        |                  | Need workaround  |
-|    |   +------------------+------------+                  +------------------+
-|    |   | WinXP x64        | N/A        |                  | Good             |
+|    |   | WinXP x64        | N/A        |                  | Can boot         |
 |    |   +------------------+------------+------------------+                  |
-|    |   | Win10 x86        | N/A        | Can boot         |                  |
+|    |   | Win10 x86        |pal_demo x86| good             |                  |
 |    |   +------------------+------------+------------------+                  |
-|    |   | Win10 x64        | N/A        | Boot stucks      |                  |
+|    |   | Win10 x64        |pal_demo x86| Cannot boot      |                  |
+|    |   |                  +------------+ (bug_039)        |                  |
+|    |   |                  |pal_demo x64|                  |                  |
 +----+---+------------------+------------+------------------+------------------+
 ```
 
 ## Limits
 * QEMU cannot reboot (`bug_007` fixes part of this problem)
-* Grub graphical mode does not work in HP (`bug_016`)
+* Grub graphical mode does not work in HP (`bug_016`, need dynamic guest MTRR)
 * Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
 * Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
 * x86 XMHF does not support x86 PAE and x64 guests (see `bug_028`)

@@ -557,8 +557,10 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	cr0_value = *((u64 *)_vmx_decode_reg(gpr, vcpu, r));
 	old_cr0 = vcpu->vmcs.guest_CR0;
 
-	//printf("\n[cr0-%02x] MOV TO, old=0x%08llx, new=0x%08llx, shadow=0x%08llx",
-	//	vcpu->id, old_cr0, cr0_value, vcpu->vmcs.control_CR0_shadow);
+	printf("\n[cr0-%02x] MOV TO, old=0x%08llx, new=0x%08llx, shadow=0x%08llx",
+		vcpu->id, old_cr0, cr0_value, vcpu->vmcs.control_CR0_shadow);
+	printf("\n[cr0-%02x] MOV TO,mask=0x%08llx",
+		vcpu->id, vcpu->vmcs.control_CR0_mask);
 
 	/*
 	 * Make the guest think that move to CR0 succeeds (by changing shadow).
@@ -584,18 +586,31 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	 * (IA-32e mode guest). This bit should always equal to EFER.LME && CR0.PG
 	 */
 	if ((old_cr0 ^ cr0_value) & CR0_PG) {
-		u32 value = vcpu->vmcs.control_VM_entry_controls;
-		u32 lme, pae;
-		msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
-		HALT_ON_ERRORCOND(efer->index == MSR_EFER);
-		lme = (cr0_value & CR0_PG) && (efer->data & (0x1U << EFER_LME));
-		value &= ~(1U << 9);
-		value |= lme << 9;
-		vcpu->vmcs.control_VM_entry_controls = value;
+		u64 pg_pe_mask = (CR0_PG | CR0_PE);
+		/* The change request must be on some bits not related to PG or PE */
+		HALT_ON_ERRORCOND((old_cr0 ^ cr0_value) & ~pg_pe_mask);
+		/* If CR0.PG and CR0.PE are not masked, retry the MOV CR0 instruction */
+		if (!(pg_pe_mask & vcpu->vmcs.control_CR0_mask)) {
+			vcpu->vmcs.guest_CR0 &= ~pg_pe_mask;
+			vcpu->vmcs.guest_CR0 |= old_cr0 & pg_pe_mask;
+			printf("\n[cr0-%02x] RETRY:  old=0x%08llx", vcpu->vmcs.guest_CR0);
+			HALT_ON_ERRORCOND(!((vcpu->vmcs.guest_CR0 ^ cr0_value) & ~pg_pe_mask));
+			/* TODO: use a cleaner way */
+			vcpu->vmcs.guest_RIP -= vcpu->vmcs.info_vmexit_instruction_length;
+		} else {
+			u32 value = vcpu->vmcs.control_VM_entry_controls;
+			u32 lme, pae;
+			msr_entry_t *efer = &((msr_entry_t *)vcpu->vmx_vaddr_msr_area_guest)[0];
+			HALT_ON_ERRORCOND(efer->index == MSR_EFER);
+			lme = (cr0_value & CR0_PG) && (efer->data & (0x1U << EFER_LME));
+			value &= ~(1U << 9);
+			value |= lme << 9;
+			vcpu->vmcs.control_VM_entry_controls = value;
 
-		pae = (cr0_value & CR0_PG) && (!lme) && (vcpu->vmcs.guest_CR4 & CR4_PAE);
-		/* TODO: Need to walk EPT and retrieve values for guest_PDPTE* */
-		HALT_ON_ERRORCOND(!pae);
+			pae = (cr0_value & CR0_PG) && (!lme) && (vcpu->vmcs.guest_CR4 & CR4_PAE);
+			/* TODO: Need to walk EPT and retrieve values for guest_PDPTE* */
+			HALT_ON_ERRORCOND(!pae);
+		}
 	}
 
 	//flush mappings

@@ -3,7 +3,8 @@
 ## Scope
 * HP, x64 Windows 10, x64 XMHF
 * good: HP, x86 Windows 10, x64 XMHF
-* good: QEMU
+* good: QEMU, Windows 10
+* good: QEMU, Fedora
 * bad, probably related: ThinkPad, Fedora 35
 
 ## Behavior
@@ -42,6 +43,4 @@ Git around `ae6d89527`, serial `20220208231648`. We think Windows 10 and Fedora
 * ThinkPad, x64 Fedora 35, x64 XMHF
 
 # tmp notes
-
-TODO: try Fedora on QEMU
 

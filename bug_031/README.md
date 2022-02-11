@@ -942,4 +942,9 @@ enter 32-bit mode. This causes the problem.
 
 The temporary fix for running on QEMU is to use self-compiled SeaBIOS. If this
 bug is reproduced on HP, may need to use fake BIOS handler.
+* QEMU command line: `-bios bug_031/bios.bin`
+
+After `bug_036` fixed: I think `bug_036` is a related bug. However when testing
+now I cannot reproduce `bug_031`. Maybe related to QEMU update? Currently
+QEMU version is 6.1.0, XMHF commit is `5324ae8e8`
 

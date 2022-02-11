@@ -188,7 +188,7 @@
 * Support `CR{0,4}` intercept with R8-R15 (`bug_034`)
 * (Now can boot Windows 10 in QEMU)
 
-`43b3d6552..3bbcf39a8`
+`43b3d6552..5324ae8e8`
 * Fix bug of interpreting RSP in real mode (`bug_036`)
 * Refactor MTRR code (`bug_036`)
 * Remove hardcoding of memorytype=WB in `_vmx_setupEPT()` (`bug_036`)
@@ -196,14 +196,16 @@
 * Fix compile errors due to data types (`bug_037`)
 * Use DS to access memory to work in Inel TXT mode (`bug_037`)
 * Read MTRR default type MSR and apply it (`bug_036`)
-* (Now can boot Windows 10 in HP)
+* For PAL, update Makefile to set Windows macro (`bug_038`)
+* For PAL, use Windows memory APIs (`bug_038`)
+* (Now can boot x86 Windows 10 in HP, and run PAL)
+
+`5324ae8e8..` (0efebfe87)
+* Retry MOV CR0 interceptions when CR0.PG changes (`bug_040`)
 
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
 * `83eb8f36d`: Simulate handler for `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
-* `ee1e4c976`: Temporary fix for PAE in CR0 handler (run WinXP SP3 & Win10)
-	* Another workaround is to revert `9c0f9491a`
-* `bug_031`: Use `-bios bug_031/bios.bin` for Windows 10 on QEMU
 * `91b493b2f`: Add monitor trap and breakpoint support
 
 ### TODO
@@ -258,12 +260,13 @@ Windows
 | x64|   | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
 |    |   +------------------+------------+                  +------------------+
 |    |   | WinXP x64        | N/A        |                  | Can boot         |
-|    |   +------------------+------------+------------------+                  |
-|    |   | Win10 x86        |pal_demo x86| good             |                  |
+|    |   +------------------+------------+------------------+------------------+
+|    |   | Win10 x86        |pal_demo x86| good             | good             |
 |    |   +------------------+------------+------------------+                  |
 |    |   | Win10 x64        |pal_demo x86| Cannot boot      |                  |
-|    |   |                  +------------+ (bug_039)        |                  |
-|    |   |                  |pal_demo x64|                  |                  |
+|    |   |                  +------------+ (bug_039)        +------------------+
+|    |   |                  |pal_demo x64|                  | Cannot run PAL   |
+|    |   |                  |            |                  | (bug_038)        |
 +----+---+------------------+------------+------------------+------------------+
 ```
 

@@ -388,6 +388,10 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
 					vcpu->id);
 			HALT();
 			break;
+		case IA32_BIOS_UPDT_TRIG:
+			printf("\nCPU(0x%02x): OS tries to write microcode, ignored",
+					vcpu->id);
+			break;
 		default:{
 			asm volatile ("wrmsr\r\n"
           : //no outputs

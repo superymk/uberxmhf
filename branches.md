@@ -200,8 +200,11 @@
 * For PAL, use Windows memory APIs (`bug_038`)
 * (Now can boot x86 Windows 10 in HP, and run PAL)
 
-`5324ae8e8..` (0efebfe87)
+`5324ae8e8..221e7b84b`
 * Retry MOV CR0 interceptions when CR0.PG changes (`bug_040`)
+* Ignore guest OS's request to update microcode (`bug_039`)
+* Set hypervisor present flag in CPUID (`bug_039`)
+* (Now can boot x64 Windows 10 in HP, and run PAL)
 
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
@@ -232,9 +235,9 @@ Linux
 |    |   |                  +------------+                                     |
 |    |   |                  |pal_demo x64|                                     |
 |    |   +------------------+------------+------------------+------------------+
-|    |   | Fedora 35 x64    |pal_demo x86| Cannot boot      | good             |
-|    |   |                  +------------+ (bug_039)        |                  |
-|    |   |                  |pal_demo x64|                  |                  |
+|    |   | Fedora 35 x64    |pal_demo x86| Cannot run PAL   | good             |
+|    |   |                  +------------+ stablely         |                  |
+|    |   |                  |pal_demo x64| (bug_041)        |                  |
 +----+---+------------------+------------+------------------+------------------+
 | x86| Y | Debian 11 x86    |pal_demo x86| good             | Not Applicable   |
 +----+   +------------------+------------+------------------+                  |
@@ -261,13 +264,13 @@ Windows
 |    |   +------------------+------------+                  +------------------+
 |    |   | WinXP x64        | N/A        |                  | Can boot         |
 |    |   +------------------+------------+------------------+------------------+
-|    |   | Win10 x86        |pal_demo x86| good             | good             |
-|    |   +------------------+------------+------------------+                  |
-|    |   | Win10 x64        |pal_demo x86| Cannot boot      |                  |
-|    |   |                  +------------+ (bug_039)        +------------------+
-|    |   |                  |pal_demo x64|                  | Cannot run PAL   |
-|    |   |                  |            |                  | (bug_038)        |
-+----+---+------------------+------------+------------------+------------------+
+|    |   | Win10 x86        |pal_demo x86| good                                |
+|    |   +------------------+------------+                                     |
+|    |   | Win10 x64        |pal_demo x86|                                     |
+|    |   |                  +------------+-------------------------------------+
+|    |   |                  |pal_demo x64| Cannot run PAL                      |
+|    |   |                  |            | (bug_038)                           |
++----+---+------------------+------------+-------------------------------------+
 ```
 
 ## Limits

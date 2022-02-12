@@ -298,7 +298,7 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
 	u64 write_data = ((u64)r->edx << 32) | (u64)r->eax;
 
-	printf("\nCPU(0x%02x): WRMSR 0x%08x 0x%08x%08x @ %p", vcpu->id, r->ecx, r->edx, r->eax, vcpu->vmcs.guest_RIP);
+//	printf("\nCPU(0x%02x): WRMSR 0x%08x 0x%08x%08x @ %p", vcpu->id, r->ecx, r->edx, r->eax, vcpu->vmcs.guest_RIP);
 
 	/* Disallow x2APIC MSRs */
 	HALT_ON_ERRORCOND((r->ecx & 0xffffff00U) != 0x800);
@@ -409,7 +409,7 @@ static void _vmx_handle_intercept_rdmsr(VCPU *vcpu, struct regs *r){
 	/* After switch statement, will assign this value to r->eax and r->edx */
 	u64 read_result = 0;
 
-	printf("\nCPU(0x%02x): RDMSR 0x%08x @ %p", vcpu->id, r->ecx, vcpu->vmcs.guest_RIP);
+//	printf("\nCPU(0x%02x): RDMSR 0x%08x @ %p", vcpu->id, r->ecx, vcpu->vmcs.guest_RIP);
 
 	/* Disallow x2APIC MSRs */
 	HALT_ON_ERRORCOND((r->ecx & 0xffffff00U) != 0x800);

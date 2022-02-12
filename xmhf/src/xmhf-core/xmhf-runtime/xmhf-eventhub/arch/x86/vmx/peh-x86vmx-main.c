@@ -89,6 +89,8 @@ static void _vmx_handle_intercept_cpuid(VCPU *vcpu, struct regs *r){
 		r->ecx &= ~(1U << 5);
 		/* Clear x2APIC capability */
 		r->ecx &= ~(1U << 21);
+		/* Set Hypervisor Present */
+		r->ecx |= (1U << 31);
 	}
 	vcpu->vmcs.guest_RIP += vcpu->vmcs.info_vmexit_instruction_length;
 }
@@ -287,9 +289,9 @@ static void _vmx_int15_handleintercept(VCPU *vcpu, struct regs *r){
 
 //---intercept handler (WRMSR)--------------------------------------------------
 static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
-	//printf("\nCPU(0x%02x): WRMSR 0x%08x", vcpu->id, r->ecx);
-
 	u64 write_data = ((u64)r->edx << 32) | (u64)r->eax;
+
+	//printf("\nCPU(0x%02x): WRMSR 0x%08x", vcpu->id, r->ecx);
 
 	/* Disallow x2APIC MSRs */
 	HALT_ON_ERRORCOND((r->ecx & 0xffffff00U) != 0x800);
@@ -379,6 +381,10 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
 					vcpu->id);
 			HALT();
 			break;
+		case IA32_BIOS_UPDT_TRIG:
+			printf("\nCPU(0x%02x): OS tries to write microcode, ignore",
+					vcpu->id);
+			break;
 		default:{
 			asm volatile ("wrmsr\r\n"
           : //no outputs
@@ -393,10 +399,10 @@ static void _vmx_handle_intercept_wrmsr(VCPU *vcpu, struct regs *r){
 
 //---intercept handler (RDMSR)--------------------------------------------------
 static void _vmx_handle_intercept_rdmsr(VCPU *vcpu, struct regs *r){
-	//printf("\nCPU(0x%02x): RDMSR 0x%08x", vcpu->id, r->ecx);
-
 	/* After switch statement, will assign this value to r->eax and r->edx */
 	u64 read_result = 0;
+
+	//printf("\nCPU(0x%02x): RDMSR 0x%08x", vcpu->id, r->ecx);
 
 	/* Disallow x2APIC MSRs */
 	HALT_ON_ERRORCOND((r->ecx & 0xffffff00U) != 0x800);
@@ -568,6 +574,13 @@ static void vmx_handle_intercept_cr0access_ug(VCPU *vcpu, struct regs *r, u32 gp
 	/*
 	 * If CR0.PG bit changes, need to update guest_PDPTE0 - guest_PDPTE3 if
 	 * PAE is enabled.
+	 *
+	 * There is a workaround to retry the MOV CR0 instruction, implemented in
+	 * vmx_handle_intercept_cr0access_ug() in peh-x86_64vmx-main.c.
+	 *
+	 * x86 XMHF cannot support PAE guests well because the hypervisor cannot
+	 * access memory above 4GB. So the workaround is not implemented here.
+	 * x86_64 XMHF should be used instead.
 	 */
 	if ((old_cr0 ^ cr0_value) & CR0_PG) {
 		u32 pae = (cr0_value & CR0_PG) && (vcpu->vmcs.guest_CR4 & CR4_PAE);

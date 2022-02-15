@@ -89,13 +89,14 @@ serial `20220211213522`. So maybe a problem in Linux?
 Now we survey things related to microcode. Can search for "microcode" in Intel
 manuals.
 
-Volume 2
-* CPUID will change `IA32_BIOS_SIGN_ID`
-Volume 3
-Volume 4
-* `IA32_PLATFORM_ID (MSR_PLATFORM_ID, 17h)`: determine which microcode to use
-* `IA32_BIOS_UPDT_TRIG (BIOS_UPDT_TRIG, 79h)`: perform update
-* `IA32_BIOS_SIGN_ID (BIOS_SIGN/BBL_CR_D3, 8bh)`: show updated signature
+* Volume 2
+	* CPUID will change `IA32_BIOS_SIGN_ID`
+* Volume 3
+* Volume 4
+	* `IA32_PLATFORM_ID (MSR_PLATFORM_ID, 17h)`: determine which microcode to
+	  use
+	* `IA32_BIOS_UPDT_TRIG (BIOS_UPDT_TRIG, 79h)`: perform update
+	* `IA32_BIOS_SIGN_ID (BIOS_SIGN/BBL_CR_D3, 8bh)`: show updated signature
 
 From Intel documentation looks like there are no easy way to report to the
 guest that microcode update is not supported. But when running Fedora on QEMU,

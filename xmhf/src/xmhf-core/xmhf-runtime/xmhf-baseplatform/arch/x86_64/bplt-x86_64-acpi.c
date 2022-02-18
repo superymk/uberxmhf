@@ -61,9 +61,11 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
   u32 i;
 
   p=(char *)spaddr;
-  
-  for(i=0; i< size; i++)
+  printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, spaddr, size);
+  for(i=0; i< size; i++) {
+    printf("\nLINE %d 0x%08lx", __LINE__, (uintptr_t)(p+i));
     checksum+= (char)(*(p+i));
+  }
   
   return (u32)checksum;
 }
@@ -95,26 +97,44 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       }
     }
   }
-
+  printf("\nLINE %d", __LINE__);
 	//found RSDP?  
   if(found)
     return (u32)(ebdaphys+i);
-  
+  printf("\nLINE %d", __LINE__);
   //nope, search within BIOS areas 0xE0000 to 0xFFFFF
   for(i=0xE0000; i < (0xFFFFF-8); i+=16){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)i, sizeof(ACPI_RSDP));
+    //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
+      printf("\nLINE %d", __LINE__);
+      printf("\nsignature=0x%016llx", rsdp->signature);
+      printf("\nchecksum =0x%02x", (u32)rsdp->checksum);
+      printf("\noemid[0] =0x%02x", (u32)rsdp->oemid[0]);
+      printf("\noemid[1] =0x%02x", (u32)rsdp->oemid[1]);
+      printf("\noemid[2] =0x%02x", (u32)rsdp->oemid[2]);
+      printf("\noemid[3] =0x%02x", (u32)rsdp->oemid[3]);
+      printf("\noemid[4] =0x%02x", (u32)rsdp->oemid[4]);
+      printf("\noemid[5] =0x%02x", (u32)rsdp->oemid[5]);
+      printf("\nrevision =0x%02x", (u32)rsdp->revision);
+      printf("\nrsdtaddress =0x%08x", (u32)rsdp->rsdtaddress);
+      printf("\nlength   =0x%08x", (u32)rsdp->length);
+      printf("\nxsdtaddress =0x%016llx", rsdp->xsdtaddress);
+      printf("\nxchecksum =0x%02x", (u32)rsdp->xchecksum);
+      printf("\nLINE %d", __LINE__);
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
+        printf("\nLINE %d", __LINE__);
         found=1;
         break;
       }
+      printf("\nLINE %d", __LINE__);
     }
   }
-
+  printf("\nLINE %d", __LINE__);
   //found RSDP?
   if(found)
     return i;
-  
+  printf("\nLINE %d", __LINE__);
   //no RSDP, system is not ACPI compliant!
   return 0;  
 }

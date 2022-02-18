@@ -101,6 +101,15 @@ someone mentioned that Hyper-V will set CPUID to indicate vapic is available.
 * Re-install Windows, disable CPUID 0x40000000, disable network, see what
   happens
 
+### Workarounds
+
+In `bug_027` the workaround to boot x86 Windows XP SP3 in QEMU is `ed2714bab`
+(x86 XMHF only)
+
+Then it is updated to `83eb8f36d` (both x86 and x64 XMHF)
+
+Then it is updated to `0d7e0599d` (allow Windows XP to run PAL)
+
 ## Result
 
 Not fixed because of low priority (Windows XP is EOL). Focus on Windows 10.

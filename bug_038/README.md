@@ -116,9 +116,14 @@ Fixed some bugs in `221e7b84b..057309e3f`. Now using x64 Debian to test,
 `wine test_args.exe 4 1 1` will cause test failure. Looks like there will be a
 problem if and only if `args_i[1] != 0`.
 
+The cause is that in x64 Windows `long` is 4 bytes, should use `uintptr_t`
+(8 bytes).
+
+After that, looks like problem fixed.
+
 ## Fix
 
-`a2fe5a973..a7fa77062`, `221e7b84b..342ad3e62`
+`a2fe5a973..a7fa77062`, `221e7b84b..5b5cd7931`
 * Allow RAND_MAX to be 0x7fff (to support MinGW)
 * Update Makefile to set Windows macro
 * Use Windows memory APIs

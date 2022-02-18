@@ -44,7 +44,7 @@ menuentry 'Windows' --class windows --class os $menuentry_id_option 'windows' {
 }
 ```
 
-In `/etc/defaults/grub`, Can change to `GRUB_DEFAULT=Windows`
+In `/etc/default/grub`, Can change to `GRUB_DEFAULT=Windows`
 
 ## Debugging Windows
 
@@ -141,4 +141,13 @@ certificates.
 * WSL: <https://docs.microsoft.com/en-us/windows/wsl/install>
 * Cygwin?: <https://www.cygwin.com/>
 	* May have trouble because Cygwin does not use Linux's calling convention
+
+### Faking time in QEMU
+
+Sometimes Windows XP asks the user to activate Windows. Maybe a workaround is
+to time travel to when the OS was just installed. In QEMU KVM this is
+done by `-rtc base=2011-11-11T11:11:00,clock=rt`. For some reason Debian
+still sees host's date, but Windows XP x64 will see the fake date.
+
+Ref: <https://unix.stackexchange.com/questions/345483/>
 

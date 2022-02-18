@@ -14,6 +14,7 @@
 		* <del>`xmhf64-ap`: be able to spawn APs in xmhf-runtime</del>
 		* <del>`xmhf64-vm`: deal with VMWRITE and VMLAUNCH failed problem</del>
 		* (no longer use sub-branches)
+		* `xmhf64-dev`: development commits
 
 ## Change Log
 
@@ -206,9 +207,16 @@
 * Set hypervisor present flag in CPUID (`bug_039`)
 * (Now can boot x64 Windows 10 in HP, and run PAL)
 
+`221e7b84b..6733ca433`
+* Translate x64 Windows calling convention to Linux (`bug_038`)
+* Fix bug in `hpt_scode_switch_regular()` that cause unaligned RSP (`bug_038`)
+* Use `uintptr_t` instead of `long` to get correct size (`bug_038`)
+* Support munmap memory in caller.c (`bug_038`)
+* (Now can run PAL in x64 Windows 10 and x64 Fedora)
+
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
-* `83eb8f36d`: Simulate handler for `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
+* `0d7e0599d`: Handl VMCALL `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
 * `91b493b2f`: Add monitor trap and breakpoint support
 
 ### TODO
@@ -234,14 +242,14 @@ Linux
 |    |   | Debian 11 x64    |pal_demo x86|                                     |
 |    |   |                  +------------+                                     |
 |    |   |                  |pal_demo x64|                                     |
-|    |   +------------------+------------+------------------+------------------+
-|    |   | Fedora 35 x64    |pal_demo x86| Cannot run PAL   | good             |
-|    |   |                  +------------+ stablely         |                  |
-|    |   |                  |pal_demo x64| (bug_041)        |                  |
+|    |   +------------------+------------+                                     |
+|    |   | Fedora 35 x64    |pal_demo x86|                                     |
+|    |   |                  +------------+                                     |
+|    |   |                  |pal_demo x64|                                     |
 +----+---+------------------+------------+------------------+------------------+
 | x86| Y | Debian 11 x86    |pal_demo x86| good             | Not Applicable   |
 +----+   +------------------+------------+------------------+                  |
-| x64|   | Debian 11 x86    |pal_demo x86| cannot boot xmhf |                  |
+| x64|   | Debian 11 x86    |pal_demo x86| Cannot boot xmhf |                  |
 |    |   +------------------+------------+ (bug_037)        |                  |
 |    |   | Debian 11 x64    |pal_demo x86|                  |                  |
 |    |   |                  +------------+                  |                  |
@@ -256,21 +264,22 @@ Windows
 |    |   |Operating         |            +------------------+------------------+
 |XMHF|DRT|System            |Application | HP               | QEMU             |
 +====+===+==================+============+==================+==================+
-| x86| N | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
-|    |   +------------------+------------+------------------+------------------+
-|    |   | Win10 x86        |pal_demo x86| good             | Can boot         |
-+----+   +------------------+------------+------------------+------------------+
-| x64|   | WinXP x86 SP3    | N/A        | Not tested       | Need workaround  |
+| x86| N | WinXP x86 SP3    | N/A        | Boot not tested  | good             |
+|    |   +------------------+------------+------------------+                  |
+|    |   | Win10 x86        |pal_demo x86| good             |                  |
++----+   +------------------+------------+------------------+                  |
+| x64|   | WinXP x86 SP3    | N/A        | Boot not tested  |                  |
+|    |   +------------------+------------+                  |                  |
+|    |   | WinXP x64        |pal_demo x86|                  |                  |
+|    |   |                  +------------+                  |                  |
+|    |   |                  |pal_demo x64|                  |                  |
+|    |   +------------------+------------+------------------+                  |
+|    |   | Win10 x86        |pal_demo x86| good             |                  |
 |    |   +------------------+------------+                  +------------------+
-|    |   | WinXP x64        | N/A        |                  | Can boot         |
-|    |   +------------------+------------+------------------+------------------+
-|    |   | Win10 x86        |pal_demo x86| good                                |
-|    |   +------------------+------------+                                     |
-|    |   | Win10 x64        |pal_demo x86|                                     |
-|    |   |                  +------------+-------------------------------------+
-|    |   |                  |pal_demo x64| Cannot run PAL                      |
-|    |   |                  |            | (bug_038)                           |
-+----+---+------------------+------------+-------------------------------------+
+|    |   | Win10 x64        |pal_demo x86|                  | PAL not tested   |
+|    |   |                  +------------+                  |                  |
+|    |   |                  |pal_demo x64|                  |                  |
++----+---+------------------+------------+------------------+------------------+
 ```
 
 ## Limits
@@ -279,7 +288,5 @@ Windows
 * Terminating a PAL (e.g. through Ctrl+C) crashes XMHF
 * Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
 * x86 XMHF does not support x86 PAE and x64 guests (see `bug_028`)
-* x86 Windows XP SP3 needs 2 workarounds to run
-	* `83eb8f36d`: Unexpected use of VMCALL (`bug_029`)
-	* `ee1e4c976`: Unexpected interceptions (`bug_030`, `bug_033`)
+* x86 Windows XP SP3 has strange VMCALL, workaround is `0d7e0599d` (`bug_029`)
 

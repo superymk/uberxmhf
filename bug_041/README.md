@@ -19,4 +19,10 @@ Looks like reproducible every time.
 
 ## Debugging
 
-TODO
+Work on `bug_038`
+
+## Result
+
+No longer reproducible in git `342ad3e62`. Bug fixed. Maybe related to
+unaligned stack address?
+

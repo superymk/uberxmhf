@@ -52,7 +52,7 @@
  */
 enum HCcmd {
   /* pal manipulation ops */
-  TV_HC_REG =14,
+  TV_HC_REG =1,
   TV_HC_UNREG =2,
   TV_HC_SHARE =6,
 

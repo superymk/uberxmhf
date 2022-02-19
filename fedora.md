@@ -45,3 +45,20 @@ sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
 
 However, unable to boot XMHF. Will need to look into UEFI support in the future.
 
+### Install GRUB on USB
+
+We try to use Debian to install GRUB on another disk formatted with MBR
+
+```sh
+sudo fdisk /dev/sdx
+	# add a partition
+sudo mke2fs /dev/sdxy
+sudo grub-install /dev/sdx
+sudo tune2fs /dev/sdxy -U <UUID-of-disk-containing-boot-directory>
+sudo mount /dev/sdxy /mnt
+sudo mkdir /mnt/boot
+sudo cp -r /boot/grub /mnt/boot/
+sudo umount /mnt
+sync
+```
+

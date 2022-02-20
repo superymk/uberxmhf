@@ -152,6 +152,7 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
     
     xxd(0x0f000u, 0x10000u);
     xxd_phys(0xfc500u, 0xfc700u);
+    printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
 
 	//get runtime physical base
 	runtime_physical_base = sl_baseaddr + PAGE_SIZE_2M;	//base of SL + 2M

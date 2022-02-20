@@ -194,10 +194,8 @@ void xmhf_sl_arch_sanitize_post_launch(void){
         txt_heap_t *txt_heap;
         os_mle_data_t *os_mle_data;
 
-        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         // sl.c unity-maps 0xfed00000 for 2M so these should work fine
         txt_heap = get_txt_heap();
-        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
 		printf("\nSL: txt_heap = 0x%08lx", (u64)txt_heap);
 		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         /// compensate for special DS here in SL

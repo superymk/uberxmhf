@@ -91,6 +91,7 @@ void xmhf_baseplatform_arch_initialize(void){
 		#ifndef __XMHF_VERIFICATION__
 			//TODO: plug in a BIOS data area map/model
 			printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+			printf("\nFILE:LINE %s:%d &rsdp=0x%016lx", __FILE__, __LINE__, (uintptr_t)&rsdp);
 			if(!xmhf_baseplatform_arch_x86_64_acpi_getRSDP(&rsdp)){
 			    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
 				printf("\n%s: ACPI RSDP not found, Halting!", __FUNCTION__);

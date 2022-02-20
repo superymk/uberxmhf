@@ -243,6 +243,14 @@ our C main*/
 
     _sl_start_64:
 
+    /* Load new segment selectors for DS, ES, FS, GS, and SS */
+    movw $(__DS), %bx
+    movw %bx, %ds
+    movw %bx, %es
+    movw %bx, %fs
+    movw %bx, %gs
+    movw %bx, %ss
+
     /*
      * Modify the page table so that (VA + RBP) % 4GiB = PA.
      * When address is now too high, VA + RBP = PA.
@@ -283,11 +291,25 @@ our C main*/
 
     _sl_skip_page_table_change:
 
+    P('\n')P('C')P('S')P('=')
+    xorl %ebx, %ebx; movw %cs, %bx; call put_hex;
+    P('\n')P('D')P('S')P('=')
+    xorl %ebx, %ebx; movw %ds, %bx; call put_hex;
+    P('\n')P('E')P('S')P('=')
+    xorl %ebx, %ebx; movw %es, %bx; call put_hex;
+    P('\n')P('F')P('S')P('=')
+    xorl %ebx, %ebx; movw %fs, %bx; call put_hex;
+    P('\n')P('E')P('B')P('P')P('=')
+    movl %ebp, %ebx; call put_hex;
+
     P('\n')P('C')P('S')P('G')P('7')P('=') movl %cs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
     P('\n')P('D')P('S')P('G')P('7')P('=') movl %ds:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
     P('\n')P('E')P('S')P('G')P('7')P('=') movl %es:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
     P('\n')P('F')P('S')P('G')P('7')P('=') movl %fs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
     P('\n')P('S')P('S')P('G')P('7')P('=') movl %ss:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+
+    P('\n')P('3')P('0')P('3')
+    P('\n')
 
     /* Now we only need RBP */
     xorq %rax, %rax

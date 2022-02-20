@@ -108,6 +108,7 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
     //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+      printf("\nrsdp = 0x%016lx", (uintptr_t)rsdp);
       printf("\nsignature=0x%016llx", rsdp->signature);
       printf("\nchecksum =0x%02x", (u32)rsdp->checksum);
       printf("\noemid[0] =0x%02x", (u32)rsdp->oemid[0]);

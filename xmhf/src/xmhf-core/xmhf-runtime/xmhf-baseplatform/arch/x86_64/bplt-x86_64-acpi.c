@@ -61,11 +61,9 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
   u32 i;
 
   p=(char *)spaddr;
-  for(i=0; i< size; i++) {
-    checksum+= (char)(*(p+i));
-  }
   
-  printf("\nDONE");
+  for(i=0; i< size; i++)
+    checksum+= (char)(*(p+i));
   
   return (u32)checksum;
 }
@@ -97,29 +95,26 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       }
     }
   }
-  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+
 	//found RSDP?  
   if(found)
     return (u32)(ebdaphys+i);
-  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+  
   //nope, search within BIOS areas 0xE0000 to 0xFFFFF
   for(i=0xE0000; i < (0xFFFFF-8); i+=16){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)i, sizeof(ACPI_RSDP));
-    //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
-        printf("\nFOUND 2");
         found=1;
         break;
       }
-      printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
     }
   }
-  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+
   //found RSDP?
   if(found)
     return i;
-  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+  
   //no RSDP, system is not ACPI compliant!
   return 0;  
 }

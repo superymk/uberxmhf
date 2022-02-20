@@ -219,14 +219,23 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
 		
 	}
 	
+	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+	for (int i = 0; i < 1000; i++) { udelay(1000); }
+
 	//initialize basic platform elements
 	xmhf_baseplatform_initialize();
+
+	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+	for (int i = 0; i < 1000; i++) { udelay(1000); }
 
 	//sanitize cache/MTRR/SMRAM (most important is to ensure that MTRRs 
 	//do not contain weird mappings)
 #if defined (__DRT__)
     xmhf_sl_arch_sanitize_post_launch();
 #endif	//__DRT__
+
+	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+	for (int i = 0; i < 1000; i++) { udelay(1000); }
 
 #if defined (__DMAP__)    
 	//setup DMA protection on runtime (secure loader is already DMA protected)

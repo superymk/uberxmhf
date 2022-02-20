@@ -94,6 +94,39 @@ static void xxd_phys(u32 start, u32 end) {
 }
 #endif
 
+void udelay(u32 usecs){
+    u8 val;
+    u32 latchregval;  
+
+    //enable 8254 ch-2 counter
+    val = inb(0x61);
+    val &= 0x0d; //turn PC speaker off
+    val |= 0x01; //turn on ch-2
+    outb(val, 0x61);
+  
+    //program ch-2 as one-shot
+    outb(0xB0, 0x43);
+  
+    //compute appropriate latch register value depending on usecs
+    latchregval = ((u64)1193182 * usecs) / 1000000;
+
+	HALT_ON_ERRORCOND(latchregval < (1 << 16));
+
+    //write latch register to ch-2
+    val = (u8)latchregval;
+    outb(val, 0x42);
+    val = (u8)((u32)latchregval >> (u32)8);
+    outb(val , 0x42);
+  
+    //wait for countdown
+    while(!(inb(0x61) & 0x20));
+  
+    //disable ch-2 counter
+    val = inb(0x61);
+    val &= 0x0c;
+    outb(val, 0x61);
+}
+
 //we get here from slheader.S
 // rdtsc_* are valid only if PERF_CRIT is not defined.  slheader.S
 // sets them to 0 otherwise.
@@ -130,7 +163,6 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
     else
 		printf("\nSL(late-init): at 0x%08x, starting...", sl_baseaddr);
 		
-	printf("\nSL: &runtime_physical_base = %p", &runtime_physical_base);
 	//debug: dump SL parameter block
 	printf("\nSL: slpb at = 0x%08lx", (sla_t)&slpb);
 	printf("\n	errorHandler=0x%08x", slpb.errorHandler);
@@ -151,7 +183,7 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
            slpb.rdtsc_before_drtm, slpb.rdtsc_after_drtm);
     printf("\nSL: [PERF] RDTSC DRTM elapsed cycles: 0x%llx",
            slpb.rdtsc_after_drtm - slpb.rdtsc_before_drtm);
-
+    
 	//get runtime physical base
 	runtime_physical_base = sl_baseaddr + PAGE_SIZE_2M;	//base of SL + 2M
 	
@@ -219,9 +251,6 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
 		
 	}
 	
-	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-	for (int i = 0; i < 1000; i++) { udelay(1000); }
-
 	//initialize basic platform elements
 	xmhf_baseplatform_initialize();
 

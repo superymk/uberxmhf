@@ -79,38 +79,6 @@ u32 xmhf_baseplatform_arch_getcpuvendor(void){
 	return cpu_vendor;
 }
 
-void udelay(u32 usecs){
-    u8 val;
-    u32 latchregval;  
-
-    //enable 8254 ch-2 counter
-    val = inb(0x61);
-    val &= 0x0d; //turn PC speaker off
-    val |= 0x01; //turn on ch-2
-    outb(val, 0x61);
-  
-    //program ch-2 as one-shot
-    outb(0xB0, 0x43);
-  
-    //compute appropriate latch register value depending on usecs
-    latchregval = ((u64)1193182 * usecs) / 1000000;
-
-	HALT_ON_ERRORCOND(latchregval < (1 << 16));
-
-    //write latch register to ch-2
-    val = (u8)latchregval;
-    outb(val, 0x42);
-    val = (u8)((u32)latchregval >> (u32)8);
-    outb(val , 0x42);
-  
-    //wait for countdown
-    while(!(inb(0x61) & 0x20));
-  
-    //disable ch-2 counter
-    val = inb(0x61);
-    val &= 0x0c;
-    outb(val, 0x61);
-}
 
 //initialize basic platform elements
 void xmhf_baseplatform_arch_initialize(void){
@@ -126,8 +94,6 @@ void xmhf_baseplatform_arch_initialize(void){
 				printf("\n%s: ACPI RSDP not found, Halting!", __FUNCTION__);
 				HALT();
 			}
-			printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-			for (int i = 0; i < 1000; i++) { udelay(1000); }
 		#endif //__XMHF_VERIFICATION__
 	}
 

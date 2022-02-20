@@ -194,21 +194,28 @@ void xmhf_sl_arch_sanitize_post_launch(void){
         txt_heap_t *txt_heap;
         os_mle_data_t *os_mle_data;
 
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         // sl.c unity-maps 0xfed00000 for 2M so these should work fine
         txt_heap = get_txt_heap();
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
 		printf("\nSL: txt_heap = 0x%08lx", (u64)txt_heap);
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         /// compensate for special DS here in SL
         os_mle_data = get_os_mle_data_start((txt_heap_t*)((u64)txt_heap - sl_baseaddr));
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         printf("\nSL: os_mle_data = 0x%08lx", (u64)os_mle_data);
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
         // restore pre-SENTER MTRRs that were overwritten for SINIT launch
         if(!validate_mtrrs(&(os_mle_data->saved_mtrr_state))) {
             printf("\nSECURITY FAILURE: validate_mtrrs() failed.\n");
             HALT();
         }
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
 
         printf("\nSL: Restoring mtrrs...");
 
         restore_mtrrs(&(os_mle_data->saved_mtrr_state));
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     }
 
 	#endif

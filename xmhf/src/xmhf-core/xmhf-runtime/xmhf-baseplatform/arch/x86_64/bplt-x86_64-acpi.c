@@ -51,6 +51,36 @@
 
 #include <xmhf.h> 
 
+void udelay(u32 usecs){
+    u8 val;
+    u32 latchregval;  
+
+    //enable 8254 ch-2 counter
+    val = inb(0x61);
+    val &= 0x0d; //turn PC speaker off
+    val |= 0x01; //turn on ch-2
+    outb(val, 0x61);
+  
+    //program ch-2 as one-shot
+    outb(0xB0, 0x43);
+  
+    //compute appropriate latch register value depending on usecs
+    latchregval = (1193182 * usecs) / 1000000;
+
+    //write latch register to ch-2
+    val = (u8)latchregval;
+    outb(val, 0x42);
+    val = (u8)((u32)latchregval >> (u32)8);
+    outb(val , 0x42);
+  
+    //wait for countdown
+    while(!(inb(0x61) & 0x20));
+  
+    //disable ch-2 counter
+    val = inb(0x61);
+    val &= 0x0c;
+    outb(val, 0x61);
+}
 
 
 //------------------------------------------------------------------------------
@@ -61,12 +91,21 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
   u32 i;
 
   p=(char *)spaddr;
-  
-  for(i=0; i< size; i++)
+  printf("\nFILE:LINE %s:%d 0x%08lx 0x%08lx", __FILE__, __LINE__, spaddr, size);
+  for (u32 i = 0; i < 3; i++) {
+  	printf("\nFILE:LINE %s:%d %d 0x%08lx 0x%08lx", __FILE__, __LINE__, i, spaddr, size);
+    for (int i = 0; i < 1000; i++) { udelay(1000); }
+  }
+  for(i=0; i< size; i++) {
+    printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
+    for (int i = 0; i < 1000; i++) { udelay(1000); }
+    // TODO: add wbinvd here
     checksum+= (char)(*(p+i));
+  }
+  
   printf("\nDONE");
-  udelay(1000000);
-
+  for (int i = 0; i < 1000; i++) { udelay(1000); }
+  
   return (u32)checksum;
 }
 
@@ -97,26 +136,37 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       }
     }
   }
-
+  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
 	//found RSDP?  
   if(found)
     return (u32)(ebdaphys+i);
-  
+  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
   //nope, search within BIOS areas 0xE0000 to 0xFFFFF
   for(i=0xE0000; i < (0xFFFFF-8); i+=16){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)i, sizeof(ACPI_RSDP));
+    //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
+      printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+      printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
+      printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
+      printf("\ni = 0x%016lx", i);
+      printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+      printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
+      printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
+      for (int i = 0; i < 1000; i++) { udelay(1000); }
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
         found=1;
         break;
       }
+      printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
     }
   }
-
+  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
   //found RSDP?
   if(found)
     return i;
-  
+  printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
   //no RSDP, system is not ACPI compliant!
   return 0;  
 }

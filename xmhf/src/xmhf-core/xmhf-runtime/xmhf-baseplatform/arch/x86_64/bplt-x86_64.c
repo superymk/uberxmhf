@@ -79,37 +79,6 @@ u32 xmhf_baseplatform_arch_getcpuvendor(void){
 	return cpu_vendor;
 }
 
-void udelay(u32 usecs){
-    u8 val;
-    u32 latchregval;  
-
-    //enable 8254 ch-2 counter
-    val = inb(0x61);
-    val &= 0x0d; //turn PC speaker off
-    val |= 0x01; //turn on ch-2
-    outb(val, 0x61);
-  
-    //program ch-2 as one-shot
-    outb(0xB0, 0x43);
-  
-    //compute appropriate latch register value depending on usecs
-    latchregval = ((u64)1193182 * usecs) / 1000000;
-
-    //write latch register to ch-2
-    val = (u8)latchregval;
-    outb(val, 0x42);
-    val = (u8)((u32)latchregval >> (u32)8);
-    outb(val , 0x42);
-  
-    //wait for countdown
-    while(!(inb(0x61) & 0x20));
-  
-    //disable ch-2 counter
-    val = inb(0x61);
-    val &= 0x0c;
-    outb(val, 0x61);
-}
-
 
 //initialize basic platform elements
 void xmhf_baseplatform_arch_initialize(void){
@@ -123,16 +92,12 @@ void xmhf_baseplatform_arch_initialize(void){
 			//TODO: plug in a BIOS data area map/model
 			printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
 			printf("\nFILE:LINE %s:%d &rsdp=0x%016lx", __FILE__, __LINE__, (uintptr_t)&rsdp);
-			udelay(1000000);
 			if(!xmhf_baseplatform_arch_x86_64_acpi_getRSDP(&rsdp)){
 			    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-			    udelay(1000000);
 				printf("\n%s: ACPI RSDP not found, Halting!", __FUNCTION__);
-				udelay(1000000);
 				HALT();
 			}
 			printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-			udelay(1000000);
 		#endif //__XMHF_VERIFICATION__
 	}
 

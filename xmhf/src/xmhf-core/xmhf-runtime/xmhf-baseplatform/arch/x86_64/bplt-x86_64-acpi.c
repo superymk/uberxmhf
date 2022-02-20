@@ -109,12 +109,6 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
         printf("\nFOUND 2");
-        for (int i = 0; i < 100000; i++) {
-	        for (int i = 0; i < 1000; i++) { udelay(1000); }
-	        printf(".");
-	        udelay(1000000);
-	        printf("+");
-	    }
         found=1;
         break;
       }

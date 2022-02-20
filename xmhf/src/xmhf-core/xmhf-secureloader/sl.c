@@ -60,6 +60,7 @@ struct _sl_parameter_block slpb __attribute__(( section(".sl_untrusted_params") 
 	.magic = SL_PARAMETER_BLOCK_MAGIC,
 };
 
+#if 0
 static void xxd(u32 start, u32 end) {
 	HALT_ON_ERRORCOND((start & 0xf) == 0);
 	HALT_ON_ERRORCOND((end & 0xf) == 0);
@@ -91,6 +92,7 @@ static void xxd_phys(u32 start, u32 end) {
 		}
 	}
 }
+#endif
 
 //we get here from slheader.S
 // rdtsc_* are valid only if PERF_CRIT is not defined.  slheader.S
@@ -149,11 +151,6 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
            slpb.rdtsc_before_drtm, slpb.rdtsc_after_drtm);
     printf("\nSL: [PERF] RDTSC DRTM elapsed cycles: 0x%llx",
            slpb.rdtsc_after_drtm - slpb.rdtsc_before_drtm);
-    
-    xxd(0x0f000u, 0x0f010u);
-    xxd_phys(0xfc600u, 0xfc630u);
-    printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
-	// printf("\nINVPCID ..."); asm volatile ("movl $2, %%eax; invpcid 0, %%rax;" : : : "%eax"); printf("done");
 
 	//get runtime physical base
 	runtime_physical_base = sl_baseaddr + PAGE_SIZE_2M;	//base of SL + 2M

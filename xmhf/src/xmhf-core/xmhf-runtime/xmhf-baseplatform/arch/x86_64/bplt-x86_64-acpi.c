@@ -51,6 +51,36 @@
 
 #include <xmhf.h> 
 
+void udelay(u32 usecs){
+    u8 val;
+    u32 latchregval;  
+
+    //enable 8254 ch-2 counter
+    val = inb(0x61);
+    val &= 0x0d; //turn PC speaker off
+    val |= 0x01; //turn on ch-2
+    outb(val, 0x61);
+  
+    //program ch-2 as one-shot
+    outb(0xB0, 0x43);
+  
+    //compute appropriate latch register value depending on usecs
+    latchregval = (1193182 * usecs) / 1000000;
+
+    //write latch register to ch-2
+    val = (u8)latchregval;
+    outb(val, 0x42);
+    val = (u8)((u32)latchregval >> (u32)8);
+    outb(val , 0x42);
+  
+    //wait for countdown
+    while(!(inb(0x61) & 0x20));
+  
+    //disable ch-2 counter
+    val = inb(0x61);
+    val &= 0x0c;
+    outb(val, 0x61);
+}
 
 
 //------------------------------------------------------------------------------
@@ -62,16 +92,19 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
 
   p=(char *)spaddr;
   printf("\nFILE:LINE %s:%d 0x%08lx 0x%08lx", __FILE__, __LINE__, spaddr, size);
-  for (u32 i = 0; i < 3 * size; i++) {
+  for (u32 i = 0; i < 3; i++) {
   	printf("\nFILE:LINE %s:%d %d 0x%08lx 0x%08lx", __FILE__, __LINE__, i, spaddr, size);
+    for (int i = 0; i < 1000; i++) { udelay(1000); }
   }
   for(i=0; i< size; i++) {
-    //printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
+    printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
+    for (int i = 0; i < 1000; i++) { udelay(1000); }
     // TODO: add wbinvd here
     checksum+= (char)(*(p+i));
   }
   
   printf("\nDONE");
+  for (int i = 0; i < 1000; i++) { udelay(1000); }
   
   return (u32)checksum;
 }
@@ -120,6 +153,7 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
       printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
       printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
+      for (int i = 0; i < 1000; i++) { udelay(1000); }
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
         printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
         found=1;

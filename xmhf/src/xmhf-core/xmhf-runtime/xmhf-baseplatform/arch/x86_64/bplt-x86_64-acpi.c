@@ -91,13 +91,7 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
   u32 i;
 
   p=(char *)spaddr;
-  printf("\nFILE:LINE %s:%d 0x%08lx 0x%08lx", __FILE__, __LINE__, spaddr, size);
-  for (u32 i = 0; i < 3; i++) {
-  	printf("\nFILE:LINE %s:%d %d 0x%08lx 0x%08lx", __FILE__, __LINE__, i, spaddr, size);
-    for (int i = 0; i < 1000; i++) { udelay(1000); }
-  }
   for(i=0; i< size; i++) {
-    printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
     for (int i = 0; i < 1000; i++) { udelay(1000); }
     // TODO: add wbinvd here
     checksum+= (char)(*(p+i));
@@ -131,6 +125,8 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)(ebdaphys+i), sizeof(ACPI_RSDP));
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
+        printf("\nFOUND 1");
+        for (int i = 0; i < 1000; i++) { udelay(1000); }
         found=1;
         break;
       }
@@ -155,7 +151,8 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
       printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
       for (int i = 0; i < 1000; i++) { udelay(1000); }
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
-        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+        printf("\nFOUND 2");
+        for (int i = 0; i < 1000; i++) { udelay(1000); }
         found=1;
         break;
       }

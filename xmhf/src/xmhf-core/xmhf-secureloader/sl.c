@@ -150,8 +150,8 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
     printf("\nSL: [PERF] RDTSC DRTM elapsed cycles: 0x%llx",
            slpb.rdtsc_after_drtm - slpb.rdtsc_before_drtm);
     
-    xxd(0x0f000u, 0x10000u);
-    xxd_phys(0xfc500u, 0xfc700u);
+    xxd(0x0f000u, 0x0f010u);
+    xxd_phys(0xfc600u, 0xfc630u);
     printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
 	// printf("\nINVPCID ..."); asm volatile ("movl $2, %%eax; invpcid 0, %%rax;" : : : "%eax"); printf("done");
 

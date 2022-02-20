@@ -137,9 +137,6 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
     xmhf_baseplatform_arch_flat_copy((u8 *)rsdp, (u8 *)i, sizeof(ACPI_RSDP));
     //printf("\nLINE %d 0x%08lx 0x%08lx", __LINE__, (uintptr_t)rsdp, (uintptr_t)i);
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
-      printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
-      printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
-      for (int i = 0; i < 1000; i++) { udelay(1000); }
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
         printf("\nFOUND 2");
         for (int i = 0; i < 1000; i++) { udelay(1000); }

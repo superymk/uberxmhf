@@ -62,13 +62,16 @@ static u32 _acpi_computetablechecksum(uintptr_t spaddr, uintptr_t size){
 
   p=(char *)spaddr;
   printf("\nFILE:LINE %s:%d 0x%08lx 0x%08lx", __FILE__, __LINE__, spaddr, size);
-  for (u32 i = 0; i < 10 * size; i++) {
+  for (u32 i = 0; i < 2 * size; i++) {
   	printf("\nFILE:LINE %s:%d %d 0x%08lx 0x%08lx", __FILE__, __LINE__, i, spaddr, size);
   }
   for(i=0; i< size; i++) {
-    printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
+    //printf("\nFILE:LINE %s:%d 0x%08lx", __FILE__, __LINE__, (uintptr_t)(p+i));
+    // TODO: add wbinvd here
     checksum+= (char)(*(p+i));
   }
+  
+  printf("\nDONE");
   
   return (u32)checksum;
 }

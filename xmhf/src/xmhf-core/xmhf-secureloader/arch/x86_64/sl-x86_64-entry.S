@@ -50,6 +50,8 @@
 
 #include <xmhf.h>
 
+#define P(c) movb $c, %ah; call putc;
+
 /*----------------------------------------------------------------------
  CODE
 ----------------------------------------------------------------------
@@ -192,6 +194,43 @@ our C main*/
     leal _sl_start_64(%ebp), %eax
     pushl %eax
 
+    P('\n')P('C')P('S')P('=')
+    xorl %ebx, %ebx; movw %cs, %bx; call put_hex;
+    P('\n')P('D')P('S')P('=')
+    xorl %ebx, %ebx; movw %ds, %bx; call put_hex;
+    P('\n')P('E')P('S')P('=')
+    xorl %ebx, %ebx; movw %es, %bx; call put_hex;
+    P('\n')P('F')P('S')P('=')
+    xorl %ebx, %ebx; movw %fs, %bx; call put_hex;
+    P('\n')P('E')P('B')P('P')P('=')
+    movl %ebp, %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('0')P('=') movl sl_gdt+0x0*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('1')P('=') movl sl_gdt+0x1*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('2')P('=') movl sl_gdt+0x2*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('3')P('=') movl sl_gdt+0x3*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('4')P('=') movl sl_gdt+0x4*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('5')P('=') movl sl_gdt+0x5*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('6')P('=') movl sl_gdt+0x6*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('7')P('=') movl sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('8')P('=') movl sl_gdt+0x8*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('9')P('=') movl sl_gdt+0x9*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('a')P('=') movl sl_gdt+0xa*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('b')P('=') movl sl_gdt+0xb*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('c')P('=') movl sl_gdt+0xc*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('d')P('=') movl sl_gdt+0xd*4(%ebp), %ebx; call put_hex;
+    P('\n')P('G')P('D')P('T')P('e')P('=') movl sl_gdt+0xe*4(%ebp), %ebx; call put_hex;
+    P('\t')P('G')P('D')P('T')P('f')P('=') movl sl_gdt+0xf*4(%ebp), %ebx; call put_hex;
+    P('\n')
+
+    P('\n')P('C')P('S')P('G')P('7')P('=') movl %cs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('D')P('S')P('G')P('7')P('=') movl %ds:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('E')P('S')P('G')P('7')P('=') movl %es:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('F')P('S')P('G')P('7')P('=') movl %fs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('S')P('S')P('G')P('7')P('=') movl %ss:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+
+    P('\n')P('2')P('3')P('1')
+    P('\n')
+
     /* enable paging */
     movl %cr0, %eax
     orl $(CR0_PG), %eax
@@ -243,6 +282,12 @@ our C main*/
     /* PDT[1:] will be set in C code */
 
     _sl_skip_page_table_change:
+
+    P('\n')P('C')P('S')P('G')P('7')P('=') movl %cs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('D')P('S')P('G')P('7')P('=') movl %ds:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('E')P('S')P('G')P('7')P('=') movl %es:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('F')P('S')P('G')P('7')P('=') movl %fs:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
+    P('\n')P('S')P('S')P('G')P('7')P('=') movl %ss:sl_gdt+0x7*4(%ebp), %ebx; call put_hex;
 
     /* Now we only need RBP */
     xorq %rax, %rax
@@ -334,6 +379,60 @@ sl_cpu_common:
     spinforever:
         jmp spinforever
     hlt
+
+put_hex:
+    // EBX is argument to print
+    // Clobber EAX, ECX, EDX
+    // ECX is counter
+    movl $0, %ecx
+    movb $'0', %ah; call putc;
+    movb $'x', %ah; call putc;
+    movl %ebx, %ecx; shr $28, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $24, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $20, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $16, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr $12, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr  $8, %ecx; call put_hex_1;
+    movl %ebx, %ecx; shr  $4, %ecx; call put_hex_1;
+    movl %ebx, %ecx;                call put_hex_1;
+    ret
+
+put_hex_1:
+    // CL is argument
+    // Clobber EAX and EDX
+    andb $0xf, %cl;
+1:  cmpb $0x0, %cl; jne 1f; movb $'0', %ah; call putc; ret;
+1:  cmpb $0x1, %cl; jne 1f; movb $'1', %ah; call putc; ret;
+1:  cmpb $0x2, %cl; jne 1f; movb $'2', %ah; call putc; ret;
+1:  cmpb $0x3, %cl; jne 1f; movb $'3', %ah; call putc; ret;
+1:  cmpb $0x4, %cl; jne 1f; movb $'4', %ah; call putc; ret;
+1:  cmpb $0x5, %cl; jne 1f; movb $'5', %ah; call putc; ret;
+1:  cmpb $0x6, %cl; jne 1f; movb $'6', %ah; call putc; ret;
+1:  cmpb $0x7, %cl; jne 1f; movb $'7', %ah; call putc; ret;
+1:  cmpb $0x8, %cl; jne 1f; movb $'8', %ah; call putc; ret;
+1:  cmpb $0x9, %cl; jne 1f; movb $'9', %ah; call putc; ret;
+1:  cmpb $0xa, %cl; jne 1f; movb $'a', %ah; call putc; ret;
+1:  cmpb $0xb, %cl; jne 1f; movb $'b', %ah; call putc; ret;
+1:  cmpb $0xc, %cl; jne 1f; movb $'c', %ah; call putc; ret;
+1:  cmpb $0xd, %cl; jne 1f; movb $'d', %ah; call putc; ret;
+1:  cmpb $0xe, %cl; jne 1f; movb $'e', %ah; call putc; ret;
+1:  cmpb $0xf, %cl; jne 1f; movb $'f', %ah; call putc; ret;
+1:                          movb $'?', %ah; call putc; ret;
+
+// #define SERIAL 0x3f8 // QEMU
+#define SERIAL 0x5080   // HP
+
+putc:
+    // AH is argument
+    // Clobber EAX and EDX
+    movw $(SERIAL + 5), %dx
+    inb %dx, %al
+    testb $0x20, %al
+    jz putc
+    movb %ah, %al
+    movw $(SERIAL), %dx
+    outb %al, %dx
+    ret
 
 /*----------------------------------------------------------------------
  DATA

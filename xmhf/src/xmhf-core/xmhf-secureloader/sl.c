@@ -97,6 +97,7 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
     else
 		printf("\nSL(late-init): at 0x%08x, starting...", sl_baseaddr);
 		
+	printf("\nSL: &runtime_physical_base = %p", &runtime_physical_base);
 	//debug: dump SL parameter block
 	printf("\nSL: slpb at = 0x%08lx", (sla_t)&slpb);
 	printf("\n	errorHandler=0x%08x", slpb.errorHandler);

@@ -115,23 +115,11 @@ u32 xmhf_baseplatform_arch_x86_64_acpi_getRSDP(ACPI_RSDP *rsdp){
     if(rsdp->signature == ACPI_RSDP_SIGNATURE){
       printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
       printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
+      printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
       printf("\ni = 0x%016lx", i);
-      printf("\nrsdp = 0x%016lx", (uintptr_t)rsdp);
-      printf("\nsignature=0x%016llx", rsdp->signature);
-      printf("\nchecksum =0x%02x", (u32)rsdp->checksum);
-      printf("\noemid[0] =0x%02x", (u32)rsdp->oemid[0]);
-      printf("\noemid[1] =0x%02x", (u32)rsdp->oemid[1]);
-      printf("\noemid[2] =0x%02x", (u32)rsdp->oemid[2]);
-      printf("\noemid[3] =0x%02x", (u32)rsdp->oemid[3]);
-      printf("\noemid[4] =0x%02x", (u32)rsdp->oemid[4]);
-      printf("\noemid[5] =0x%02x", (u32)rsdp->oemid[5]);
-      printf("\nrevision =0x%02x", (u32)rsdp->revision);
-      printf("\nrsdtaddress =0x%08x", (u32)rsdp->rsdtaddress);
-      printf("\nlength   =0x%08x", (u32)rsdp->length);
-      printf("\nxsdtaddress =0x%016llx", rsdp->xsdtaddress);
-      printf("\nxchecksum =0x%02x", (u32)rsdp->xchecksum);
       printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
       printf("\nWBINVD ..."); asm volatile ("wbinvd"); printf("done");
+      printf("\nWRITE CR3 ..."); write_cr3(read_cr3()); printf("done");
       if(!_acpi_computetablechecksum((uintptr_t)rsdp, 20)){
         printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
         found=1;

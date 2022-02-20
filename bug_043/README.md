@@ -28,6 +28,61 @@ and HDD will become 0x81. This will make chain loading HDD's GRUB impossible.
 
 ### Empirical study
 
-TODO: test the behavior on QEMU
-TODO: likely accept an argument in XMHF bootloader to override DX
+QEMU supports `-boot menu=on` to select a hard disk to boot.
+
+We use the following GDB script to break at 0x7c00
+
+```
+hb *0x7c00
+hb *0x0
+```
+
+Whichever hard disk I select, after hitting the break point, RDX = 0x80.
+Actually QEMU / SeaBIOS will also change the booting hard drive to `(hd0)`.
+
+Currently, we have a few cases. The XMHF files are stored in HDD; USB only
+contains GRUB files.
+* HDD is the first hardware disk and USB is the second hardware disk
+	* Boot into HDD (1)
+		* rdx=0x80, `(hd0)` is HDD, `(hd1)` is USB
+	* Boot into USB (2)
+		* rdx=0x80, `(hd0)` is USB, `(hd1)` is HDD
+		* `set root='(hd1,msdos1)'` will load XMHF correctly
+		* `module --nounzip (hd1)+1` will load USB's GRUB in guest
+		  (intended to load HDD)
+* USB is the first hardware disk and HDD is the second hardware disk
+	* Boot into USB (1)
+		* rdx=0x80, `(hd0)` is USB, `(hd1)` is HDD
+		* `set root='(hd1,msdos1)'` will load XMHF correctly
+		* `module --nounzip (hd1)+1` will load USB's GRUB in guest
+		  (intended to load HDD)
+	* Boot into HDD (2)
+		* rdx=0x80, `(hd0)` is HDD, `(hd1)` is USB
+
+We cannot confirm our hypothesis with only QEMU. Try directly changing EDX on
+XMHF.
+
+### Adding argument
+
+We can add a command line argument for XMHF, following `cmdline.c` and
+`get_tboot_serial()` will be good enough. Then pass the argument to SLPB and
+RPB.
+
+`9afbe1130` implements the change. Looks good on QEMU. In QEMU, need to add
+`boot_drive=0x81` to XMHF arguments to boot:
+* SeaBIOS -> USB GRUB -> XMHF -> HDD GRUB -> Linux
+
+After test, can also boot to another GRUB on HP.
+
+Also tested on a computer that uses EFI to boot. The computer does not have
+serial port (so can only use VGA to see output). There are 2 problems to be
+solved in the future:
+* EFI GRUB cannot load XMHF correctly (see nothing from VGA)
+* XMHF cannot chain load EFI GRUB
+
+## Fix
+
+`6733ca433..9afbe1130`
+* Support booting a grub located other than `(hd0)`
+* Remove some unnecessary `__attribute__((packed))`
 

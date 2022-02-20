@@ -214,6 +214,11 @@
 * Support munmap memory in caller.c (`bug_038`)
 * (Now can run PAL in x64 Windows 10 and x64 Fedora)
 
+`6733ca433..` (da97a50e1)
+* Support booting a grub located other than `(hd0)` (`bug_043`)
+* Remove some unnecessary `__attribute__((packed))` (`bug_043`)
+* Fix unexpected content on screen when debugging with VGA (`bug_044`)
+
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
 * `0d7e0599d`: Handl VMCALL `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
@@ -289,4 +294,5 @@ Windows
 * Forwarding very frequent NMIs to Linux may have a bug (`bug_025`)
 * x86 XMHF does not support x86 PAE and x64 guests (see `bug_028`)
 * x86 Windows XP SP3 has strange VMCALL, workaround is `0d7e0599d` (`bug_029`)
+* UEFI is not supported
 

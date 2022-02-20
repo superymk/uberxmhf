@@ -7,8 +7,9 @@ exec tail -n +3 $0
 menuentry "XMHF64" {
 	set root='(hd0,msdos1)'		# point to file system for /
 	set kernel='/boot/init-x86_64.bin'
+	set boot_drive='0x80'	# should point to where grub is installed
 	echo "Loading ${kernel}..."
-	multiboot ${kernel} serial=115200,8n1,0x5080
+	multiboot ${kernel} serial=115200,8n1,0x5080 boot_drive=${boot_drive}
 	module /boot/hypervisor-x86_64.bin.gz
 	module --nounzip (hd0)+1	# should point to where grub is installed
 	module /boot/i5_i7_DUAL_SINIT_51.BIN

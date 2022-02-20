@@ -160,7 +160,7 @@ xmhf_sl_main
 
 We can see that `_acpi_computetablechecksum()` causes the problem.
 
-Expected (i.e. without DRT)
+Expected (i.e. without DRT) (when working on `bug_042`: this is wrong)
 ```
 LINE 110
 signature=0x2052545020445352

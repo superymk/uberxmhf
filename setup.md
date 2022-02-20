@@ -107,13 +107,23 @@ exec tail -n +3 $0
 menuentry "XMHF" {
 	set root='(hd0,msdos1)'		# point to file system for /
 	set kernel='/boot/init-x86.bin'
+	set boot_drive='0x80'	# should point to where grub is installed
 	echo "Loading ${kernel}..."
-	multiboot ${kernel} serial=115200,8n1,0x5080
+	multiboot ${kernel} serial=115200,8n1,0x5080 boot_drive=${boot_drive}
 	module /boot/hypervisor-x86.bin.gz
 	module --nounzip (hd0)+1	# should point to where grub is installed
 	module /boot/i5_i7_DUAL_SINIT_51.BIN
 }
 ```
+
+There are a few variables in this script
+* `(hd0,msdos1)` should be the place where XMHF files are installed
+* In x86-64 XMHF,
+	* `/boot/init-x86.bin` becomes `/boot/init-x86_64.bin`
+	* `/boot/hypervisor-x86.bin.gz` becomes `/boot/hypervisor-x86_64.bin.gz`
+* `0x5080` is serial port's I/O port address. in QEMU this is `0x3f8`
+* `(hd0)+1` and `0x80` points to where GRUB is installed (default is like sda)
+	* If GRUB is installed on second HDD (sdb), should be `(hd1)+1` and `0x81`
 
 Use GRUB text mode (Ref: <https://superuser.com/a/462096>)
 

@@ -472,19 +472,16 @@ bool validate_mtrrs(const mtrr_state_t *saved_state)
 void restore_mtrrs(mtrr_state_t *saved_state)
 {
     int ndx;
-    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     if(NULL == saved_state) {
         printf("\nFATAL ERROR: restore_mtrrs(): called with NULL\n");
         HALT();
     }
-    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
 
     //print_mtrrs(saved_state);
         
     /* called by apply_policy() so use saved ptr */
     if ( saved_state == NULL )
         saved_state = g_saved_mtrrs;
-    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     /* haven't saved them yet, so return */
     if ( saved_state == NULL )
         return;
@@ -496,10 +493,8 @@ void restore_mtrrs(mtrr_state_t *saved_state)
     for ( ndx = 0; ndx < saved_state->num_var_mtrrs; ndx++ ) {
         wrmsr64(MTRR_PHYS_MASK0_MSR + ndx*2,
               saved_state->mtrr_physmasks[ndx].raw);
-        printf("\nFILE:LINE %s:%d %d", __FILE__, __LINE__, ndx); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
         wrmsr64(MTRR_PHYS_BASE0_MSR + ndx*2,
               saved_state->mtrr_physbases[ndx].raw);
-        printf("\nFILE:LINE %s:%d %d", __FILE__, __LINE__, ndx); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     }
     printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     /* IA32_MTRR_DEF_TYPE MSR */

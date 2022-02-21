@@ -257,6 +257,24 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
 	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
 	for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
 
+	{
+		u32 eax, edx;
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
+		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		eax &= ~0x800U;
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		eax |= 0x800U;
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
+		printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+	}
+
+	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+	for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+
 	//sanitize cache/MTRR/SMRAM (most important is to ensure that MTRRs 
 	//do not contain weird mappings)
 #if defined (__DRT__)

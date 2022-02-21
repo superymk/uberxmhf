@@ -176,6 +176,42 @@ void print_mtrrs(const mtrr_state_t *saved_state)
     }
 }
 
+void xmhf_baseplatform_arch_x86_udelay(u32 usecs){
+  u8 val;
+  u32 latchregval;  
+
+  //enable 8254 ch-2 counter
+  val = inb(0x61);
+  val &= 0x0d; //turn PC speaker off
+  val |= 0x01; //turn on ch-2
+  outb(val, 0x61);
+  
+  //program ch-2 as one-shot
+  outb(0xB0, 0x43);
+  
+  //compute appropriate latch register value depending on usecs
+  latchregval = ((u64)1193182 * usecs) / 1000000;
+
+  HALT_ON_ERRORCOND(latchregval < (1 << 16));
+
+  //write latch register to ch-2
+  val = (u8)latchregval;
+  outb(val, 0x42);
+  val = (u8)((u32)latchregval >> (u32)8);
+  outb(val , 0x42);
+  
+  #ifndef __XMHF_VERIFICATION__
+	//TODO: plug in a 8254 programmable interval timer h/w model
+	//wait for countdown
+	while(!(inb(0x61) & 0x20));
+  #endif //__XMHF_VERIFICATION__
+  
+  //disable ch-2 counter
+  val = inb(0x61);
+  val &= 0x0c;
+  outb(val, 0x61);
+}
+
 void save_mtrrs(mtrr_state_t *saved_state)
 {
     mtrr_cap_t mtrr_cap;
@@ -197,11 +233,14 @@ void save_mtrrs(mtrr_state_t *saved_state)
         saved_state->num_var_mtrrs = mtrr_cap.vcnt;
 
     /* physmask's and physbase's */
+    printf("\nFILE:LINE %s:%d 0x%08x", __FILE__, __LINE__, saved_state->num_var_mtrrs); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_udelay(1000); }
     for ( ndx = 0; ndx < saved_state->num_var_mtrrs; ndx++ ) {
         saved_state->mtrr_physmasks[ndx].raw =
             rdmsr64(MTRR_PHYS_MASK0_MSR + ndx*2);
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016llx", __FILE__, __LINE__, MTRR_PHYS_MASK0_MSR + ndx*2, saved_state->mtrr_physmasks[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_udelay(1000); }
         saved_state->mtrr_physbases[ndx].raw =
             rdmsr64(MTRR_PHYS_BASE0_MSR + ndx*2);
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016llx", __FILE__, __LINE__, MTRR_PHYS_BASE0_MSR + ndx*2, saved_state->mtrr_physbases[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_udelay(1000); }
     }
 
     print_mtrrs(saved_state);

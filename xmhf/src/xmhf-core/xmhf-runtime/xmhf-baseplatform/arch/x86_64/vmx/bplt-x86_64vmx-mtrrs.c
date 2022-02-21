@@ -477,18 +477,6 @@ void restore_mtrrs(mtrr_state_t *saved_state)
         HALT();
     }
 
-	{
-		u32 eax, edx;
-		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax &= ~0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax |= 0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-	}
-
     //print_mtrrs(saved_state);
         
     /* called by apply_policy() so use saved ptr */
@@ -508,7 +496,7 @@ void restore_mtrrs(mtrr_state_t *saved_state)
         wrmsr64(MTRR_PHYS_BASE0_MSR + ndx*2,
               saved_state->mtrr_physbases[ndx].raw);
     }
-    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+    printf("\nFILE:LINE %s:%d 0x%016lx", __FILE__, __LINE__, saved_state->mtrr_def_type.raw); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     /* IA32_MTRR_DEF_TYPE MSR */
     wrmsr64(MSR_MTRRdefType, saved_state->mtrr_def_type.raw);
     printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
@@ -603,18 +591,6 @@ bool set_mem_type(void *base, uint32_t size, uint32_t mem_type)
 void set_all_mtrrs(bool enable)
 {
     mtrr_def_type_t mtrr_def_type;
-
-	{
-		u32 eax, edx;
-		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax &= ~0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax |= 0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-	}
 
     printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     mtrr_def_type.raw = rdmsr64(MSR_MTRRdefType);

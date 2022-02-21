@@ -197,11 +197,14 @@ void save_mtrrs(mtrr_state_t *saved_state)
         saved_state->num_var_mtrrs = mtrr_cap.vcnt;
 
     /* physmask's and physbase's */
+    printf("\nFILE:LINE %s:%d 0x%08x", __FILE__, __LINE__, saved_state->num_var_mtrrs); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     for ( ndx = 0; ndx < saved_state->num_var_mtrrs; ndx++ ) {
         saved_state->mtrr_physmasks[ndx].raw =
             rdmsr64(MTRR_PHYS_MASK0_MSR + ndx*2);
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016lx", __FILE__, __LINE__, MTRR_PHYS_MASK0_MSR + ndx*2, saved_state->mtrr_physmasks[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
         saved_state->mtrr_physbases[ndx].raw =
             rdmsr64(MTRR_PHYS_BASE0_MSR + ndx*2);
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016lx", __FILE__, __LINE__, MTRR_PHYS_BASE0_MSR + ndx*2, saved_state->mtrr_physbases[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     }
 
     print_mtrrs(saved_state);
@@ -488,11 +491,13 @@ void restore_mtrrs(mtrr_state_t *saved_state)
     printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     /* disable all MTRRs first */
     set_all_mtrrs(false);
-    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+    printf("\nFILE:LINE %s:%d 0x%08x", __FILE__, __LINE__, saved_state->num_var_mtrrs); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     /* physmask's and physbase's */
     for ( ndx = 0; ndx < saved_state->num_var_mtrrs; ndx++ ) {
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016lx", __FILE__, __LINE__, MTRR_PHYS_MASK0_MSR + ndx*2, saved_state->mtrr_physmasks[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
         wrmsr64(MTRR_PHYS_MASK0_MSR + ndx*2,
               saved_state->mtrr_physmasks[ndx].raw);
+        printf("\nFILE:LINE %s:%d 0x%08x 0x%016lx", __FILE__, __LINE__, MTRR_PHYS_BASE0_MSR + ndx*2, saved_state->mtrr_physbases[ndx].raw); for (int i = 0; i < 100; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
         wrmsr64(MTRR_PHYS_BASE0_MSR + ndx*2,
               saved_state->mtrr_physbases[ndx].raw);
     }

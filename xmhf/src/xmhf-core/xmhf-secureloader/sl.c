@@ -60,72 +60,6 @@ struct _sl_parameter_block slpb __attribute__(( section(".sl_untrusted_params") 
 	.magic = SL_PARAMETER_BLOCK_MAGIC,
 };
 
-#if 0
-static void xxd(u32 start, u32 end) {
-	HALT_ON_ERRORCOND((start & 0xf) == 0);
-	HALT_ON_ERRORCOND((end & 0xf) == 0);
-	for (u32 i = start; i < end; i += 0x10) {
-		printf("\n%08x: ", i);
-		for (u32 j = 0; j < 0x10; j++) {
-			if (j & 1) {
-				printf("%02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
-			} else {
-				printf(" %02x", (unsigned)*(unsigned char*)(uintptr_t)(i + j));
-			}
-		}
-	}
-}
-
-static void xxd_phys(u32 start, u32 end) {
-	HALT_ON_ERRORCOND((start & 0xf) == 0);
-	HALT_ON_ERRORCOND((end & 0xf) == 0);
-	for (u32 i = start; i < end; i += 0x10) {
-		printf("\n%08x: ", i);
-		for (u32 j = 0; j < 0x10; j++) {
-			unsigned char value;
-			xmhf_baseplatform_arch_flat_copy((u8 *)&value, (u8 *)(uintptr_t)(i + j), 1);
-			if (j & 1) {
-				printf("%02x", (unsigned)value);
-			} else {
-				printf(" %02x", (unsigned)value);
-			}
-		}
-	}
-}
-#endif
-
-void xmhf_baseplatform_arch_x86_64_udelay(u32 usecs){
-    u8 val;
-    u32 latchregval;  
-
-    //enable 8254 ch-2 counter
-    val = inb(0x61);
-    val &= 0x0d; //turn PC speaker off
-    val |= 0x01; //turn on ch-2
-    outb(val, 0x61);
-  
-    //program ch-2 as one-shot
-    outb(0xB0, 0x43);
-  
-    //compute appropriate latch register value depending on usecs
-    latchregval = ((u64)1193182 * usecs) / 1000000;
-
-	HALT_ON_ERRORCOND(latchregval < (1 << 16));
-
-    //write latch register to ch-2
-    val = (u8)latchregval;
-    outb(val, 0x42);
-    val = (u8)((u32)latchregval >> (u32)8);
-    outb(val , 0x42);
-  
-    //wait for countdown
-    while(!(inb(0x61) & 0x20));
-  
-    //disable ch-2 counter
-    val = inb(0x61);
-    val &= 0x0c;
-    outb(val, 0x61);
-}
 
 //we get here from slheader.S
 // rdtsc_* are valid only if PERF_CRIT is not defined.  slheader.S
@@ -254,9 +188,6 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
 	//initialize basic platform elements
 	xmhf_baseplatform_initialize();
 
-	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-	for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-
 	//sanitize cache/MTRR/SMRAM (most important is to ensure that MTRRs 
 	//do not contain weird mappings)
 #if defined (__DRT__)
@@ -264,13 +195,14 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
 #endif	//__DRT__
 
 	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-	for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
 
 #if defined (__DMAP__)    
 	//setup DMA protection on runtime (secure loader is already DMA protected)
 	xmhf_sl_arch_early_dmaprot_init(slpb.runtime_size);
 #endif
 	
+	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
+
 	//transfer control to runtime
 	xmhf_sl_arch_xfer_control_to_runtime(rpb);
 

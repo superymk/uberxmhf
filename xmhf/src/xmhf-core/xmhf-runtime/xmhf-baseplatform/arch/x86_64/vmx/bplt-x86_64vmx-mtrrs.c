@@ -469,37 +469,75 @@ bool validate_mtrrs(const mtrr_state_t *saved_state)
     return true;
 }
 
+void udelay(u32 usecs){
+    u8 val;
+    u32 latchregval;  
+
+    //enable 8254 ch-2 counter
+    val = inb(0x61);
+    val &= 0x0d; //turn PC speaker off
+    val |= 0x01; //turn on ch-2
+    outb(val, 0x61);
+  
+    //program ch-2 as one-shot
+    outb(0xB0, 0x43);
+  
+    //compute appropriate latch register value depending on usecs
+    latchregval = ((u64)1193182 * usecs) / 1000000;
+
+	HALT_ON_ERRORCOND(latchregval < (1 << 16));
+
+    //write latch register to ch-2
+    val = (u8)latchregval;
+    outb(val, 0x42);
+    val = (u8)((u32)latchregval >> (u32)8);
+    outb(val , 0x42);
+  
+    //wait for countdown
+    while(!(inb(0x61) & 0x20));
+  
+    //disable ch-2 counter
+    val = inb(0x61);
+    val &= 0x0c;
+    outb(val, 0x61);
+}
+
 void restore_mtrrs(mtrr_state_t *saved_state)
 {
     int ndx;
-
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     if(NULL == saved_state) {
         printf("\nFATAL ERROR: restore_mtrrs(): called with NULL\n");
         HALT();
     }
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
 
     //print_mtrrs(saved_state);
         
     /* called by apply_policy() so use saved ptr */
     if ( saved_state == NULL )
         saved_state = g_saved_mtrrs;
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     /* haven't saved them yet, so return */
     if ( saved_state == NULL )
         return;
-
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     /* disable all MTRRs first */
     set_all_mtrrs(false);
-
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     /* physmask's and physbase's */
     for ( ndx = 0; ndx < saved_state->num_var_mtrrs; ndx++ ) {
         wrmsr64(MTRR_PHYS_MASK0_MSR + ndx*2,
               saved_state->mtrr_physmasks[ndx].raw);
+        printf("\nFILE:LINE %s:%d %d", __FILE__, __LINE__, ndx); for (int i = 0; i < 1000; i++) { udelay(1000); }
         wrmsr64(MTRR_PHYS_BASE0_MSR + ndx*2,
               saved_state->mtrr_physbases[ndx].raw);
+        printf("\nFILE:LINE %s:%d %d", __FILE__, __LINE__, ndx); for (int i = 0; i < 1000; i++) { udelay(1000); }
     }
-
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
     /* IA32_MTRR_DEF_TYPE MSR */
     wrmsr64(MSR_MTRRdefType, saved_state->mtrr_def_type.raw);
+    printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
 }
 
 /*

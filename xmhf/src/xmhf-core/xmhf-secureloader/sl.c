@@ -194,15 +194,11 @@ void xmhf_sl_main(u32 cpu_vendor, u32 baseaddr, u32 rdtsc_eax, u32 rdtsc_edx){
     xmhf_sl_arch_sanitize_post_launch();
 #endif	//__DRT__
 
-	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-
 #if defined (__DMAP__)    
 	//setup DMA protection on runtime (secure loader is already DMA protected)
 	xmhf_sl_arch_early_dmaprot_init(slpb.runtime_size);
 #endif
 	
-	printf("\nFILE:LINE %s:%d", __FILE__, __LINE__);
-
 	//transfer control to runtime
 	xmhf_sl_arch_xfer_control_to_runtime(rpb);
 

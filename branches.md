@@ -214,10 +214,14 @@
 * Support munmap memory in caller.c (`bug_038`)
 * (Now can run PAL in x64 Windows 10 and x64 Fedora)
 
-`6733ca433..` (da97a50e1)
+`6733ca433..` (72356c5a7)
 * Support booting a grub located other than `(hd0)` (`bug_043`)
 * Remove some unnecessary `__attribute__((packed))` (`bug_043`)
 * Fix unexpected content on screen when debugging with VGA (`bug_044`)
+* Reset segment descriptors in x64 sl entry (`bug_042`)
+* Add attribute packed to _txt_acmod.h (`bug_042`)
+* Fix unsigned overflow in udelay() in init.c (`bug_045`)
+* Check for overflow of latchregval in udelay() (`bug_045`)
 
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
@@ -255,7 +259,7 @@ Linux
 | x86| Y | Debian 11 x86    |pal_demo x86| good             | Not Applicable   |
 +----+   +------------------+------------+------------------+                  |
 | x64|   | Debian 11 x86    |pal_demo x86| Cannot boot xmhf |                  |
-|    |   +------------------+------------+ (bug_037)        |                  |
+|    |   +------------------+------------+ (bug_046)        |                  |
 |    |   | Debian 11 x64    |pal_demo x86|                  |                  |
 |    |   |                  +------------+                  |                  |
 |    |   |                  |pal_demo x64|                  |                  |

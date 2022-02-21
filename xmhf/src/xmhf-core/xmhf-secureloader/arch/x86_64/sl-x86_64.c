@@ -190,18 +190,6 @@ u64 xmhf_sl_arch_x86_64_setup_runtime_paging(RPB *rpb, spa_t runtime_spa, hva_t 
 void xmhf_sl_arch_sanitize_post_launch(void){
 	#ifndef __XMHF_VERIFICATION__
 
-	{
-		u32 eax, edx;
-		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax &= ~0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-		eax |= 0x800U;
-		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
-		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
-	}
-
     if(get_cpu_vendor_or_die() == CPU_VENDOR_INTEL) {
         txt_heap_t *txt_heap;
         os_mle_data_t *os_mle_data;

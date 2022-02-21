@@ -477,6 +477,18 @@ void restore_mtrrs(mtrr_state_t *saved_state)
         HALT();
     }
 
+	{
+		u32 eax, edx;
+		rdmsr(IA32_MTRR_DEF_TYPE, &eax, &edx);
+		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		eax &= ~0x800U;
+		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
+		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+		eax |= 0x800U;
+		wrmsr(IA32_MTRR_DEF_TYPE, eax, edx);
+		printf("\nFILE:LINE %s:%d 0x%08x %08x", __FILE__, __LINE__, edx, eax); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
+	}
+
     //print_mtrrs(saved_state);
         
     /* called by apply_policy() so use saved ptr */

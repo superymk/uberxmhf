@@ -207,10 +207,10 @@ void xmhf_sl_arch_sanitize_post_launch(void){
         }
 
         printf("\nSL: Restoring mtrrs...");
-        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
 
         restore_mtrrs(&(os_mle_data->saved_mtrr_state));
-        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { udelay(1000); }
+        printf("\nFILE:LINE %s:%d", __FILE__, __LINE__); for (int i = 0; i < 1000; i++) { xmhf_baseplatform_arch_x86_64_udelay(1000); }
     }
 
 	#endif

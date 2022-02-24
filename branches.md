@@ -225,7 +225,7 @@
 
 ### `xmhf64-dev`: development workarounds
 * `59b3fd053`: Quiet TrustVisor output
-* `0d7e0599d`: Handl VMCALL `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
+* `0d7e0599d`: Handle VMCALL `KVM_HC_VAPIC_POLL_IRQ` (run WinXP SP3)
 * `91b493b2f`: Add monitor trap and breakpoint support
 
 ### TODO

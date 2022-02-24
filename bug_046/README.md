@@ -30,3 +30,11 @@ else.
 The difference can be seen in `xmhf_baseplatform_arch_x86_64vmx_wakeupAPs()`.
 We need to compare behavior of x86 and x64 XMHF with DRT.
 
+Can see that in x86 `rlp_wakeup_addr` should be `0xbb701d20`, but in x64 it is
+`0x0`. We need to fix this.
+
+## Fix
+
+`78f0eef8e..` (d06cbc4f9)
+* Fix type size in `xmhf_baseplatform_arch_x86_64vmx_wakeupAPs()`
+

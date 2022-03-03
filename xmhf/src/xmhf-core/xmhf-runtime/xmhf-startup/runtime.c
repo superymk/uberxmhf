@@ -119,7 +119,7 @@ void xmhf_runtime_entry(void){
 		}
 
 #else //!__DMAP__
-	printf("\n%s:%d", __FILE__, __LINE__);
+	
 	#if defined (__DRT__)
 	//if __DRT__ is enabled without DMA protections, zap DMAR device
 	//from ACPI tables
@@ -128,7 +128,6 @@ void xmhf_runtime_entry(void){
 		vmx_eap_zap();
 	}
 	#endif	//__DRT__
-	printf("\n%s:%d", __FILE__, __LINE__);
 	
 #endif
 

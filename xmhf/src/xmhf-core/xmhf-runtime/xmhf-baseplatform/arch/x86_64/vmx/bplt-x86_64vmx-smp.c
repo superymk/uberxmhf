@@ -198,7 +198,11 @@ void xmhf_baseplatform_arch_x86_64vmx_wakeupAPs(void){
             printf("\nBSP: joining RLPs to MLE with MONITOR wakeup");
             printf("\nBSP: rlp_wakeup_addr = 0x%08x", sinit_mle_data->rlp_wakeup_addr);
             for (int i = 0; i < 1000; i++) xmhf_baseplatform_arch_x86_64_udelay(1000);
+            printf("\nBSP: write start");
             *((uint32_t *)(unsigned long)(sinit_mle_data->rlp_wakeup_addr)) = 0x01;
+            printf("\nBSP: write end");
+            for (int i = 0; i < 1000; i++) xmhf_baseplatform_arch_x86_64_udelay(1000);
+            printf("\nBSP: write end 1s");
         }else {
             printf("\nBSP: joining RLPs to MLE with GETSEC[WAKEUP]");
             __getsec_wakeup();

@@ -186,10 +186,10 @@ void xmhf_baseplatform_arch_x86_64vmx_wakeupAPs(void){
         #ifndef __XMHF_VERIFICATION__
         mle_join = (mle_join_t*)((u64)_mle_join_start - (u64)_ap_bootstrap_start + 0x10000); // XXX magic number
         #endif
-        //printf("\nBSP: mle_join.gdt_limit = 0x%08x", mle_join->gdt_limit);
-        //printf("\nBSP: mle_join.gdt_base = 0x%08x", mle_join->gdt_base);
-        //printf("\nBSP: mle_join.seg_sel = 0x%08x", mle_join->seg_sel);
-        //printf("\nBSP: mle_join.entry_point = 0x%08x", mle_join->entry_point);
+        printf("\nBSP: mle_join.gdt_limit = 0x%08x", mle_join->gdt_limit);
+        printf("\nBSP: mle_join.gdt_base = 0x%08x", mle_join->gdt_base);
+        printf("\nBSP: mle_join.seg_sel = 0x%08x", mle_join->seg_sel);
+        printf("\nBSP: mle_join.entry_point = 0x%08x", mle_join->entry_point);
 
 	#ifndef __XMHF_VERIFICATION__
         write_priv_config_reg(TXTCR_MLE_JOIN, (uint64_t)(unsigned long)mle_join);

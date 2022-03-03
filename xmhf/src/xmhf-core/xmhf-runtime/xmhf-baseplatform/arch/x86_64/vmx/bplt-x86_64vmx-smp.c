@@ -191,6 +191,8 @@ void xmhf_baseplatform_arch_x86_64vmx_wakeupAPs(void){
         printf("\nBSP: mle_join.seg_sel = 0x%08x", mle_join->seg_sel);
         printf("\nBSP: mle_join.entry_point = 0x%08x", mle_join->entry_point);
 
+		for (int i = 0; i < 1000; i++) xmhf_baseplatform_arch_x86_64_udelay(1000);
+
 	#ifndef __XMHF_VERIFICATION__
         write_priv_config_reg(TXTCR_MLE_JOIN, (uint64_t)(unsigned long)mle_join);
 		

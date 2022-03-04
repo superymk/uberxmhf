@@ -69,17 +69,56 @@ not solve the problem.
 Note that at this point BSP already has IDT set up, so I think the triple fault
 likely comes from AP.
 
+### Bochs
+
+Debugging triple fault on HP is very difficult. Can we get a CPU debugger?
+
+Looks like SENTER instructions are called "SMX instruction set", which is
+related to Intel TXT. The documentation for SMX should be intel volume 2
+"CHAPTER 6 SAFER MODE EXTENSIONS REFERENCE"
+* Ref: <http://linasm.sourceforge.net/docs/instructions/smx.php>
+
+Looks like Bochs supports SMX instructions, but not sure whether it supports
+TXT. If it suppors, we can try Bochs because what we need to debug is low level
+(e.g. the guest OS does not need to be up)
+* Ref: <https://bochs.sourceforge.io/cgi-bin/lxr/source/docs-html/cpu_configurability.txt>
+
+This can be a future direction.
+
+### Review struct size
+
+Git `e211ec67a`, we add a use of all structs of `_txt*.h` in the XMHF runtime
+code. This way GDB recognizes the symbol. Then we use `txt1.gdb` to print
+all their size. Find 2 mismatches, all caused by alignment problems
+* `bios_data_t`: 36 (x86) vs 40 (x64)
+	* Intel's specification is not aligned ("C.1 BIOS Data Format")
+* `os_sinit_data_t`: 92 (x86) vs 96 (x64)
+	* Intel's specification is not aligned ("C.3 OS to SINIT Data Format")
+
+There is also another unaffected struct `sinit_mdr_t` in `_txt_heap.h`, but
+the structure is defined by Intel, so we still add alignment
+("Table 22. SINIT Memory Descriptor Record")
+
+So we add alginment on these fields. Git `a08f148a1`, alginment problems fixed.
+However, still see `BSP: rlp_wakeup_addr = 0xbb701d20` and system reboots.
+
 # tmp notes
 
-TODO: review alignment in structs in `*txt*.h`
+TODO: compare x86 and x64 logs (why is there `TXT.ERRORCODE=80000000`?)
+TODO: does join data structure need to be 64 bits for x64?
 TODO: try to use x86 version of `_ap_bootstrap_start()`
+TODO: try `__getsec_wakeup()` (do not use `rlp_wake_monitor`), or use ACPI
 TODO: how is BSP loaded? According to TXT docs AP should be similar
 TODO: read TXT docs
+TODO: try Bochs
+TODO: how is `g_sinit_module_ptr` used?
+TODO: study tboot
 TODO: maybe write a TXT program from scratch
+TODO: in an extreme case, set up tboot for x64 and rewrite it to xmhf
 
 ## Fix
 
-`78f0eef8e..` (3ae6989ba)
+`78f0eef8e..3ae6989ba`, `4d6217bd5..` (a08f148a1)
 * Fix type size in `xmhf_baseplatform_arch_x86_64vmx_wakeupAPs()`
-* Fix `x86_64` alignment problem for `sinit_mle_data_t`
+* Fix `x86_64` alignment problem for `_txt_heap.h`
 

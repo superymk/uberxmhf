@@ -423,86 +423,6 @@ static u32 vmx_eap_initialize(
     return 1;
 }
 
-//------------------------------------------------------------------------------
-// vt-d invalidate cachess note: we do global invalidation currently
-static void _vtd_invalidatecaches(void)
-{
-    u32 i;
-    VTD_CCMD_REG ccmd;
-    VTD_IOTLB_REG iotlb;
-
-#ifdef __XMHF_VERIFICATION__
-    for (i = 0; i < 1; i++)
-    {
-#else
-    for (i = 0; i < vtd_num_drhd; i++)
-    {
-#endif
-        // 1. invalidate CET cache
-
-#ifndef __XMHF_VERIFICATION__
-        // wait for context cache invalidation request to send
-        do
-        {
-            _vtd_reg(&vtd_drhd[i], VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-        } while (ccmd.bits.icc);
-#else
-        _vtd_reg(&vtd_drhd[0], VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-#endif
-
-        // initialize CCMD to perform a global invalidation
-        ccmd.value = 0;
-        ccmd.bits.cirg = 1; // global invalidation
-        ccmd.bits.icc = 1;  // invalidate context cache
-
-        // perform the invalidation
-        _vtd_reg(&vtd_drhd[i], VTD_REG_WRITE, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-
-#ifndef __XMHF_VERIFICATION__
-        // wait for context cache invalidation completion status
-        do
-        {
-            _vtd_reg(&vtd_drhd[i], VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-        } while (ccmd.bits.icc);
-#else
-        _vtd_reg(&vtd_drhd[0], VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-#endif
-
-        // if all went well CCMD CAIG = CCMD CIRG (i.e., actual = requested invalidation granularity)
-        if (ccmd.bits.caig != 0x1)
-        {
-            printf("	Invalidatation of CET failed. Halting! (%u)\n", ccmd.bits.caig);
-            HALT();
-        }
-
-        // 2. invalidate IOTLB
-        // initialize IOTLB to perform a global invalidation
-        iotlb.value = 0;
-        iotlb.bits.iirg = 1; // global invalidation
-        iotlb.bits.ivt = 1;  // invalidate
-
-        // perform the invalidation
-        _vtd_reg(&vtd_drhd[i], VTD_REG_WRITE, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
-
-#ifndef __XMHF_VERIFICATION__
-        // wait for the invalidation to complete
-        do
-        {
-            _vtd_reg(&vtd_drhd[i], VTD_REG_READ, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
-        } while (iotlb.bits.ivt);
-#else
-        _vtd_reg(&vtd_drhd[0], VTD_REG_READ, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
-#endif
-
-        // if all went well IOTLB IAIG = IOTLB IIRG (i.e., actual = requested invalidation granularity)
-        if (iotlb.bits.iaig != 0x1)
-        {
-            printf("	Invalidation of IOTLB failed. Halting! (%u)\n", iotlb.bits.iaig);
-            HALT();
-        }
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////
 // Within DMAP component
 
@@ -575,7 +495,7 @@ u32 xmhf_dmaprot_arch_x86_vmx_enable(spa_t protectedbuffer_paddr,
 #endif
 
     // Clear VT-d caches
-    _vtd_invalidatecaches();
+    xmhf_dmaprot_arch_x86_vmx_invalidate_cache();
 
     // success
     printf("%s: success, leaving...\n", __FUNCTION__);
@@ -693,5 +613,16 @@ void xmhf_dmaprot_arch_x86_vmx_unprotect(spa_t start_paddr, size_t size)
 // flush the caches
 void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void)
 {
-    _vtd_invalidatecaches();
+    u32 i;
+
+#ifdef __XMHF_VERIFICATION__
+    for (i = 0; i < 1; i++)
+    {
+#else
+    for (i = 0; i < vtd_num_drhd; i++)
+    {
+#endif
+
+        _vtd_invalidatecaches(&vtd_drhd[i], &vtd_drhd[0]);
+    }
 }

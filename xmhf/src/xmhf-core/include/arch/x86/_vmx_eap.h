@@ -109,6 +109,12 @@ typedef struct{
   u8 rsvdz[10];
 }__attribute__ ((packed)) VTD_DMAR;
 
+typedef struct
+{
+  u32 need_wbf:1,
+      _reserved1:31;
+} VTD_IOMMU_FLAGS;
+
 //VT-d DRHD structure
 typedef struct{
   u16 type;
@@ -117,6 +123,9 @@ typedef struct{
   u8 rsvdz0;
   u16 pcisegment;
   u64 regbaseaddr;
+
+  // Flags (not part of DRHD structure, but useful for DRHD programming)
+  VTD_IOMMU_FLAGS iommu_flags;
 }__attribute__ ((packed)) VTD_DRHD;
 
 

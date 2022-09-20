@@ -623,6 +623,6 @@ void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void)
     {
 #endif
 
-        _vtd_invalidatecaches(&vtd_drhd[i], &vtd_drhd[0]);
+        _vtd_invalidate_caches(&vtd_drhd[i], &vtd_drhd[0]);
     }
 }

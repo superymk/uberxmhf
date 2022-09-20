@@ -35,7 +35,7 @@ extern void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr);
 
 // vt-d invalidate cachess note: we do global invalidation currently
 // [NOTE] <drhd0> refers to &vtd_drhd[0] and is used for __XMHF_VERIFICATION__ only.
-extern void _vtd_invalidatecaches(VTD_DRHD *drhd, VTD_DRHD *drhd0);
+extern void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0);
 
 #endif // __ASSEMBLY__
 #endif // XMHF_DMAP_VMX_INTERNAL_H

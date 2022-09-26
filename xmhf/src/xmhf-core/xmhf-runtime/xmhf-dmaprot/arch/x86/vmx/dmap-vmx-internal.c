@@ -329,7 +329,6 @@ static void _vtd_drhd_issue_wbf(VTD_DRHD *drhd)
 // common sense instead...:p
 void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
 {
-    VTD_GCMD_REG gcmd;
     VTD_GSTS_REG gsts;
     VTD_CCMD_REG ccmd;
     VTD_IOTLB_REG iotlb;

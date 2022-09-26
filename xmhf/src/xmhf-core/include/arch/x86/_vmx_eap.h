@@ -352,8 +352,8 @@ typedef struct
 	VTD_IOMMU_FLAGS iommu_flags;
 } __attribute__((packed)) VTD_DRHD;
 
-#define vtd_cap_frr_mem_offset(drhd)	(drhd->iommu_flags.cap.bits.fro * VTD_CAP_REG_FRO_MULTIPLIER)
-#define vtd_cap_frr_nums(drhd)	(drhd->iommu_flags.cap.bits.nfr + 1)
+#define vtd_cap_frr_mem_offset(drhd)	(uint32_t)(drhd->iommu_flags.cap.bits.fro * VTD_CAP_REG_FRO_MULTIPLIER)
+#define vtd_cap_frr_nums(drhd)	(uint32_t)(drhd->iommu_flags.cap.bits.nfr + 1)
 #define vtd_cap_require_wbf(drhd)	(drhd->iommu_flags.cap.bits.rwbf)
 #define vtd_cap_plmr(drhd)	(drhd->iommu_flags.cap.bits.plmr)
 #define vtd_cap_phmr(drhd)	(drhd->iommu_flags.cap.bits.phmr)

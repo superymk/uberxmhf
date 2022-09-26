@@ -54,7 +54,7 @@
 
 static inline void clflush_ins(volatile void *__p)
 {
-	asm volatile("clflush %0" : "+m" (*(volatile char __force *)__p));
+	asm volatile("clflush %0" : "+m" (*(volatile char *)__p));
 }
 
 //returns true if CPU has support for XSAVE/XRSTOR

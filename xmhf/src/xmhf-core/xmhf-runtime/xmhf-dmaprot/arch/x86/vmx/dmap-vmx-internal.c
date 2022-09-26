@@ -50,9 +50,11 @@
 #include <xmhf.h>
 #include "dmap-vmx-internal.h"
 
-struct dmap_vmx_cap g_vtd_cap;
+struct dmap_vmx_cap g_vtd_cap_sagaw_mgaw_nd;
 
 //------------------------------------------------------------------------------
+#define DMAR_OPERATION_TIMEOUT  SEC_TO_CYCLES(1)
+
 // vt-d register access function
 void _vtd_reg(VTD_DRHD *dmardevice, u32 access, u32 reg, void *value)
 {
@@ -147,7 +149,7 @@ void _vtd_reg(VTD_DRHD *dmardevice, u32 access, u32 reg, void *value)
 // (2) supported MGAW to ensure our host address width is supported (32-bits)
 // (3) AGAW must support 39-bits or 48-bits
 // (4) Number of domains must not be unsupported
-bool _vtd_verify_cap(VTD_DRHD* vtd_drhd, u32 vtd_num_drhd, struct dmap_vmx_cap *out_cap)
+bool _vtd_verify_cap(VTD_DRHD *vtd_drhd, u32 vtd_num_drhd, struct dmap_vmx_cap *out_cap)
 {
 #define INVALID_SAGAW_VAL 0xFFFFFFFF
 #define INVALID_MGAW_VAL 0xFFFFFFFF
@@ -163,10 +165,10 @@ bool _vtd_verify_cap(VTD_DRHD* vtd_drhd, u32 vtd_num_drhd, struct dmap_vmx_cap *
     if (!out_cap)
         return false;
 
-    if(!vtd_drhd)
+    if (!vtd_drhd)
         return false;
 
-    if(!vtd_num_drhd || vtd_num_drhd >= VTD_MAX_DRHD) // Support maximum of VTD_MAX_DRHD VT-d units
+    if (!vtd_num_drhd || vtd_num_drhd >= VTD_MAX_DRHD) // Support maximum of VTD_MAX_DRHD VT-d units
         return false;
 
     for (i = 0; i < vtd_num_drhd; i++)
@@ -262,61 +264,62 @@ bool _vtd_verify_cap(VTD_DRHD* vtd_drhd, u32 vtd_num_drhd, struct dmap_vmx_cap *
 }
 
 //------------------------------------------------------------------------------
-// Relax the CPU and let the compiler know that time passes.
-static inline void cpu_relax(void)
+#define IOMMU_WAIT_OP(drhd, reg, cond, sts, msg_for_false_cond)                 \
+    do                                                                          \
+    {                                                                           \
+        uint64_t start_time = rdtsc64();                                        \
+        while (1)                                                               \
+        {                                                                       \
+            _vtd_reg(drhd, VTD_REG_READ, reg, sts);                             \
+            if (cond)                                                           \
+                break;                                                          \
+            if (rdtsc64() > start_time + DMAR_OPERATION_TIMEOUT)                \
+            {                                                                   \
+                printf("DMAR hardware malfunction:%s\n", (msg_for_false_cond)); \
+                HALT();                                                         \
+            }                                                                   \
+            xmhf_cpu_relax();                                                   \
+        }                                                                       \
+    } while (0)
+
+// According to Intel Virtualization Technology for Directed I/O specification, Section 11.4.4.1 Global Command Register.
+#define VTD_GSTS_MASK_FOR_GCMD  (0x96FFFFFF)
+
+//! @brief Modify an individual bit of Global Command Register.
+static void _vtd_drhd_issue_gcmd(VTD_DRHD *drhd, u32 offset, u32 val)
 {
-    asm volatile ( "rep ; nop" : : : "memory" );
-}
+    VTD_GCMD_REG gcmd;
+    VTD_GSTS_REG gsts;
 
-// This macro is used by microsec CPU delay. The delayed time is imprecise.
-// [TODO] We assume the CPU frequency is 3.5GHz.
-#define CPU_CYCLES_PER_MICRO_SEC        3500UL
+    // Check: <offset> must be in [0, 31]
+    if(offset >= 32)
+        return;
 
-#define SEC_TO_CYCLES(x)                (1000UL * 1000UL) * CPU_CYCLES_PER_MICRO_SEC * x
-#define DMAR_OPERATION_TIMEOUT          SEC_TO_CYCLES(1)
+    // According to Intel Virtualization Technology for Directed I/O specification, Section 11.4.4.1 Global Command Register.
+    _vtd_reg(drhd, VTD_REG_READ, VTD_GSTS_REG_OFF, (void *)&gsts.value);
+    gsts.value &= VTD_GSTS_MASK_FOR_GCMD;
 
-// [TODO] Move util functions to a better place
-__attribute__((unused))
-static void delay_us(uint64_t us)
-{
-    uint64_t cycles = 3500 * us;
-    uint64_t start = rdtsc64();
+    if(val)
+        gcmd.value = gsts.value | (1UL << offset);
+    else
+        gcmd.value = gsts.value & ~(1UL << offset);
     
-    while ( rdtsc64()-start < cycles ) ;
+    _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
 }
-
-#define IOMMU_WAIT_OP(drhd, reg, cond, sts, msg_for_false_cond)     \
-do {                                                \
-    uint64_t start_time = rdtsc64();                \
-    while(1) {                                      \
-        _vtd_reg(drhd, VTD_REG_READ, reg, sts);     \
-        if ( cond )                                 \
-            break;                                  \
-        if ( rdtsc64() > start_time + DMAR_OPERATION_TIMEOUT ) {    \
-            printf("DMAR hardware malfunction:%s\n", (msg_for_false_cond));  \
-            HALT();                                 \
-        }                                           \
-        cpu_relax();                                \
-    }                                               \
-} while (0)                                         
 
 // Issue Write Buffer Flusing (WBF) if the IOMMU requires it.
 static void _vtd_drhd_issue_wbf(VTD_DRHD *drhd)
 {
-    VTD_GCMD_REG gcmd;
     VTD_GSTS_REG gsts;
 
     // sanity check
     HALT_ON_ERRORCOND(drhd != NULL);
 
-    if(!drhd->iommu_flags.need_wbf)
+    if (!vtd_cap_require_wbf(drhd))
         // Not need to issue Write Buffer Flusing (WBF)
         return;
 
-    gcmd.value = 0;
-    gcmd.bits.wbf = 1;
-    _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
-
+    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_WBF, 1);
     IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.wbfs, (void *)&gsts.value, "	Cannot perform WBF. Halting!");
 }
 
@@ -328,9 +331,6 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
 {
     VTD_GCMD_REG gcmd;
     VTD_GSTS_REG gsts;
-    VTD_FECTL_REG fectl;
-    VTD_CAP_REG cap;
-    VTD_RTADDR_REG rtaddr, rtaddr_readout;
     VTD_CCMD_REG ccmd;
     VTD_IOTLB_REG iotlb;
 
@@ -340,29 +340,47 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     // Clear <iommu_flags>
     memset(&drhd->iommu_flags, 0, sizeof(VTD_IOMMU_FLAGS));
 
-    // check VT-d snoop control capabilities
+    // Step 0. Read <cap> and <ecap>
     {
+        VTD_CAP_REG cap;
         VTD_ECAP_REG ecap;
+
+        // read ECAP register
+        _vtd_reg(drhd, VTD_REG_READ, VTD_CAP_REG_OFF, (void *)&cap.value);
+        drhd->iommu_flags.cap = cap;
+
         // read ECAP register
         _vtd_reg(drhd, VTD_REG_READ, VTD_ECAP_REG_OFF, (void *)&ecap.value);
+        drhd->iommu_flags.ecap = ecap;
+    }
 
-        if (ecap.bits.sc)
+    // check VT-d snoop control capabilities
+    {
+        if (vtd_ecap_sc(drhd))
             printf("	VT-d hardware Snoop Control (SC) capabilities present\n");
         else
             printf("	VT-d hardware Snoop Control (SC) unavailable\n");
 
-        if (ecap.bits.c) {
+        if (vtd_ecap_c(drhd))
+        {
             printf("	VT-d hardware access to remapping structures COHERENT\n");
-            drhd->iommu_flags.need_wbf = false;
-        } else {
-            printf("	VT-d hardware access to remapping structures NON-COHERENT\n");
-            drhd->iommu_flags.need_wbf = true;
         }
+        else
+        {
+            printf("	VT-d hardware access to remapping structures NON-COHERENT\n");
+        }
+    }
+
+    // Init fault-recording registers
+    {
+        printf("	VT-d numbers of fault recording registers:%u\n", vtd_cap_frr_nums(drhd));
     }
 
     // 3. setup fault logging
     printf("	Setting Fault-reporting to NON-INTERRUPT mode...");
     {
+        VTD_FECTL_REG fectl;
+
         // read FECTL
         fectl.value = 0;
         _vtd_reg(drhd, VTD_REG_READ, VTD_FECTL_REG_OFF, (void *)&fectl.value);
@@ -385,6 +403,8 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     // 4. setup RET (root-entry)
     printf("	Setting up RET...");
     {
+        VTD_RTADDR_REG rtaddr, rtaddr_readout;
+
         // setup RTADDR with base of RET
         rtaddr.value = (u64)vtd_ret_paddr | VTD_RTADDR_LEGACY_MODE;
         _vtd_reg(drhd, VTD_REG_WRITE, VTD_RTADDR_REG_OFF, (void *)&rtaddr.value);
@@ -394,24 +414,23 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
         IOMMU_WAIT_OP(drhd, VTD_RTADDR_REG_OFF, (rtaddr_readout.value == rtaddr.value), (void *)&rtaddr_readout.value, "	Failed to set RTADDR. Halting!");
 
         // latch RET address by using GCMD.SRTP
-        gcmd.value = 0;
-        gcmd.bits.srtp = 1;
-        _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
+        _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_SRTP, 1);
 
         // ensure the RET address was latched by the h/w
         IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, gsts.bits.rtps, (void *)&gsts.value, "	Failed to latch RTADDR. Halting!");
     }
     printf("Done.\n");
 
+    // If IOMMU needs mHV to issue WBF, then mHV needs to do so before invalidate caches.
+    if (vtd_cap_require_wbf(drhd))
+        _vtd_drhd_issue_wbf(drhd);
+
     // 5. invalidate CET cache
     printf("	Invalidating CET cache...");
     {
         // wait for context cache invalidation request to send
 #ifndef __XMHF_VERIFICATION__
-        do
-        {
-            _vtd_reg(drhd, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-        } while (ccmd.bits.icc);
+        IOMMU_WAIT_OP(drhd, VTD_CCMD_REG_OFF, !ccmd.bits.icc, (void *)&ccmd.value, "IOMMU is not ready to invalidate CET cache");
 #endif
 
         // initialize CCMD to perform a global invalidation
@@ -424,10 +443,7 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
 
         // wait for context cache invalidation completion status
 #ifndef __XMHF_VERIFICATION__
-        do
-        {
-            _vtd_reg(drhd, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-        } while (ccmd.bits.icc);
+        IOMMU_WAIT_OP(drhd, VTD_CCMD_REG_OFF, !ccmd.bits.icc, (void *)&ccmd.value, "Failed to invalidate CET cache");
 #endif
 
         // if all went well CCMD CAIG = CCMD CIRG (i.e., actual = requested invalidation granularity)
@@ -442,6 +458,9 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     // 6. invalidate IOTLB
     printf("	Invalidating IOTLB...");
     {
+        // wait for the IOTLB invalidation is available
+        IOMMU_WAIT_OP(drhd, VTD_IOTLB_REG_OFF, !iotlb.bits.ivt, (void *)&iotlb.value, "IOMMU is not ready to invalidate IOTLB");
+
         // initialize IOTLB to perform a global invalidation
         iotlb.value = 0;
         iotlb.bits.iirg = 1; // global invalidation
@@ -452,10 +471,7 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
 
 #ifndef __XMHF_VERIFICATION__
         // wait for the invalidation to complete
-        do
-        {
-            _vtd_reg(drhd, VTD_REG_READ, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
-        } while (iotlb.bits.ivt);
+        IOMMU_WAIT_OP(drhd, VTD_IOTLB_REG_OFF, !iotlb.bits.ivt, (void *)&iotlb.value, "Failed to invalidate IOTLB");
 #endif
 
         // if all went well IOTLB IAIG = IOTLB IIRG (i.e., actual = requested invalidation granularity)
@@ -471,21 +487,15 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     printf("	Disabling unsupported options...");
     {
         // disable advanced fault logging (AFL)
-        gcmd.value = 0;
-        gcmd.bits.eafl = 0;
-        _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
+        _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_EAFL, 0);
         IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.afls, (void *)&gsts.value, "	Could not disable AFL. Halting!");
 
         // disabled queued invalidation (QI)
-        gcmd.value = 0;
-        gcmd.bits.qie = 0;
-        _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
+        _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_QIE, 0);
         IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.qies, (void *)&gsts.value, "	Could not disable QI. Halting!");
 
         // disable interrupt remapping (IR)
-        gcmd.value = 0;
-        gcmd.bits.ire = 0;
-        _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
+        _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_IRE, 0);
         IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.ires, (void *)&gsts.value, "	Could not disable IR. Halting!");
     }
     printf("Done.\n");
@@ -494,13 +504,7 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     printf("	Enabling device...");
     {
         // enable translation
-        gcmd.value = 0;
-        gcmd.bits.te = 1;
-#ifdef __XMHF_VERIFICATION_DRIVEASSERTS__
-        assert(gcmd.bits.te == 1);
-#endif
-
-        _vtd_reg(drhd, VTD_REG_WRITE, VTD_GCMD_REG_OFF, (void *)&gcmd.value);
+        _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 1);
 
         // wait for translation enabled status to go green...
         IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, gsts.bits.tes, (void *)&gsts.value, "	DMA translation cannot be enabled. Halting!");
@@ -511,10 +515,9 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
     printf("	Checking and disabling PMR...");
     {
         VTD_PMEN_REG pmen;
-        _vtd_reg(drhd, VTD_REG_READ, VTD_CAP_REG_OFF, (void *)&cap.value);
 
         // PMR caps present, so disable it as we dont support that
-        if (cap.bits.plmr || cap.bits.phmr)
+        if (vtd_cap_plmr(drhd) || vtd_cap_phmr(drhd))
         {
             _vtd_reg(drhd, VTD_REG_READ, VTD_PMEN_REG_OFF, (void *)&pmen.value);
             pmen.bits.epm = 0; // disable PMR
@@ -526,17 +529,11 @@ void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr)
         }
     }
     printf("Done.\n");
-
-    // 10. perform write buffer flush (WBF)
-    if (drhd->iommu_flags.need_wbf) 
-    {
-        _vtd_drhd_issue_wbf(drhd);
-    }
 }
 
 // vt-d invalidate cachess note: we do global invalidation currently
 // [NOTE] <drhd0> refers to &vtd_drhd[0] and is used for __XMHF_VERIFICATION__ only.
-void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
+void _vtd_invalidate_caches_single_iommu(VTD_DRHD *drhd, VTD_DRHD *drhd0)
 {
     VTD_CCMD_REG ccmd;
     VTD_IOTLB_REG iotlb;
@@ -545,15 +542,15 @@ void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
     HALT_ON_ERRORCOND(drhd != NULL);
     HALT_ON_ERRORCOND(drhd0 != NULL);
 
-    // 1. invalidate CET cache
+    // 0. If IOMMU needs mHV to issue WBF, then mHV needs to do so before invalidate caches.
+    if (vtd_cap_require_wbf(drhd))
+        _vtd_drhd_issue_wbf(drhd);
+
+        // 1. invalidate CET cache
 
 #ifndef __XMHF_VERIFICATION__
     // wait for context cache invalidation request to send
     IOMMU_WAIT_OP(drhd, VTD_CCMD_REG_OFF, !ccmd.bits.icc, (void *)&ccmd.value, "IOMMU is not ready to invalidate CET cache");
-    // do
-    // {
-    //     _vtd_reg(drhd, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-    // } while (ccmd.bits.icc);
 #else
     _vtd_reg(drhd0, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
 #endif
@@ -569,10 +566,6 @@ void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
 #ifndef __XMHF_VERIFICATION__
     // wait for context cache invalidation completion status
     IOMMU_WAIT_OP(drhd, VTD_CCMD_REG_OFF, !ccmd.bits.icc, (void *)&ccmd.value, "Failed to invalidate CET cache");
-    // do
-    // {
-    //     _vtd_reg(drhd, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
-    // } while (ccmd.bits.icc);
 #else
     _vtd_reg(drhd0, VTD_REG_READ, VTD_CCMD_REG_OFF, (void *)&ccmd.value);
 #endif
@@ -585,6 +578,9 @@ void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
     }
 
     // 2. invalidate IOTLB
+    // wait for the IOTLB invalidation is available
+    IOMMU_WAIT_OP(drhd, VTD_IOTLB_REG_OFF, !iotlb.bits.ivt, (void *)&iotlb.value, "IOMMU is not ready to invalidate IOTLB");
+
     // initialize IOTLB to perform a global invalidation
     iotlb.value = 0;
     iotlb.bits.iirg = 1; // global invalidation
@@ -596,10 +592,6 @@ void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
 #ifndef __XMHF_VERIFICATION__
     // wait for the invalidation to complete
     IOMMU_WAIT_OP(drhd, VTD_IOTLB_REG_OFF, !iotlb.bits.ivt, (void *)&iotlb.value, "Failed to invalidate IOTLB");
-    // do
-    // {
-    //     _vtd_reg(drhd, VTD_REG_READ, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
-    // } while (iotlb.bits.ivt);
 #else
     _vtd_reg(drhd0, VTD_REG_READ, VTD_IOTLB_REG_OFF, (void *)&iotlb.value);
 #endif
@@ -610,8 +602,57 @@ void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0)
         printf("	Invalidation of IOTLB failed. Halting! (%u)\n", iotlb.bits.iaig);
         HALT();
     }
+}
 
-    // Issue WBF if needed
-    if(drhd->iommu_flags.need_wbf)
-        _vtd_drhd_issue_wbf(drhd);
+/********* Debug functions *********/
+void _vtd_print_and_clear_fault_registers(VTD_DRHD *drhd)
+{
+    uint32_t i = 0;
+    uint64_t frr_low64, frr_high64;
+    uint32_t fsr_clear_pfo_val = VTD_FSTS_PFO | VTD_FSTS_PPF | VTD_FSTS_PRO;
+    VTD_FSTS_REG fsr;
+
+    for (i = 0; i < vtd_cap_frr_nums(drhd); i++)
+    {
+        hva_t frr_vaddr = drhd->regbaseaddr + vtd_cap_frr_mem_offset(drhd) + i * VTD_CAP_REG_FRO_MULTIPLIER;
+
+        frr_low64 = *(uint64_t *)(frr_vaddr);
+        frr_high64 = *(uint64_t *)(frr_vaddr + 8);
+
+        printf("    DRHD Fault Recording Register[%u]: frr_vaddr:0x%lX, low64:0x%llX, high64:0x%llX\n", i, frr_vaddr, frr_low64, frr_high64);
+
+        // Clear the Fault Recording Registers
+        *(uint64_t *)(frr_vaddr + 8) = 0x8000000000000000ULL;
+        *(uint64_t *)(frr_vaddr) = 0ULL;
+
+        // Clear the PFO, PPF, and PRO bit of Fault Status Register
+        _vtd_reg(drhd, VTD_REG_WRITE, VTD_FSTS_REG_OFF, (void *)&fsr_clear_pfo_val);
+        IOMMU_WAIT_OP(drhd, VTD_FSTS_REG_OFF, !fsr.bits.pfo && !fsr.bits.ppf && !fsr.bits.pro, (void *)&fsr.value,
+                      "Failed to clear PFO, PPF, and PRO in Fault Status Register!");
+    }
+}
+
+void _vtd_restart_dma_iommu(VTD_DRHD *drhd)
+{
+    VTD_GSTS_REG gsts;
+
+    // disable translation
+    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 0); // te
+    // wait for translation enabled status to go red...
+    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.tes, (void *)&gsts.value, "	DMA translation cannot be disabled. Halting!");
+
+    // enable translation
+    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 1); // te
+    // wait for translation enabled status to go green...
+    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, gsts.bits.tes, (void *)&gsts.value, "	    DMA translation cannot be enabled. Halting!");
+}
+
+void _vtd_disable_dma_iommu(VTD_DRHD *drhd)
+{
+    VTD_GSTS_REG gsts;
+
+    // disable translation
+    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 0);
+    // wait for translation enabled status to go red...
+    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.tes, (void *)&gsts.value, "	DMA translation cannot be disabled. Halting!");
 }

@@ -72,8 +72,7 @@ static hva_t l_vtd_pts_vaddr = 0;
 
 //------------------------------------------------------------------------------
 // setup VT-d DMA protection page tables
-static bool _vtd_setuppagetables(struct dmap_vmx_cap *vtd_cap,
-                                 spa_t vtd_pml4t_paddr, hva_t vtd_pml4t_vaddr,
+static bool _vtd_setuppagetables(spa_t vtd_pml4t_paddr, hva_t vtd_pml4t_vaddr,
                                  spa_t vtd_pdpt_paddr, hva_t vtd_pdpt_vaddr,
                                  spa_t vtd_pdts_paddr, hva_t vtd_pdts_vaddr,
                                  spa_t vtd_pts_paddr, hva_t vtd_pts_vaddr,
@@ -89,10 +88,6 @@ static bool _vtd_setuppagetables(struct dmap_vmx_cap *vtd_cap,
     spa_t m_low_spa = PA_PAGE_ALIGN_1G(machine_low_spa);
     spa_t m_high_spa = PA_PAGE_ALIGN_UP_1G(machine_high_spa);
     u32 num_1G_entries = (m_high_spa - (u64)m_low_spa) >> PAGE_SHIFT_1G;
-
-    // Sanity checks
-    if (!vtd_cap)
-        return false;
 
     pml4tphysaddr = vtd_pml4t_paddr;
     pdptphysaddr = vtd_pdpt_paddr;
@@ -254,7 +249,7 @@ static u32 vmx_eap_initialize(
     // zero out rsdp and rsdt structures
     memset(&rsdp, 0, sizeof(ACPI_RSDP));
     memset(&rsdt, 0, sizeof(ACPI_RSDT));
-    memset(&g_vtd_cap, 0, sizeof(struct dmap_vmx_cap));
+    memset(&g_vtd_cap_sagaw_mgaw_nd, 0, sizeof(struct dmap_vmx_cap));
 
     // get ACPI RSDP
     //  [TODO] Unify the name of <xmhf_baseplatform_arch_x86_acpi_getRSDP> and <xmhf_baseplatform_arch_x86_acpi_getRSDP>, and then remove the following #ifdef
@@ -358,7 +353,7 @@ static u32 vmx_eap_initialize(
     }
 
     // Verify VT-d capabilities
-    status2 = _vtd_verify_cap(vtd_drhd, vtd_num_drhd, &g_vtd_cap);
+    status2 = _vtd_verify_cap(vtd_drhd, vtd_num_drhd, &g_vtd_cap_sagaw_mgaw_nd);
     if (!status2)
     {
         printf("%s: verify VT-d units' capabilities error! Halting!\n", __FUNCTION__);
@@ -387,7 +382,7 @@ static u32 vmx_eap_initialize(
             HALT();
         }
 
-        status2 = _vtd_setuppagetables(&g_vtd_cap, vtd_pml4t_paddr, vtd_pml4t_vaddr, vtd_pdpt_paddr, vtd_pdpt_vaddr,
+        status2 = _vtd_setuppagetables(vtd_pml4t_paddr, vtd_pml4t_vaddr, vtd_pdpt_paddr, vtd_pdpt_vaddr,
                                        vtd_pdts_paddr, vtd_pdts_vaddr, vtd_pts_paddr, vtd_pts_vaddr, machine_low_spa, machine_high_spa);
         if (!status2)
         {
@@ -400,7 +395,7 @@ static u32 vmx_eap_initialize(
 
     // initialize VT-d RET and CET
     {
-        status2 = _vtd_setupRETCET(&g_vtd_cap, vtd_pml4t_paddr, vtd_pdpt_paddr, vtd_ret_paddr, vtd_ret_vaddr, vtd_cet_paddr, vtd_cet_vaddr);
+        status2 = _vtd_setupRETCET(&g_vtd_cap_sagaw_mgaw_nd, vtd_pml4t_paddr, vtd_pdpt_paddr, vtd_ret_paddr, vtd_ret_vaddr, vtd_cet_paddr, vtd_cet_vaddr);
         if (!status2)
         {
             printf("%s: setup VT-d RET (%llx) and CET (%llx) error! Halting!\n", __FUNCTION__, vtd_ret_paddr, vtd_cet_paddr);
@@ -417,6 +412,9 @@ static u32 vmx_eap_initialize(
     // EPT/NPTs such that the DMAR pages are unmapped for the guest
     xmhf_baseplatform_arch_flat_writeu32(dmaraddrphys, 0UL);
 
+    // Flush CPU cache
+    wbinvd();
+
     // success
     printf("%s: success, leaving...\n", __FUNCTION__);
 
@@ -432,12 +430,12 @@ spa_t xmhf_dmaprot_arch_x86_vmx_get_eap_vtd_pt_root(void)
 {
     spa_t result = INVALID_SPADDR;
 
-    if (g_vtd_cap.sagaw & 0x4)
+    if (g_vtd_cap_sagaw_mgaw_nd.sagaw & 0x4)
     {
         // 4-level PT
         result = l_vtd_pml4t_paddr;
     }
-    else if (g_vtd_cap.sagaw & 0x2)
+    else if (g_vtd_cap_sagaw_mgaw_nd.sagaw & 0x2)
     {
         // VT-d uses 3-level PT
         result = l_vtd_pdpt_paddr;
@@ -496,6 +494,9 @@ u32 xmhf_dmaprot_arch_x86_vmx_enable(spa_t protectedbuffer_paddr,
 
     // Clear VT-d caches
     xmhf_dmaprot_arch_x86_vmx_invalidate_cache();
+
+    // Print and clean fault registers
+	xmhf_dmaprot_arch_x86_vmx_print_and_clear_fault_registers();
 
     // success
     printf("%s: success, leaving...\n", __FUNCTION__);
@@ -613,16 +614,63 @@ void xmhf_dmaprot_arch_x86_vmx_unprotect(spa_t start_paddr, size_t size)
 // flush the caches
 void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void)
 {
-    u32 i;
+    u32 i = 0;
 
-#ifdef __XMHF_VERIFICATION__
-    for (i = 0; i < 1; i++)
-    {
-#else
+#ifndef __XMHF_VERIFICATION__
+    // initialize all DRHD units
     for (i = 0; i < vtd_num_drhd; i++)
     {
+        _vtd_invalidate_caches_single_iommu(&vtd_drhd[i], &vtd_drhd[0]);
+    }
+#else
+    _vtd_invalidate_caches_single_iommu(&vtd_drhd[0], &vtd_drhd[0]);
 #endif
+}
 
-        _vtd_invalidate_caches(&vtd_drhd[i], &vtd_drhd[0]);
+
+
+
+/********* Debug functions *********/
+void xmhf_dmaprot_arch_x86_vmx_print_and_clear_fault_registers(void)
+{
+    u32 i = 0;
+
+    for (i = 0; i < vtd_num_drhd; i++)
+    {
+        printf("DRHD[%u]:\n", i);
+        _vtd_print_and_clear_fault_registers(&vtd_drhd[i]);
+    }
+}
+
+void xmhf_dmaprot_arch_x86_vmx_restart_dma_iommu(void)
+{
+    u32 i = 0;
+
+    for (i = 0; i < vtd_num_drhd; i++)
+    {
+        _vtd_restart_dma_iommu(&vtd_drhd[i]);
+    }
+}
+
+void xmhf_dmaprot_arch_x86_vmx_disable_dma_iommu(void)
+{
+    u32 i = 0;
+
+    for (i = 0; i < vtd_num_drhd; i++)
+    {
+        _vtd_disable_dma_iommu(&vtd_drhd[i]);
+    }
+}
+
+void xmhf_dmaprot_arch_x86_vmx_print_tes(char* s)
+{
+    u32 i = 0;
+
+    for (i = 0; i < vtd_num_drhd; i++)
+    {
+        VTD_GCMD_REG gcmd;
+        VTD_GSTS_REG gsts;
+        _vtd_reg(&vtd_drhd[i], VTD_REG_READ, VTD_GSTS_REG_OFF, (void *)&gsts.value); 
+        printf("%s gsts.bits.tes:%u\n", s, gsts.bits.tes);
     }
 }

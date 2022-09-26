@@ -13,7 +13,7 @@
 
 
 #ifndef __ASSEMBLY__
-extern struct dmap_vmx_cap g_vtd_cap;
+extern struct dmap_vmx_cap g_vtd_cap_sagaw_mgaw_nd;
 
 //vt-d register access function
 extern void _vtd_reg(VTD_DRHD *dmardevice, u32 access, u32 reg, void *value);
@@ -35,7 +35,14 @@ extern void _vtd_drhd_initialize(VTD_DRHD *drhd, u32 vtd_ret_paddr);
 
 // vt-d invalidate cachess note: we do global invalidation currently
 // [NOTE] <drhd0> refers to &vtd_drhd[0] and is used for __XMHF_VERIFICATION__ only.
-extern void _vtd_invalidate_caches(VTD_DRHD *drhd, VTD_DRHD *drhd0);
+extern void _vtd_invalidate_caches_single_iommu(VTD_DRHD *drhd, VTD_DRHD *drhd0);
+
+
+
+
+/********* Debug functions *********/
+extern void _vtd_print_and_clear_fault_registers(VTD_DRHD *drhd);
+extern void _vtd_restart_dma_iommu(VTD_DRHD *drhd);
 
 #endif // __ASSEMBLY__
 #endif // XMHF_DMAP_VMX_INTERNAL_H

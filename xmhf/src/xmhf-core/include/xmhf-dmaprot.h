@@ -215,6 +215,11 @@ void xmhf_dmaprot_arch_x86_vmx_protect(spa_t start_paddr, size_t size);
 extern void xmhf_dmaprot_arch_x86_vmx_unprotect(spa_t start_paddr, size_t size);
 extern void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void);
 
+
+/********* Debug functions *********/
+extern void xmhf_dmaprot_arch_x86_vmx_print_and_clear_fault_registers(void);
+extern void xmhf_dmaprot_arch_x86_vmx_restart_dma_iommu(void);
+
 //----------------------------------------------------------------------
 //svm SUBARCH. INTERFACES
 //----------------------------------------------------------------------

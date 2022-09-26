@@ -67,7 +67,7 @@ static u32 vmx_eap_initialize_early(
     // zero out rsdp and rsdt structures
     memset(&rsdp, 0, sizeof(ACPI_RSDP));
     memset(&rsdt, 0, sizeof(ACPI_RSDT));
-    memset(&g_vtd_cap, 0, sizeof(struct dmap_vmx_cap));
+    memset(&g_vtd_cap_sagaw_mgaw_nd, 0, sizeof(struct dmap_vmx_cap));
 
     // get ACPI RSDP
     //  [TODO] Unify the name of <xmhf_baseplatform_arch_x86_acpi_getRSDP> and <xmhf_baseplatform_arch_x86_acpi_getRSDP>, and then remove the following #ifdef
@@ -171,7 +171,7 @@ static u32 vmx_eap_initialize_early(
     }
 
     // Verify VT-d capabilities
-    status2 = _vtd_verify_cap(vtd_drhd, vtd_num_drhd, &g_vtd_cap);
+    status2 = _vtd_verify_cap(vtd_drhd, vtd_num_drhd, &g_vtd_cap_sagaw_mgaw_nd);
     if (!status2)
     {
         printf("%s: verify VT-d units' capabilities error! Halting!\n", __FUNCTION__);
@@ -181,6 +181,9 @@ static u32 vmx_eap_initialize_early(
     // initialize VT-d RET and CET using empty RET and CET, so no DMA is allowed
     _vtd_setupRETCET_bootstrap(vtd_ret_paddr, vtd_ret_vaddr, vtd_cet_paddr, vtd_cet_vaddr);
     printf("%s: setup VT-d RET (%08x) and CET (%08x) for bootstrap.\n", __FUNCTION__, vtd_ret_paddr, vtd_cet_paddr);
+
+    // Flush CPU cache
+    wbinvd();
 
 #endif //__XMHF_VERIFICATION__
 

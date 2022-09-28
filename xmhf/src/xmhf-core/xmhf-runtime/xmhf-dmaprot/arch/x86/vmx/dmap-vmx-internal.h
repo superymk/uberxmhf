@@ -15,6 +15,26 @@
 #ifndef __ASSEMBLY__
 extern struct dmap_vmx_cap g_vtd_cap_sagaw_mgaw_nd;
 
+#define DMAR_OPERATION_TIMEOUT  SEC_TO_CYCLES(1)
+
+#define IOMMU_WAIT_OP(drhd, reg, cond, sts, msg_for_false_cond)                 \
+    do                                                                          \
+    {                                                                           \
+        uint64_t start_time = rdtsc64();                                        \
+        while (1)                                                               \
+        {                                                                       \
+            _vtd_reg(drhd, VTD_REG_READ, reg, sts);                             \
+            if (cond)                                                           \
+                break;                                                          \
+            if (rdtsc64() > start_time + DMAR_OPERATION_TIMEOUT)                \
+            {                                                                   \
+                printf("DMAR hardware malfunction:%s\n", (msg_for_false_cond)); \
+                HALT();                                                         \
+            }                                                                   \
+            xmhf_cpu_relax();                                                   \
+        }                                                                       \
+    } while (0)
+
 //vt-d register access function
 extern void _vtd_reg(VTD_DRHD *dmardevice, u32 access, u32 reg, void *value);
 

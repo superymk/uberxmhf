@@ -23,13 +23,10 @@ static u32 vtd_num_drhd = 0; // total number of DMAR h/w units
 // we ensure that every entry in the RET is 0 which means that the DRHD will
 // not allow any DMA requests for PCI bus 0-255 (Sec 3.3.2, IVTD Spec. v1.2)
 // we zero out the CET just for sanity
-static void _vtd_setupRETCET_bootstrap(spa_t vtd_ret_paddr, hva_t vtd_ret_vaddr, spa_t vtd_cet_paddr, hva_t vtd_cet_vaddr)
+static void _vtd_setupRETCET_bootstrap(spa_t vtd_ret_paddr, hva_t vtd_ret_vaddr)
 {
     // sanity check that RET and CET are page-aligned
-    HALT_ON_ERRORCOND(PA_PAGE_ALIGNED_4K(vtd_ret_paddr) && PA_PAGE_ALIGNED_4K(vtd_cet_paddr));
-
-    // zero out CET, we dont require it for bootstrapping
-    memset((void *)vtd_cet_vaddr, 0, PAGE_SIZE_4K);
+    HALT_ON_ERRORCOND(PA_PAGE_ALIGNED_4K(vtd_ret_paddr));
 
     // zero out RET, effectively preventing DMA reads and writes in the system
     memset((void *)vtd_ret_vaddr, 0, PAGE_SIZE_4K);
@@ -45,8 +42,7 @@ static u32 vmx_eap_initialize_early(
     spa_t vtd_pdpt_paddr, hva_t vtd_pdpt_vaddr,
     spa_t vtd_pdts_paddr, hva_t vtd_pdts_vaddr,
     spa_t vtd_pts_paddr, hva_t vtd_pts_vaddr,
-    spa_t vtd_ret_paddr, hva_t vtd_ret_vaddr,
-    spa_t vtd_cet_paddr, hva_t vtd_cet_vaddr)
+    spa_t vtd_ret_paddr, hva_t vtd_ret_vaddr)
 {
     ACPI_RSDP rsdp;
     ACPI_RSDT rsdt;
@@ -179,8 +175,8 @@ static u32 vmx_eap_initialize_early(
     }
 
     // initialize VT-d RET and CET using empty RET and CET, so no DMA is allowed
-    _vtd_setupRETCET_bootstrap(vtd_ret_paddr, vtd_ret_vaddr, vtd_cet_paddr, vtd_cet_vaddr);
-    printf("%s: setup VT-d RET (%08x) and CET (%08x) for bootstrap.\n", __FUNCTION__, vtd_ret_paddr, vtd_cet_paddr);
+    _vtd_setupRETCET_bootstrap(vtd_ret_paddr, vtd_ret_vaddr);
+    printf("%s: setup VT-d RET (0x%llX) for bootstrap.\n", __FUNCTION__, vtd_ret_paddr);
 
     // Flush CPU cache
     wbinvd();
@@ -220,14 +216,12 @@ u32 xmhf_dmaprot_arch_x86_vmx_earlyinitialize(sla_t protectedbuffer_paddr, sla_t
 
     printf("SL: Bootstrapping VMX DMA protection...\n");
 
-    // we use 2 pages for Vt-d bootstrapping
-    HALT_ON_ERRORCOND(protectedbuffer_size >= (2 * PAGE_SIZE_4K));
+    // we use 1 pages for Vt-d bootstrapping
+    HALT_ON_ERRORCOND(protectedbuffer_size >= (1 * PAGE_SIZE_4K));
 
     vmx_eap_vtd_ret_paddr = protectedbuffer_paddr;
     vmx_eap_vtd_ret_vaddr = protectedbuffer_vaddr;
-    vmx_eap_vtd_cet_paddr = protectedbuffer_paddr + PAGE_SIZE_4K;
-    vmx_eap_vtd_cet_vaddr = protectedbuffer_vaddr + PAGE_SIZE_4K;
 
     return vmx_eap_initialize_early(0, 0, 0, 0, 0, 0, 0, 0,
-                vmx_eap_vtd_ret_paddr, vmx_eap_vtd_ret_vaddr, vmx_eap_vtd_cet_paddr, vmx_eap_vtd_cet_vaddr);
+                vmx_eap_vtd_ret_paddr, vmx_eap_vtd_ret_vaddr);
 }

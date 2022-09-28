@@ -209,7 +209,7 @@ static u32 vmx_eap_initialize_early(
 // return 1 on success 0 on failure
 u32 xmhf_dmaprot_arch_x86_vmx_earlyinitialize(sla_t protectedbuffer_paddr, sla_t protectedbuffer_vaddr, size_t protectedbuffer_size, sla_t __attribute__((unused)) memregionbase_paddr, u32 __attribute__((unused)) memregion)
 {
-    u32 vmx_eap_vtd_ret_paddr, vmx_eap_vtd_ret_vaddr, vmx_eap_vtd_cet_paddr, vmx_eap_vtd_cet_vaddr;
+    u32 vmx_eap_vtd_ret_paddr, vmx_eap_vtd_ret_vaddr;
 
     //(void)memregionbase_paddr;
     //(void)memregion_size;

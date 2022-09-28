@@ -603,7 +603,10 @@ void _vtd_invalidate_caches_single_iommu(VTD_DRHD *drhd, VTD_DRHD *drhd0)
     }
 }
 
-/********* Debug functions *********/
+
+
+
+/********* Other util functions *********/
 void _vtd_print_and_clear_fault_registers(VTD_DRHD *drhd)
 {
     uint32_t i = 0;
@@ -633,17 +636,8 @@ void _vtd_print_and_clear_fault_registers(VTD_DRHD *drhd)
 
 void _vtd_restart_dma_iommu(VTD_DRHD *drhd)
 {
-    VTD_GSTS_REG gsts;
-
-    // disable translation
-    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 0); // te
-    // wait for translation enabled status to go red...
-    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.tes, (void *)&gsts.value, "	DMA translation cannot be disabled. Halting!");
-
-    // enable translation
-    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 1); // te
-    // wait for translation enabled status to go green...
-    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, gsts.bits.tes, (void *)&gsts.value, "	    DMA translation cannot be enabled. Halting!");
+    _vtd_disable_dma_iommu(drhd);
+    _vtd_enable_dma_iommu(drhd);
 }
 
 void _vtd_disable_dma_iommu(VTD_DRHD *drhd)
@@ -654,4 +648,14 @@ void _vtd_disable_dma_iommu(VTD_DRHD *drhd)
     _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 0);
     // wait for translation enabled status to go red...
     IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, !gsts.bits.tes, (void *)&gsts.value, "	DMA translation cannot be disabled. Halting!");
+}
+
+void _vtd_enable_dma_iommu(VTD_DRHD *drhd)
+{
+    VTD_GSTS_REG gsts;
+
+    // enable translation
+    _vtd_drhd_issue_gcmd(drhd, VTD_GCMD_BIT_TE, 1); // te
+    // wait for translation enabled status to go green...
+    IOMMU_WAIT_OP(drhd, VTD_GSTS_REG_OFF, gsts.bits.tes, (void *)&gsts.value, "	    DMA translation cannot be enabled. Halting!");
 }

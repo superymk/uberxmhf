@@ -40,9 +40,11 @@ extern void _vtd_invalidate_caches_single_iommu(VTD_DRHD *drhd, VTD_DRHD *drhd0)
 
 
 
-/********* Debug functions *********/
+/********* Other util functions *********/
 extern void _vtd_print_and_clear_fault_registers(VTD_DRHD *drhd);
 extern void _vtd_restart_dma_iommu(VTD_DRHD *drhd);
+extern void _vtd_enable_dma_iommu(VTD_DRHD *drhd);
+extern void _vtd_disable_dma_iommu(VTD_DRHD *drhd);
 
 #endif // __ASSEMBLY__
 #endif // XMHF_DMAP_VMX_INTERNAL_H

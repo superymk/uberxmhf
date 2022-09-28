@@ -340,7 +340,7 @@ static u32 vmx_eap_initialize(
 
     // be a little verbose about what we found
     printf("%s: DMAR Devices:\n", __FUNCTION__);
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         VTD_CAP_REG cap;
         VTD_ECAP_REG ecap;
@@ -482,7 +482,7 @@ u32 xmhf_dmaprot_arch_x86_vmx_enable(spa_t protectedbuffer_paddr,
     
 #ifndef __XMHF_VERIFICATION__
     // initialize all DRHD units
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         printf("%s: initializing DRHD unit %u...\n", __FUNCTION__, i);
         _vtd_drhd_initialize(&vtd_drhd[i], vmx_eap_vtd_ret_paddr);
@@ -618,7 +618,7 @@ void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void)
 
 #ifndef __XMHF_VERIFICATION__
     // initialize all DRHD units
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         _vtd_invalidate_caches_single_iommu(&vtd_drhd[i], &vtd_drhd[0]);
     }
@@ -630,12 +630,34 @@ void xmhf_dmaprot_arch_x86_vmx_invalidate_cache(void)
 
 
 
+/********* Support hypapps to control igfx's IOMMU *********/
+#ifdef __XMHF_ALLOW_HYPAPP_DISABLE_IGFX_IOMMU__
+//! \brief Enable the IOMMU servicing the integrated GPU only. Other IOMMUs are not modified.
+//!
+//! @return Return true on success
+bool xmhf_dmaprot_arch_x86_vmx_enable_igfx_iommu(void)
+{
+    return _vtd_enable_igfx_drhd(vtd_drhd, vtd_num_drhd);
+}
+
+//! \brief Disable the IOMMU servicing the integrated GPU only. Other IOMMUs are not modified.
+//!
+//! @return Return true on success
+bool xmhf_dmaprot_arch_x86_vmx_disable_igfx_iommu(void)
+{
+    return _vtd_disable_igfx_drhd(vtd_drhd, vtd_num_drhd);
+}
+#endif // __XMHF_ALLOW_HYPAPP_DISABLE_IGFX_IOMMU__
+
+
+
+
 /********* Debug functions *********/
 void xmhf_dmaprot_arch_x86_vmx_print_and_clear_fault_registers(void)
 {
     u32 i = 0;
 
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         printf("DRHD[%u]:\n", i);
         _vtd_print_and_clear_fault_registers(&vtd_drhd[i]);
@@ -646,7 +668,7 @@ void xmhf_dmaprot_arch_x86_vmx_restart_dma_iommu(void)
 {
     u32 i = 0;
 
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         _vtd_restart_dma_iommu(&vtd_drhd[i]);
     }
@@ -656,7 +678,7 @@ void xmhf_dmaprot_arch_x86_vmx_disable_dma_iommu(void)
 {
     u32 i = 0;
 
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         _vtd_disable_dma_iommu(&vtd_drhd[i]);
     }
@@ -666,7 +688,7 @@ void xmhf_dmaprot_arch_x86_vmx_print_tes(char* s)
 {
     u32 i = 0;
 
-    for (i = 0; i < vtd_num_drhd; i++)
+    FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
         VTD_GCMD_REG gcmd;
         VTD_GSTS_REG gsts;

@@ -11,6 +11,7 @@ C_SOURCES += ./arch/x86/dmap-x86-runtime.c
 C_SOURCES += ./arch/x86/svm/dmap-svm.c
 C_SOURCES += ./arch/x86/vmx/dmap-vmx-earlyinit.c
 C_SOURCES += ./arch/x86/vmx/dmap-vmx-internal.c
+C_SOURCES += ./arch/x86/vmx/dmap-vmx-quirks.c
 C_SOURCES += ./arch/x86/vmx/dmap-vmx-runtime.c
 C_SOURCES += ./arch/x86/vmx/dmap-vmx-utils.c
 C_SOURCES += ./arch/x86/vmx/dmap-vmx-data.c

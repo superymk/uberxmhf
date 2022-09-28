@@ -690,7 +690,6 @@ void xmhf_dmaprot_arch_x86_vmx_print_tes(char* s)
 
     FOREACH_S(i, vtd_num_drhd, VTD_MAX_DRHD, 0, 1)
     {
-        VTD_GCMD_REG gcmd;
         VTD_GSTS_REG gsts;
         _vtd_reg(&vtd_drhd[i], VTD_REG_READ, VTD_GSTS_REG_OFF, (void *)&gsts.value); 
         printf("%s gsts.bits.tes:%u\n", s, gsts.bits.tes);

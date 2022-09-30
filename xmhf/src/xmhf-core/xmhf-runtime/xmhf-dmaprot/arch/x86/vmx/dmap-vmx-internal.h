@@ -17,7 +17,19 @@ extern struct dmap_vmx_cap g_vtd_cap_sagaw_mgaw_nd;
 
 #define DMAR_OPERATION_TIMEOUT  SEC_TO_CYCLES(1)
 
+/* Default implementation of IOMMU_WAIT_OP reduces code size */
 #define IOMMU_WAIT_OP(drhd, reg, cond, sts, msg_for_false_cond)                 \
+    do                                                                          \
+    {                                                                           \
+        _vtd_reg(drhd, VTD_REG_READ, reg, sts);                                 \
+        xmhf_cpu_relax();                                                       \
+    } while (!(cond))                                                           \
+
+/*
+ * Similar to IOMMU_WAIT_OP, but report error when timeout. Currently not used
+ * in order to reduce secureloader code size.
+ */
+#define IOMMU_WAIT_OP_DBG(drhd, reg, cond, sts, msg_for_false_cond)             \
     do                                                                          \
     {                                                                           \
         uint64_t start_time = rdtsc64();                                        \
